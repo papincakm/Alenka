@@ -15,8 +15,8 @@ AQuestionDialog::AQuestionDialog()
     EventTypeManagerLabel = new QLabel(this);
     EventTypeManagerLabel->setText("EventType manager ");
 
-    // Message = new QLabel(this);
-    // Message->setText("Do you want to maintain the same coniguration");
+    Message = new QLabel(this);
+    Message->setText("Do you want to maintain the same coniguration");
 
     // MontageManagerLabel = new QLabel(this);
     // MontageManagerLabel->setText("Montage Manager");

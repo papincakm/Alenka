@@ -186,7 +186,10 @@ void VideoPlayer::seek(const int position) {
 void VideoPlayer::stopAndSetPlayer(const VideoFile &newVideoFile) {
   player->stop();
   currentVideoFile = newVideoFile;
-  player->setMedia(currentVideoFile.url);
+  //TODO: (papi) temp video fix
+  if (!currentVideoFile.url.isEmpty()) {
+	  player->setMedia(currentVideoFile.url);
+  }
 }
 
 void VideoPlayer::seekPlayer(const int position, const VideoFile &videoFile) {

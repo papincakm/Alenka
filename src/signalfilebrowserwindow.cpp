@@ -1208,6 +1208,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   eventTypeManager->changeFile(openDataFile.get());
   montageManager->changeFile(openDataFile.get());
   filterManager->changeFile(openDataFile.get());
+  //TODO: (papi) video error here
   videoPlayer->changeFile(openDataFile.get());
   syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());
