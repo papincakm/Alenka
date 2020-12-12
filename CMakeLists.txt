@@ -196,6 +196,36 @@ set(SRC
   src/spikedetsettingsdialog.h
   src/tracklabelbar.cpp
   src/tracklabelbar.h
+  #  Second version Alenka 2.0
+  src/AButton.h
+  src/AButton.cpp
+  src/AComboBox.h
+  src/AComboBox.cpp
+  src/AQuestionDialog.h
+  src/AQuestionDialog.cpp
+  src/ARealDialog.h
+  src/ARealDialog.cpp
+  src/ATimerInputBox.h
+  src/ATimerInputBox.cpp
+  src/ComparatorXML.h
+  src/ComparatorXML.cpp
+  src/EventTypeXML.h
+  src/EventTypeXML.cpp
+  src/MontageXML.h
+  src/MontageXML.cpp
+  #src/TimerManipulator.h
+  #src/TimerManipulator.cpp
+  #src/TrackTableXML.h
+  #src/TrackTableXML.cpp
+  src/TrackView.h
+  src/TrackView.cpp
+  src/XMLAtributes.h
+  src/XMLAtributes.cpp
+  #src/ATimerInputBox_moc.cpp
+  #src/AQuestionDialog_moc.cpp
+  src/ATimerDialog.h
+  src/ATimerDialog.cpp
+  src/ColumnCellView.cpp
 )
 set_source_files_properties(${SRC} PROPERTIES COMPILE_FLAGS
   "${WARNINGS} ${NO_WARNINGS}")

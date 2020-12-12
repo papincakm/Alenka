@@ -1,16 +1,15 @@
 #include "manager.h"
-
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 #include "../myapplication.h"
 #include "sortproxymodel.h"
 #include "tablemodel.h"
-
 #include <QtWidgets>
-
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include "codeeditdialog.h"
+#include <QQuickWidget>
 
 using namespace std;
 
@@ -56,66 +55,107 @@ vector<vector<string>> splitLinesToCells(const vector<string> &lines) {
 
 } // namespace
 
-Manager::Manager(QWidget *parent) : QWidget(parent, Qt::Window) {
-  // Construct the table widget.
-  tableView = new QTableView(this);
-  tableView->setSortingEnabled(true);
-  tableView->sortByColumn(0, Qt::AscendingOrder);
-  tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-  tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
+Manager::Manager(QWidget* parent) : QWidget(parent, Qt::Window) {
+    // Construct the table widget.
+    tableView = new QTableView(this);
+    tableView->setSortingEnabled(true);
+    tableView->sortByColumn(0, Qt::AscendingOrder);
+    tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-  // Add some actions to the tableView.
-  auto addRowAction = new QAction("Add Row", this);
-  addRowAction->setStatusTip("Add rows at the end");
-  connect(addRowAction, SIGNAL(triggered()), this, SLOT(insertRowBack()));
-  tableView->addAction(addRowAction);
+    // Add some actions to the tableView.
+    auto addRowAction = new QAction("Add Row", this);
+    addRowAction->setStatusTip("Add rows at the end");
+    connect(addRowAction, SIGNAL(triggered()), this, SLOT(insertRowBack()));
+    tableView->addAction(addRowAction);
 
-  auto removeRowsAction = new QAction("Remove Rows", this);
-  removeRowsAction->setStatusTip("Remove selected rows");
-  removeRowsAction->setShortcut(QKeySequence::Delete);
-  removeRowsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-  connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
-  tableView->addAction(removeRowsAction);
+    auto removeRowsAction = new QAction("Remove Rows", this);
+    removeRowsAction->setStatusTip("Remove selected rows");
+    removeRowsAction->setShortcut(QKeySequence::Delete);
+    removeRowsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    connect(removeRowsAction, SIGNAL(triggered()), this, SLOT(removeRows()));
+    tableView->addAction(removeRowsAction);
 
-  auto setColumnAction = new QAction("Set Column", this);
-  setColumnAction->setStatusTip(
-      "Set all cells in a column to the selected value");
-  connect(setColumnAction, SIGNAL(triggered()), this, SLOT(setColumn()));
-  tableView->addAction(setColumnAction);
+    auto setColumnAction = new QAction("Set Column", this);
+    setColumnAction->setStatusTip("Set all cells in a column to the selected value");
+    connect(setColumnAction, SIGNAL(triggered()), this, SLOT(setColumn()));
+    tableView->addAction(setColumnAction);
 
-  addSeparator();
+    addSeparator();
 
-  auto copyAction = new QAction("Copy", this);
-  copyAction->setStatusTip("Copy as tab separated table");
-  copyAction->setShortcut(QKeySequence::Copy);
-  copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-  connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
-  tableView->addAction(copyAction);
+    auto copyAction = new QAction("Copy", this);
+    copyAction->setStatusTip("Copy as tab separated table");
+    copyAction->setShortcut(QKeySequence::Copy);
+    copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
+    tableView->addAction(copyAction);
 
-  auto copyHtmlAction = new QAction("Copy HTML", this);
-  copyHtmlAction->setStatusTip("Copy as a HTML table");
-  connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
-  tableView->addAction(copyHtmlAction);
+    auto copyHtmlAction = new QAction("Copy HTML", this);
+    copyHtmlAction->setStatusTip("Copy as a HTML table");
+    connect(copyHtmlAction, SIGNAL(triggered()), this, SLOT(copyHtml()));
+    tableView->addAction(copyHtmlAction);
 
-  auto pasteAction = new QAction("Paste", this);
-  pasteAction->setShortcut(QKeySequence::Paste);
-  pasteAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-  connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
-  tableView->addAction(pasteAction);
+    auto pasteAction = new QAction("Paste", this);
+    pasteAction->setShortcut(QKeySequence::Paste);
+    pasteAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
+    tableView->addAction(pasteAction);
 
-  addSeparator();
+    addSeparator();
 
-  // Construct buttons.
-  auto addRowButton = new QPushButton("Add Row", this);
-  connect(addRowButton, SIGNAL(clicked()), this, SLOT(insertRowBack()));
+    // Construct buttons.
+    auto addRowButton = new QPushButton("Add Row", this);
+    connect(addRowButton, SIGNAL(clicked()), this, SLOT(insertRowBack()));
 
-  auto removeRowButton = new QPushButton("Remove Rows", this);
-  connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
+    auto removeRowButton = new QPushButton("Remove Rows", this);
+    connect(removeRowButton, SIGNAL(clicked()), this, SLOT(removeRows()));
 
-  // Add the widgets to the layout.
-  buttonLayout = new QGridLayout;
-  addButton(addRowButton);
-  addButton(removeRowButton);
+    // Add the widgets to the layout.
+    buttonLayout = new QGridLayout;
+    addButton(addRowButton);
+    addButton(removeRowButton);
+
+#pragma region Lucas
+    // New components add from Lucas 
+
+    //  Add action to change formula matematics 
+    auto ChangeMathAction = new QAction("Change Code", this);
+    // ChangeMathAction->setStatusTip("Change the math all lines");
+    connect(ChangeMathAction, SIGNAL(triggered()), this, SLOT(ChangeMath()));
+    tableView->addAction(ChangeMathAction);
+
+    // Add action to change the colorof pens
+    auto ChangeColorAction = new QAction("Change Color", this);
+    // ChangeColorAction->setStatusTip("Change color of all lines");
+    connect(ChangeColorAction, SIGNAL(triggered()), this, SLOT(ChangeColor()));
+    tableView->addAction(ChangeColorAction);
+
+    // Add action to change the amplitude of signals
+    auto ChangeAmplitudeAction = new QAction("Change Amplitude", this);
+    connect(ChangeAmplitudeAction, SIGNAL(triggered()), this, SLOT(ChangeAmplitude()));
+    tableView->addAction(ChangeAmplitudeAction);
+  
+    // Add action to change the Hidden os signals 
+    auto ChangeHiddenAction = new QAction("Change Hidden", this);
+    connect(ChangeHiddenAction, SIGNAL(triggered()), this, SLOT(ChangeHidden()));
+    tableView->addAction(ChangeHiddenAction);
+
+    // Add aciton to change the X 
+    auto ChangeXAction = new QAction("Change X", this);
+    connect(ChangeXAction, SIGNAL(triggered()), this, SLOT(ChangeX()));
+    tableView->addAction(ChangeXAction);
+
+    // Add action to change the Y
+    auto ChangeYAction = new QAction("Change Y", this);
+    connect(ChangeYAction, SIGNAL(triggered()), this, SLOT(ChangeY()));
+    tableView->addAction(ChangeYAction);
+
+    // Add Action to change the Z
+    auto ChangeZAction = new QAction("Change Z", this);
+    connect(ChangeZAction, SIGNAL(triggered()), this, SLOT(ChangeZ()));
+    tableView->addAction(ChangeZAction);
+
+#pragma endregion
 
   auto box = new QVBoxLayout;
   box->addLayout(buttonLayout);
@@ -146,14 +186,12 @@ void Manager::addButton(QPushButton *button) {
 
 map<pair<int, int>, QString> Manager::textOfSelection() {
   QModelIndexList indexes = tableView->selectionModel()->selectedIndexes();
-
   map<pair<int, int>, QString> cells;
 
   for (const QModelIndex &e : indexes) {
     QVariant value = e.data(Qt::EditRole);
 
-    cells[make_pair(e.row(), e.column())] =
-        value.convert(QMetaType::QString) ? value.toString() : "";
+    cells[make_pair(e.row(), e.column())] = value.convert(QMetaType::QString) ? value.toString() : "";
   }
 
   return cells;
@@ -236,10 +274,10 @@ void Manager::removeRows() {
   if (!rows.empty() && askToDeleteRows(rows.size())) {
     const QString name = metaObject()->className();
     file->undoFactory->beginMacro("remove " + name + " rows");
-
+    
     for (int rowIndex : rows)
       tableView->model()->removeRows(rowIndex, 1);
-
+      
     file->undoFactory->endMacro();
   }
 }
@@ -354,3 +392,166 @@ void Manager::setColumn() {
     file->undoFactory->endMacro();
   }
 }
+
+#pragma region Lucas 
+
+void Manager::ChangeColor()
+{
+    if (!file)
+        return;
+
+    list<ColumnCellView> Cell = GetAllColumnsView();
+    QColor color;
+    color = QColorDialog::getColor(color);
+
+    if (color.isValid()) 
+    {
+        foreach (ColumnCellView column , Cell)
+        {
+             tableView->model()->setData(tableView->model()->index(column.CellLine, 3), color.name());
+        }
+    }   
+}
+
+list<ColumnCellView> Manager::GetAllColumnsView()
+{
+    QModelIndexList indexes = tableView->selectionModel()->selectedIndexes();
+    list<ColumnCellView> Column;
+
+    for (const QModelIndex& e : indexes) {
+
+        QVariant value = e.data(Qt::EditRole);
+
+        ColumnCellView view;
+        view.CellColumn = e.column();
+        view.CellLine = e.row();
+        view.NameCell = value.typeName();
+        Column.push_front(view);   
+    }
+
+    return Column;
+
+}
+
+void Manager::ChangeMath()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+    CodeEditDialog *CodeEditor = new CodeEditDialog(this);
+    int result = CodeEditor ->exec();
+
+    if (result == QDialog::Accepted) {
+
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 2), CodeEditor->getText());
+        }
+    }
+}
+
+void Manager::ChangeAmplitude()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+
+    bool ChangedAmplitude;
+    double Amplitude = QInputDialog::getDouble(this, tr("Amplitude changer"),
+        tr("Value:"), 0.000001, -100000, 100000, 6, &ChangedAmplitude);
+
+    if (ChangedAmplitude)
+    {
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 4), Amplitude);
+        }
+    }
+
+}
+
+void Manager::ChangeHidden()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+
+    QStringList items;
+    items << tr("True") << tr("False");
+
+    bool ChangeHidden;
+    bool ValueHidden;
+    QString item = QInputDialog::getItem(this, tr("Hidden signals"),
+        tr("Value:"), items, 0, false, &ChangeHidden);
+
+    if (ChangeHidden && !item.isEmpty())
+    {
+        if (item == "True")
+            ValueHidden = true;
+        else
+            ValueHidden = false;
+
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 5), ValueHidden);
+        }
+    }
+}
+
+void Manager::ChangeX()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+
+    bool ChangedX;
+    double XValue = QInputDialog::getDouble(this, tr("Change X value"), tr("Value:"), 1, -100000, 100000, 6, &ChangedX);
+
+    if (ChangedX)
+    {
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 6), XValue);
+        }
+    }
+
+}
+
+void Manager::ChangeY()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+
+    bool ChangedY;
+    double YValue = QInputDialog::getDouble(this, tr("Change Y value"), tr("Value:"), 1, -100000, 100000, 6, &ChangedY);
+
+    if (ChangedY)
+    {
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 7), YValue);
+        }
+    }
+
+}
+
+void Manager::ChangeZ()
+{
+    if (!file)
+        return;
+    list<ColumnCellView> Cell = GetAllColumnsView();
+
+    bool ChangedZ;
+    double ZValue = QInputDialog::getDouble(this, tr("Change Z value"), tr("Value:"), 1, -100000, 100000, 6, &ChangedZ);
+
+    if (ChangedZ)
+    {
+        foreach (ColumnCellView column , Cell)
+        {
+            tableView->model()->setData(tableView->model()->index(column.CellLine, 8), ZValue);
+        }
+    }
+
+}
+#pragma endregion 

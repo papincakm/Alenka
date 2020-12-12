@@ -15,11 +15,9 @@
 
 #include <QString>
 #include <QVariant>
-
 #include <memory>
 #include <stdexcept>
 #include <string>
-
 #include <detailedexception.h>
 
 class QSettings;

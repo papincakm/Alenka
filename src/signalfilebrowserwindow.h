@@ -2,16 +2,21 @@
 #define SIGNALFILEBROWSERWINDOW_H
 
 #include "DataModel/infotable.h"
-
 #include <QMainWindow>
-
 #include <functional>
 #include <memory>
 #include <vector>
 
+#include "AQuestionDialog.h"
+#include "ATimerInputBox.h"
+#include "ComparatorXML.h"
+
 namespace AlenkaFile {
 class DataFile;
 class DataModel;
+
+// add by lucas 
+class XMLMontageView;
 } // namespace AlenkaFile
 
 class Analysis;
@@ -43,6 +48,13 @@ class QPushButton;
 class QQuickWidget;
 class QStackedWidget;
 class QFileInfo;
+
+#pragma region lucas
+// Add by lucas 
+class ATimerInputBox;
+class AQuestionDialog;
+class ComparatorXML;
+#pragma endregion
 
 /**
  * @brief This class implements the top level window of the program.
@@ -112,6 +124,15 @@ class SignalFileBrowserWindow : public QMainWindow {
   };
   std::unique_ptr<OpenFileResources> fileResources;
 
+#pragma region MyRegion
+  // Add by lucas 
+  ATimerInputBox* Position;
+  ATimerInputBox* CursorTime;
+  // Dialog box
+  AQuestionDialog* QuestionBox;
+  ComparatorXML* XMLComparator;
+#pragma endregion
+
 public:
   explicit SignalFileBrowserWindow(QWidget *parent = nullptr);
   ~SignalFileBrowserWindow() override;
@@ -148,11 +169,21 @@ private:
   void updateRecentFiles(const QFileInfo &fileInfo);
   void addAutoMontage(AutomaticMontage *autoMontage);
 
+#pragma region Lucas
+ // Properties
+  // @Brief this properties are used to create the process of mantain the montage 
+  bool Provision;
+  string OldPath; // path the first storage data 
+  string NewPath; //  path of we want compare
+  // Methods
+  QString ConvertPositionToSeconds(int positionSmaple); // Method to do the corvertion on times to seconds
+  QString ConvertPositionToMinutes(int positionSmaple); // Method to do the corvetion of times to minutes
+  void ProvisionFile(string path); // Method to identif 
+#pragma endregion
+
 private slots:
   void openFile();
-  void openFile(const QString &fileName,
-                const std::vector<std::string> &additionalFiles =
-                    std::vector<std::string>());
+  void openFile(const QString &fileName,const std::vector<std::string> &additionalFiles = std::vector<std::string>());
   bool closeFile();
   void saveFile();
   void exportToEdf();
@@ -179,6 +210,18 @@ private slots:
   void verticalZoomIn();
   void verticalZoomOut();
   void exportDialog();
+
+#pragma region Lucas
+  // Add by lucas
+  void UpadateCursorTimeInputBox();
+  void UpadatePositionTimeInputBox();
+  void UpdateInputBox(ATimerInputBox* timeBox, ATimerInputBox::ModelInput modelTime);
+  void ChangedTimeModel(int model); // Changes the time model 
+  void UpdateTracksResult(); // Update the tracks witn result
+  void UpadateEventsResult(); // Update the events in track manager with result
+  void UpdateTracksComparable(); // update the track manger with the loads
+  void UpadateEventsComparable(); // update the track manger with the loads
+#pragma endregion
 };
 
 #endif // SIGNALFILEBROWSERWINDOW_H

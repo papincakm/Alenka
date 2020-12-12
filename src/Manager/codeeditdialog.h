@@ -2,7 +2,6 @@
 #define CODEEDITDIALOG_H
 
 #include <QDialog>
-
 #include <memory>
 
 class QTextEdit;

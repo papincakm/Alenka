@@ -121,7 +121,6 @@ signals:
   void sampleScaleChanged(float);
   void sampleUnitsChanged(int);
   void elkoSessionChanged(QString);
-
   void pixelViewWidthChanged(int);
   void filterCoefficientsChanged();
   void globalMontageHeaderChanged(QString);

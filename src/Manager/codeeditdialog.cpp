@@ -1,11 +1,10 @@
 #include "codeeditdialog.h"
-
 #include "../../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/trackcodevalidator.h"
-
 #include <QDialogButtonBox>
 #include <QFile>
+
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>

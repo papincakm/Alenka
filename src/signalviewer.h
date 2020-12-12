@@ -2,7 +2,6 @@
 #define SIGNALVIEWER_H
 
 #include <QWidget>
-
 #include <vector>
 
 class OpenDataFile;
@@ -45,7 +44,6 @@ public:
 
 public slots:
   void updateSignalViewer();
-
 protected:
   void resizeEvent(QResizeEvent *event) override;
   void wheelEvent(QWheelEvent *event) override;

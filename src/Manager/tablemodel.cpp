@@ -81,7 +81,6 @@ bool ColorTableColumn::createEditor(const QStyledItemDelegate *delegate,
   lineEdit->connect(action, &QAction::triggered, [lineEdit, delegate]() {
     QColor color;
     color.setNamedColor(lineEdit->text());
-
     color = QColorDialog::getColor(color, lineEdit);
 
     if (color.isValid()) {
@@ -91,7 +90,6 @@ bool ColorTableColumn::createEditor(const QStyledItemDelegate *delegate,
       emit const_cast<QStyledItemDelegate *>(delegate)->closeEditor(lineEdit);
     }
   });
-
   *widget = lineEdit;
   return true;
 }
@@ -103,7 +101,7 @@ TableModel::TableModel(OpenDataFile *file, QObject *parent)
 bool TableModel::removeRows(int row, int count,
                             const QModelIndex & /*parent*/) {
   if (count > 0 && areAllRowsDeletable(row, count)) {
-    int rowLast = row + count - 1;
+    int rowLast = row + count -1;
     assert(rowLast < rowCount());
 
     beginRemoveRows(QModelIndex(), row, rowLast);

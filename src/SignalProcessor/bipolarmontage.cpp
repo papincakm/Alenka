@@ -1,9 +1,8 @@
-#include "bipolarmontage.h"
-
-#include "../../Alenka-File/include/AlenkaFile/datamodel.h"
-
 #include <algorithm>
 #include <cassert>
+
+#include "bipolarmontage.h"
+#include "../../Alenka-File/include/AlenkaFile/datamodel.h"
 
 using namespace std;
 using namespace AlenkaFile;

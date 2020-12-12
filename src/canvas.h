@@ -11,7 +11,6 @@
 #endif
 
 #include <QOpenGLWidget>
-
 #include <cassert>
 #include <memory>
 #include <string>
@@ -153,8 +152,7 @@ private:
   void drawCross();
   // TODO: Stop using doubles for anythig connected to rendering.
   void drawTimeLine(double position);
-  void drawSingleChannelEvents(
-      int index, const std::vector<std::tuple<int, int, int, int>> &events);
+  void drawSingleChannelEvents(int index, const std::vector<std::tuple<int, int, int, int>> &events);
   void drawSingleChannelEvent(int index, int track, int from, int to);
   void drawSignal(int index);
   void setUniformTrack(GLuint program, int track, int hidden, int index);

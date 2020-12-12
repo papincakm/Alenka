@@ -1,13 +1,10 @@
 #include "tracklabelbar.h"
-
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
 #include "DataModel/opendatafile.h"
 #include "DataModel/vitnessdatamodel.h"
 #include "canvas.h"
 #include "options.h"
-
 #include <QPainter>
-
 #include <algorithm>
 
 using namespace std;
@@ -154,11 +151,11 @@ void TrackLabelBar::updateConnections(int row) {
     if (0 <= row && row < mt->rowCount()) {
       auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
-      auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this,
-                       SLOT(updateLabels()));
+      auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
       trackConnections.push_back(c);
-      c = connect(vitness, SIGNAL(rowsInserted(int, int)), this,
-                  SLOT(updateLabels()));
+
+      c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
+
       trackConnections.push_back(c);
       c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
                   SLOT(updateLabels()));

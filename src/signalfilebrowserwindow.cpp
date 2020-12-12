@@ -1,5 +1,4 @@
 #include "signalfilebrowserwindow.h"
-
 #include "../Alenka-File/include/AlenkaFile/edf.h"
 #include "../Alenka-Signal/include/AlenkaSignal/montage.h"
 #include "../Alenka-Signal/include/AlenkaSignal/openclcontext.h"
@@ -32,14 +31,18 @@
 #include "options.h"
 #include "signalviewer.h"
 #include "spikedetsettingsdialog.h"
-#include <localeoverride.h>
 
+#include <localeoverride.h>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWidget>
 #include <QtWidgets>
-
 #include <algorithm>
+
+#pragma region Lucas
+// Add by lucas
+#include "ATimerInputBox.h"
+#pragma endregion
 
 using namespace std;
 using namespace AlenkaFile;
@@ -80,6 +83,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
     : QMainWindow(parent), fileResources(new OpenFileResources) {
   setWindowTitle(TITLE);
 
+#pragma region lucas
+  // setWindowIcon(QIcon(":/icons/brain.png"));
+  this->QuestionBox = new AQuestionDialog();
+  this->Provision = false;
+  this->OldPath = "";
+  this->NewPath = "";
+#pragma endregion
+
   OpenDataFile::kernelCache = make_unique<KernelCache>();
 
   autoSaveTimer = new QTimer(this);
@@ -97,11 +108,9 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   connect(root, SIGNAL(switchToAlenka()), this, SLOT(switchToAlenka()));
   connect(root, SIGNAL(exit()), this, SLOT(close()));
   connect(root, SIGNAL(exportDialog()), this, SLOT(exportDialog()));
-  connect(root, SIGNAL(saveSession(QString)), &OpenDataFile::infoTable,
-          SLOT(setElkoSession(QString)));
+  connect(root, SIGNAL(saveSession(QString)), &OpenDataFile::infoTable,SLOT(setElkoSession(QString)));
 
   signalViewer = new SignalViewer(this);
-
   stackedWidget = new QStackedWidget;
   stackedWidget->addWidget(view);
   stackedWidget->addWidget(signalViewer);
@@ -306,13 +315,14 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
   // Construct Time Mode action group.
   timeModeActionGroup = new QActionGroup(this);
-
   QAction *timeModeAction0 = new QAction("Sample", this);
   timeModeAction0->setToolTip("Samples from the start");
   timeModeAction0->setStatusTip(timeModeAction0->toolTip());
   timeModeAction0->setActionGroup(timeModeActionGroup);
   timeModeAction0->setCheckable(true);
   connect(timeModeAction0, &QAction::triggered, [this]() { mode(0); });
+  // Add by lucas
+  connect(timeModeAction0, &QAction::triggered, [this]() { UpdateInputBox(Position, ATimerInputBox::ModelInput::Sample); });
 
   QAction *timeModeAction1 = new QAction("Offset", this);
   timeModeAction1->setToolTip("Time offset from the start");
@@ -320,6 +330,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   timeModeAction1->setActionGroup(timeModeActionGroup);
   timeModeAction1->setCheckable(true);
   connect(timeModeAction1, &QAction::triggered, [this]() { mode(1); });
+  // Add by lucas
+  connect(timeModeAction1, &QAction::triggered, [this]() { UpdateInputBox(Position, ATimerInputBox::ModelInput::Ofset); });
 
   QAction *timeModeAction2 = new QAction("Real", this);
   timeModeAction2->setToolTip("Real time and date");
@@ -327,6 +339,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   timeModeAction2->setActionGroup(timeModeActionGroup);
   timeModeAction2->setCheckable(true);
   connect(timeModeAction2, &QAction::triggered, [this]() { mode(2); });
+  // Add by lucas
+  connect(timeModeAction2, &QAction::triggered, [this]() { UpdateInputBox(Position, ATimerInputBox::ModelInput::Real); });
 
   // Construct Time Line Interval action group.
   timeLineIntervalActionGroup = new QActionGroup(this);
@@ -382,8 +396,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   fileToolBar->addAction(closeFileAction);
   fileToolBar->addAction(saveFileAction);
   addAction(undoAction); // Add these to this widget to keep the shortcuts
-                         // working, but do't include it in the toolbar.
-  addAction(redoAction);
+  addAction(redoAction); // Working, but do't include it in the toolbar.
 
   // Construct Filter tool bar.
   QToolBar *filterToolBar = addToolBar("Filter Tool Bar");
@@ -454,10 +467,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
                                         << "kV"
                                         << "MV");
   selectToolBar->addWidget(unitsComboBox);
-  connect(unitsComboBox, SIGNAL(currentIndexChanged(int)),
-          &OpenDataFile::infoTable, SLOT(setSampleUnits(int)));
-  connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)),
-          unitsComboBox, SLOT(setCurrentIndex(int)));
+
+  connect(unitsComboBox, SIGNAL(currentIndexChanged(int)),&OpenDataFile::infoTable, SLOT(setSampleUnits(int)));
+  connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)),unitsComboBox, SLOT(setCurrentIndex(int)));
+
   selectToolBar->addWidget(new QLabel("/cm"));
 
   // Construct Zoom tool bar.
@@ -539,7 +552,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
   // Construct File menu.
   fileMenu = menuBar()->addMenu("&File");
-
   fileMenu->addAction(openFileAction);
   fileMenu->addAction(closeFileAction);
   fileMenu->addAction(saveFileAction);
@@ -570,7 +582,6 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   });
   viewMenu->addAction(screenshotAction);
   viewMenu->addSeparator();
-
   viewMenu->addAction(horizontalZoomInAction);
   viewMenu->addAction(horizontalZoomOutAction);
   viewMenu->addAction(verticalZoomInAction);
@@ -580,7 +591,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   QMenu *timeModeMenu = new QMenu("Time Mode", this);
   timeModeMenu->addAction(timeModeAction0);
   timeModeMenu->addAction(timeModeAction1);
-  timeModeMenu->addAction(timeModeAction2);
+  timeModeMenu->addAction(timeModeAction2);  
   viewMenu->addMenu(timeModeMenu);
 
   QMenu *timeLineIntervalMenu = new QMenu("Time Line Interval", this);
@@ -694,12 +705,25 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   positionStatusLabel->addAction(timeModeAction2);
   statusBar()->addPermanentWidget(positionStatusLabel);
 
+  Position = new ATimerInputBox();
+  Position->setContextMenuPolicy(Qt::ActionsContextMenu);
+  Position->ChangeToPositionType();
+  statusBar()->addPermanentWidget(Position);
+
   cursorStatusLabel = new QLabel(this);
   cursorStatusLabel->setContextMenuPolicy(Qt::ActionsContextMenu);
   cursorStatusLabel->addAction(timeModeAction0);
   cursorStatusLabel->addAction(timeModeAction1);
   cursorStatusLabel->addAction(timeModeAction2);
   statusBar()->addPermanentWidget(cursorStatusLabel);
+
+#pragma region lucas
+  CursorTime = new ATimerInputBox();
+  CursorTime->setContextMenuPolicy(Qt::ActionsContextMenu);
+  statusBar()->addPermanentWidget(CursorTime);
+  XMLComparator = new ComparatorXML();
+  // 
+#pragma endregion
 
   // Restore settings.
   restoreGeometry(PROGRAM_OPTIONS->settings("SignalFileBrowserWindow geometry")
@@ -712,8 +736,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
 SignalFileBrowserWindow::~SignalFileBrowserWindow() { closeFilePropagate(); }
 
-QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *const file,
-                                                const int sample) {
+QDateTime SignalFileBrowserWindow::sampleToDate(DataFile *const file, const int sample) {
   QDateTime date;
   const double daysSinceJesus = file->getStartDate();
 
@@ -744,9 +767,8 @@ QDateTime SignalFileBrowserWindow::sampleToOffset(DataFile *file, int sample) {
   return date;
 }
 
-QString
-SignalFileBrowserWindow::sampleToDateTimeString(DataFile *file, int sample,
-                                                InfoTable::TimeMode mode) {
+ QString SignalFileBrowserWindow::sampleToDateTimeString(DataFile *file, int sample, InfoTable::TimeMode mode) {
+
   QLocale locale;
 
   if (mode == InfoTable::TimeMode::size) {
@@ -767,10 +789,7 @@ SignalFileBrowserWindow::sampleToDateTimeString(DataFile *file, int sample,
   return QString();
 }
 
-unique_ptr<DataFile>
-SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
-                                          const vector<string> &additionalFiles,
-                                          QWidget *parent) {
+unique_ptr<DataFile> SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName, const vector<string> &additionalFiles, QWidget *parent) {
 
   const auto fileTypes = FileType::fromSuffix(fileName, additionalFiles);
 
@@ -792,8 +811,7 @@ SignalFileBrowserWindow::dataFileBySuffix(const QString &fileName,
     return nullptr;
 }
 
-int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items,
-                                                   QWidget *parent) {
+int SignalFileBrowserWindow::askForDataFileBackend(const QStringList &items, QWidget *parent) {
   bool ok;
   const QString item = QInputDialog::getItem(parent, "Choose DataFile Backend",
                                              "Library:", items, 0, false, &ok);
@@ -838,9 +856,7 @@ void SignalFileBrowserWindow::keyPressEvent(QKeyEvent *const event) {
     event->ignore();
 }
 
-vector<QMetaObject::Connection>
-SignalFileBrowserWindow::connectVitness(const DataModelVitness *const vitness,
-                                        std::function<void()> f) {
+vector<QMetaObject::Connection> SignalFileBrowserWindow::connectVitness(const DataModelVitness *const vitness, std::function<void()> f) {
   vector<QMetaObject::Connection> connections;
 
   auto c = connect(vitness, &DataModelVitness::valueChanged, f);
@@ -872,8 +888,7 @@ void SignalFileBrowserWindow::deleteAutoSave() {
   autoSaveTimer->start();
 }
 
-void SignalFileBrowserWindow::setCurrentInNumericCombo(QComboBox *combo,
-                                                       double value) {
+void SignalFileBrowserWindow::setCurrentInNumericCombo(QComboBox *combo, double value) {
   int precisionPower = static_cast<int>(pow(10, COMBO_PRECISION));
   double newValue = round(value * precisionPower);
   int count = combo->count();
@@ -1069,16 +1084,19 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
                                        const vector<string> &additionalFiles) {
   QFileInfo fileInfo(fileName);
 
-  if (fileInfo.exists() == false) {
+  if (fileInfo.exists() == false) 
+  {
     logToFileAndConsole("File '" + fileName.toStdString() + "' not found.");
     return;
-  } else if (fileInfo.isReadable() == false) {
-    logToFileAndConsole("File '" + fileName.toStdString() +
-                        "' cannot be read.");
+  } 
+  else if (fileInfo.isReadable() == false) 
+  {
+    logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be read.");
     return;
-  } else if (fileInfo.isWritable() == false) {
-    logToFileAndConsole("File '" + fileName.toStdString() +
-                        "' cannot be written to.");
+  } 
+  else if (fileInfo.isWritable() == false) 
+  {
+    logToFileAndConsole("File '" + fileName.toStdString() + "' cannot be written to.");
     return;
   }
 
@@ -1103,9 +1121,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   fileResources->dataModel = UndoCommandFactory::emptyDataModel();
   auto oldDataModel = fileResources->dataModel.get();
   fileResources->file->setDataModel(oldDataModel);
-
-  fileResources->undoFactory =
-      make_unique<UndoCommandFactory>(oldDataModel, undoStack);
+  fileResources->undoFactory = make_unique<UndoCommandFactory>(oldDataModel, undoStack);
 
   openDataFile->file = fileResources->file.get();
   openDataFile->dataModel = oldDataModel;
@@ -1115,6 +1131,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   autoSaveName = fileResources->file->getFilePath() + ".mont.autosave";
   bool useAutoSave = false;
+
   if (QFileInfo(autoSaveName.c_str()).exists()) {
     auto res = QMessageBox::question(this, "Load Autosave File?",
                                      "An autosave file was "
@@ -1125,28 +1142,50 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
     useAutoSave = res == QMessageBox::Yes;
   }
 
-  LocaleOverride::executeWithCLocale([this, useAutoSave, oldDataModel]() {
-    const bool secondaryFileExists = fileResources->file->load();
-    if (!secondaryFileExists)
-      createDefaultMontage();
+  if (QFileInfo((fileResources->file.get()->getFilePath() + ".mont").c_str()).exists())
+  {
+      this->ProvisionFile(fileResources->file.get()->getFilePath() + ".mont");
+      this->XMLComparator->CreateResult();
+  }
+  
+  LocaleOverride::executeWithCLocale([this, useAutoSave, oldDataModel]() 
+  {
+     bool secondaryFileExists = true;
 
-    if (useAutoSave) {
+     if (this->Position && !this->NewPath.empty()  && this->QuestionBox->MaintainMontage )
+     {
+         if(this->QuestionBox->TrackManager)
+            this->UpdateTracksResult();
+         else
+             this->UpdateTracksComparable();
+
+         if(this->QuestionBox->EventTypeManager)
+            this->UpadateEventsResult();
+         else
+             this->UpadateEventsComparable();
+     }
+     else 
+     {
+         secondaryFileExists = fileResources->file->load();
+     }
+    
+    if (!secondaryFileExists)
+      createDefaultMontage(); 
+
+    if (useAutoSave) 
+    {
       auto newDataModel = UndoCommandFactory::emptyDataModel();
-      fileResources->file->setDataModel(newDataModel.get());
-      const bool autosaveFileExists =
-          fileResources->file->loadSecondaryFile(autoSaveName);
+      fileResources->file->setDataModel(newDataModel.get()); 
+      const bool autosaveFileExists = fileResources->file->loadSecondaryFile(autoSaveName);
       assert(autosaveFileExists);
       (void)autosaveFileExists;
 
       fileResources->file->setDataModel(oldDataModel);
-      openDataFile->undoFactory->overwriteDataModel(std::move(newDataModel),
-                                                    "Restore auto-save");
+      openDataFile->undoFactory->overwriteDataModel(std::move(newDataModel),"Restore auto-save");
     }
 
     DETECTOR_SETTINGS settings = AlenkaSignal::Spikedet::defaultSettings();
-    OpenDataFile::infoTable.readXML(fileResources->file->getFilePath() +
-                                        ".info",
-                                    &settings, &spikeDuration);
+    OpenDataFile::infoTable.readXML(fileResources->file->getFilePath() + ".info", &settings, &spikeDuration);
   });
 
   cleanChanged(undoStack->isClean());
@@ -1162,18 +1201,17 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   const int count = openDataFile->dataModel->montageTable()->rowCount();
   if (index < 0 || index >= count)
     OpenDataFile::infoTable.setSelectedMontage(0);
-
   // Pass the file to the child widgets.
+
   trackManager->changeFile(openDataFile.get());
   eventManager->changeFile(openDataFile.get());
   eventTypeManager->changeFile(openDataFile.get());
   montageManager->changeFile(openDataFile.get());
   filterManager->changeFile(openDataFile.get());
   videoPlayer->changeFile(openDataFile.get());
-
   syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());
-
+  
   // Update Filter tool bar.
   vector<double> comboNumbers{0, 5, 10};
   for (int i = 25; i <= fileResources->file->getSamplingFrequency() / 2; i *= 2)
@@ -1203,43 +1241,46 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   lowpassComboBox->clear();
   lowpassComboBox->addItems(comboOptions);
-  c = connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this,
-              SLOT(lowpassComboBoxUpdate(QString)));
+  c = connect(lowpassComboBox, SIGNAL(currentIndexChanged(QString)), this,  SLOT(lowpassComboBoxUpdate(QString)));
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)),
-              this, SLOT(lowpassComboBoxUpdate(double)));
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)),this, SLOT(lowpassComboBoxUpdate(double)));
+
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this,
-              SLOT(lowpassComboBoxUpdate(bool)));
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this, SLOT(lowpassComboBoxUpdate(bool)));
+
   openFileConnections.push_back(c);
 
   highpassComboBox->clear();
   highpassComboBox->addItems(comboOptions);
-  c = connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this,
-              SLOT(highpassComboBoxUpdate(QString)));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(highpassFrequencyChanged(double)), this,
-              SLOT(highpassComboBoxUpdate(double)));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this,
-              SLOT(highpassComboBoxUpdate(bool)));
+  c = connect(highpassComboBox, SIGNAL(currentIndexChanged(QString)), this,SLOT(highpassComboBoxUpdate(QString)));
+
   openFileConnections.push_back(c);
 
-  c = connect(notchCheckBox, SIGNAL(toggled(bool)), &OpenDataFile::infoTable,
-              SLOT(setNotchOn(bool)));
+  c = connect(&OpenDataFile::infoTable,SIGNAL(highpassFrequencyChanged(double)), this,SLOT(highpassComboBoxUpdate(double)));
+
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)),
-              notchCheckBox, SLOT(setChecked(bool)));
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this, SLOT(highpassComboBoxUpdate(bool)));
+
   openFileConnections.push_back(c);
+
+  c = connect(notchCheckBox, SIGNAL(toggled(bool)), &OpenDataFile::infoTable,SLOT(setNotchOn(bool)));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), notchCheckBox, SLOT(setChecked(bool)));
+  openFileConnections.push_back(c);
+
+#pragma region lucas 
+  // This block of code  is where we put the configuration on manager
 
   // Set up table models and managers.
-  fileResources->eventTypeTable =
-      make_unique<EventTypeTableModel>(openDataFile.get());
+  fileResources->eventTypeTable = make_unique<EventTypeTableModel>(openDataFile.get());
   eventTypeManager->setModel(fileResources->eventTypeTable.get());
 
-  fileResources->montageTable =
-      make_unique<MontageTableModel>(openDataFile.get());
+  fileResources->montageTable = make_unique<MontageTableModel>(openDataFile.get());
   montageManager->setModel(fileResources->montageTable.get());
 
   fileResources->eventTable = make_unique<EventTableModel>(openDataFile.get());
@@ -1248,15 +1289,15 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   fileResources->trackTable = make_unique<TrackTableModel>(openDataFile.get());
   trackManager->setModel(fileResources->trackTable.get());
 
+#pragma endregion
+
   // Update the Select tool bar.
-  auto cc = connectVitness(
-      VitnessMontageTable::vitness(fileResources->dataModel->montageTable()),
-      [this]() { updateMontageComboBox(); });
+  auto cc = connectVitness( VitnessMontageTable::vitness(fileResources->dataModel->montageTable()), [this]() { updateMontageComboBox(); });
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
   updateMontageComboBox();
 
-  auto indexChangedPtr =
-      static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
+  auto indexChangedPtr = static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged);
+
   c = connect(montageComboBox, indexChangedPtr, [this](const int index) {
     const int count = fileResources->dataModel->montageTable()->rowCount();
     // If the index is out of range, ignore it. This can happen when deleting
@@ -1266,28 +1307,26 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   });
 
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
-              montageComboBox, SLOT(setCurrentIndex(int)));
+  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),montageComboBox, SLOT(setCurrentIndex(int)));
+
   openFileConnections.push_back(c);
 
-  cc = connectVitness(VitnessEventTypeTable::vitness(
-                          fileResources->dataModel->eventTypeTable()),
-                      [this]() { updateEventTypeComboBox(); });
+  cc = connectVitness(VitnessEventTypeTable::vitness( fileResources->dataModel->eventTypeTable()), [this]() { updateEventTypeComboBox(); });
+
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
+
   updateEventTypeComboBox();
 
-  c = connect(eventTypeComboBox, indexChangedPtr, [](int index) {
-    OpenDataFile::infoTable.setSelectedType(index - 1);
-  });
+  c = connect(eventTypeComboBox, indexChangedPtr, [](int index) { OpenDataFile::infoTable.setSelectedType(index - 1); });
   openFileConnections.push_back(c);
 
-  c = connect(
-      &OpenDataFile::infoTable, &InfoTable::selectedTypeChanged,
-      [this](int value) { eventTypeComboBox->setCurrentIndex(value + 1); });
+  c = connect( &OpenDataFile::infoTable, &InfoTable::selectedTypeChanged, [this](int value) { eventTypeComboBox->setCurrentIndex(value + 1); });
   openFileConnections.push_back(c);
 
   vector<float> resolutionNumbers;
+
   stringstream ss(programOption<string>("resOptions"));
+
   while (ss) {
     float tmp;
     if (ss >> tmp)
@@ -1307,108 +1346,101 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   resolutionComboBox->clear();
   resolutionComboBox->addItems(resolutionOptions);
 
-  c = connect(resolutionComboBox, SIGNAL(currentIndexChanged(QString)), this,
-              SLOT(resolutionComboBoxUpdate(QString)));
+  c = connect(resolutionComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(resolutionComboBoxUpdate(QString)));
+
   openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)), this,
-              SLOT(resolutionComboBoxUpdate(float)));
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)), this, SLOT(resolutionComboBoxUpdate(float)));
+
   openFileConnections.push_back(c);
 
   // Update the status bar.
-  QString str = "Start: " + sampleToDateTimeString(fileResources->file.get(), 0,
-                                                   InfoTable::TimeMode::real);
-  str += " Total time: " +
-         sampleToDateTimeString(fileResources->file.get(),
-                                fileResources->file->getSamplesRecorded(),
-                                InfoTable::TimeMode::offset);
+  QString str = "Start: " + sampleToDateTimeString(fileResources->file.get(), 0, InfoTable::TimeMode::real);
+
+  str += " Total time: " + sampleToDateTimeString(fileResources->file.get(), fileResources->file->getSamplesRecorded(), InfoTable::TimeMode::offset);
+
   timeStatusLabel->setText(str);
 
-  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
-              this, SLOT(updatePositionStatusLabel()));
+  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)), this, SLOT(updatePositionStatusLabel()));
+
   openFileConnections.push_back(c);
-  c = connect(signalViewer->getCanvas(),
-              SIGNAL(cursorPositionSampleChanged(int)), this,
-              SLOT(updateCursorStatusLabel()));
+
+  c = connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(updateCursorStatusLabel()));
+
   openFileConnections.push_back(c);
 
   // Connect slot SignalViewer::updateSignalViewer() to make sure that the
   // SignalViewer gets updated when needed.
   // TODO: Perhaps move this block to signalViewer.
-  c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(highpassFrequencyChanged(double)), signalViewer,
-              SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(timeLineIntervalChanged(double)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(frequencyMultipliersOnChanged(bool)), signalViewer,
-              SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)),
-              signalViewer, SLOT(updateSignalViewer()));
-  openFileConnections.push_back(c);
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(globalMontageHeaderChanged(QString)), signalViewer,
-              SLOT(updateSignalViewer()));
+  c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable,SIGNAL(highpassFrequencyChanged(double)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), signalViewer, SLOT(updateSignalViewer())); openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), signalViewer, SLOT(updateSignalViewer()));
 
   openFileConnections.push_back(c);
 
-  cc = connectVitness(
-      VitnessMontageTable::vitness(fileResources->dataModel->montageTable()),
-      [this]() { signalViewer->updateSignalViewer(); });
+  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(timeLineIntervalChanged(double)), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleScaleChanged(float)), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(sampleUnitsChanged(int)),signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(globalMontageHeaderChanged(QString)), signalViewer, SLOT(updateSignalViewer()));
+
+  openFileConnections.push_back(c);
+
+  cc = connectVitness(VitnessMontageTable::vitness(fileResources->dataModel->montageTable()), [this]() { signalViewer->updateSignalViewer(); });
+
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
-  cc = connectVitness(VitnessEventTypeTable::vitness(
-                          fileResources->dataModel->eventTypeTable()),
-                      [this]() { signalViewer->updateSignalViewer(); });
+
+  cc = connectVitness(VitnessEventTypeTable::vitness( fileResources->dataModel->eventTypeTable()), [this]() { signalViewer->updateSignalViewer(); });
+
   openFileConnections.insert(openFileConnections.end(), cc.begin(), cc.end());
-  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
-              this, SLOT(updateManagers(int)));
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(updateManagers(int)));
+
   openFileConnections.push_back(c);
 
   // Update the View submenus.
-  c = connect(&OpenDataFile::infoTable,
-              SIGNAL(timeModeChanged(InfoTable::TimeMode)), this,
-              SLOT(updateTimeMode(InfoTable::TimeMode)));
-  c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged,
-              [this](double value) {
+  c = connect(&OpenDataFile::infoTable, SIGNAL(timeModeChanged(InfoTable::TimeMode)), this, SLOT(updateTimeMode(InfoTable::TimeMode)));
+
+  c = connect(&OpenDataFile::infoTable, &InfoTable::timeLineIntervalChanged, [this](double value) {
                 setTimeLineIntervalAction->setToolTip(
                     "The time line interval is " + locale().toString(value) +
                     " s");
                 setTimeLineIntervalAction->setStatusTip(
                     setTimeLineIntervalAction->toolTip());
               });
+
   openFileConnections.push_back(c);
 
   // Load Elko session.
@@ -1423,11 +1455,11 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 
   // Emit all signals to ensure there are no uninitialized controls.
   OpenDataFile::infoTable.emitAllSignals();
-
   // Set up autosave.
   const int ms = 1000 * programOption<int>("autosave");
 
-  if (ms > 0) {
+  if (ms > 0) 
+  {
     c = connect(autoSaveTimer, &QTimer::timeout, [this]() {
       try {
         if (undoStack->isClean())
@@ -1448,6 +1480,16 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   }
 
   switchButton->setEnabled(true);
+
+#pragma region Lucas
+ // Add the conections 
+// In this lines thre were add the connections
+connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(UpadateCursorTimeInputBox())); // connection to update cursor position at combobox
+connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),this, SLOT(UpadatePositionTimeInputBox())); // connection to upadate the position on the position 
+connect(Position, SIGNAL(SetTimeGraphics(int newTimeGraphics)), this, SLOT(OpenTimeWindow()));
+this->Position->DefineFrequency(fileResources->file.get()->getSamplingFrequency());
+connect(Position, SIGNAL(ChangedBaseModel(int)), this, SLOT(ChangedTimeModel(int)));
+#pragma endregion
 }
 
 bool SignalFileBrowserWindow::closeFile() {
@@ -1645,7 +1687,7 @@ void SignalFileBrowserWindow::updateManagers(int value) {
     managersConnections.insert(managersConnections.end(), cc.begin(), cc.end());
 
     cc = connectVitness(VitnessEventTable::vitness(mt->eventTable(value)),
-                        [this]() { signalViewer->updateSignalViewer(); });
+        [this]() { signalViewer->updateSignalViewer(); });
     managersConnections.insert(managersConnections.end(), cc.begin(), cc.end());
   }
 }
@@ -1658,17 +1700,16 @@ void SignalFileBrowserWindow::updateTimeMode(InfoTable::TimeMode mode) {
 }
 
 void SignalFileBrowserWindow::updatePositionStatusLabel() {
-  const int position = OpenDataFile::infoTable.getPosition();
-  const auto str = sampleToDateTimeString(fileResources->file.get(), position);
-  positionStatusLabel->setText("Position: " + str);
+
+  // const int position = OpenDataFile::infoTable.getPosition();
+ // const auto str = sampleToDateTimeString(fileResources->file.get(), position);
+ // positionStatusLabel->setText("Position: " + str);
+  positionStatusLabel->setText("Position: ");
 }
 
 void SignalFileBrowserWindow::updateCursorStatusLabel() {
-  cursorStatusLabel->setText(
-      "Cursor at: " +
-      sampleToDateTimeString(
-          fileResources->file.get(),
-          signalViewer->getCanvas()->getCursorPositionSample()));
+    cursorStatusLabel->setText("Cursor at: "); 
+    // + sampleToDateTimeString(fileResources->file.get(), signalViewer->getCanvas()->getCursorPositionSample()));
 }
 
 void SignalFileBrowserWindow::updateMontageComboBox() {
@@ -1885,3 +1926,278 @@ void SignalFileBrowserWindow::exportDialog() {
     }
   }
 }
+
+#pragma region Lucas
+
+// This block of code update the cursor 
+void SignalFileBrowserWindow::UpadateCursorTimeInputBox()
+{
+    const int position = signalViewer->getCanvas()->getCursorPositionSample();
+    const auto str = sampleToDateTimeString(fileResources->file.get(), position);
+
+    if(Position->GetModelDefault())
+    {
+        CursorTime->setText(str);
+    }
+    
+    if(Position->GetModelSeconds())
+    {
+        CursorTime->setText(ConvertPositionToSeconds(position) + " S");
+    }
+    
+    if (Position->GetModelMinutes())
+    {
+        CursorTime->setText(ConvertPositionToMinutes(position) + " M");
+    }
+
+}
+
+// This block of code put the current time inside the combobox
+void SignalFileBrowserWindow::UpadatePositionTimeInputBox()
+{
+    const int position = OpenDataFile::infoTable.getPosition();
+    const auto str = sampleToDateTimeString(fileResources->file.get(), position);
+    
+    if (Position->GetModelDefault()) 
+    {
+        Position->setText(str);
+    }
+
+    if (Position->GetModelSeconds()) 
+    {
+        Position->setText(ConvertPositionToSeconds(position) + " S");
+    }
+
+    if (Position->GetModelMinutes())
+    {
+        Position->setText(ConvertPositionToMinutes(position) + " M");
+    }
+  
+}
+
+void SignalFileBrowserWindow::UpdateInputBox(ATimerInputBox* timeBox, ATimerInputBox::ModelInput modelTime)
+{
+    timeBox->SetModel(modelTime);
+}
+
+// this block of code changes the mode how the time bar works 
+void SignalFileBrowserWindow::ChangedTimeModel(int model)
+{
+    // Model 1 seconds 
+    int timeTotal = round(fileResources->file.get()->getSamplesRecorded() / fileResources->file.get()->getSamplingFrequency());
+    QString startTime = "Start: " + sampleToDateTimeString(fileResources->file.get(), 0, InfoTable::TimeMode::real);
+
+    // Work with normal time 
+    if (model == 0) 
+    {
+        QString defaultTime = startTime + " Total time: " + sampleToDateTimeString(fileResources->file.get(), fileResources->file.get()->getSamplesRecorded());
+        this->timeStatusLabel->setText(defaultTime);
+        this->UpadatePositionTimeInputBox();
+        this->UpadateCursorTimeInputBox();
+    }
+
+    // Work with seconds
+    if (model == 1) 
+    {
+        QString seconds = startTime + " Total time: " + QString::number(timeTotal);
+        this->timeStatusLabel->setText(seconds + " S");
+        this->UpadatePositionTimeInputBox();
+        this->UpadateCursorTimeInputBox();
+    }
+
+    // Work with minutes
+    if(model == 2)
+    {
+        QString minuts = startTime + " Total time: " + QString::number(round(timeTotal /60));
+        this->timeStatusLabel->setText(minuts + " M");
+        this->UpadatePositionTimeInputBox();
+        this->UpadateCursorTimeInputBox();
+    }
+
+}
+
+// This block of code update the TrackManager, Canvas and TrackLabelBar
+void SignalFileBrowserWindow::UpdateTracksResult()
+{
+    int i = 0;
+    auto oldDataModel = fileResources->dataModel.get();
+
+    // In this part we put the XML Montage o the objects 
+    foreach (MontageXML montageXML, this->XMLComparator->ReturnResultMontage())
+    {     
+        Montage montageRow;
+        montageRow.name = montageXML.Name;
+        montageRow.save = montageXML.Save;
+
+        auto mont = oldDataModel->montageTable();
+        mont->insertRows(i);
+        mont->row(i, montageRow);
+        auto trackTable = mont->trackTable(i);
+
+        for (size_t j = 0; j < montageXML.TrackTable.size() ; j++)
+        {
+            auto track = this->XMLComparator->ReturnTrackTableFromResult(i, j);
+            Track tracker;
+            tracker.amplitude = track.Amplitude;
+            tracker.code = track.Code;
+            tracker.hidden = track.Hidden;
+            tracker.label = track.Label;
+            tracker.color = DataModel::str2colorArray(track.Color.c_str());
+            tracker.x = track.X;
+            tracker.y = track.Y;
+            tracker.z = track.Z;
+
+            trackTable->insertRows(j);
+            trackTable->row(j, tracker);
+        }
+
+        i++;
+    }
+}
+
+void SignalFileBrowserWindow::UpadateEventsResult(){
+    // In this part we put the events
+      int j = 0;
+      auto oldDataModel = fileResources->dataModel.get();
+
+     foreach (EventTypeXML eventTypeXML , this->XMLComparator->ReturnResultEvents())
+     {
+          EventType eventType;
+          auto tableEvent = oldDataModel->eventTypeTable();
+          tableEvent->insertRows(j);
+
+          eventType.id = eventTypeXML.Id;
+          eventType.name = eventTypeXML.Name;
+          eventType.opacity = eventTypeXML.Opacity;
+          eventType.hidden = eventTypeXML.Hidden;
+          eventType.color = DataModel::str2colorArray(eventTypeXML.Color.c_str());
+          tableEvent->row(j, eventType);
+
+          j++;
+     }
+}
+
+QString SignalFileBrowserWindow::ConvertPositionToSeconds(int positionSmaple)
+{
+    return  QString::number(round(positionSmaple / (fileResources->file.get()->getSamplingFrequency())));
+}
+
+QString SignalFileBrowserWindow::ConvertPositionToMinutes(int positionSmaple)
+{
+    return QString::number(round((positionSmaple / (fileResources->file.get()->getSamplingFrequency())) / 60));
+}
+
+// This block of code do the
+// I will explain
+void SignalFileBrowserWindow::ProvisionFile(string path)
+{
+    if(this->Position && !this->NewPath.empty())
+    {         
+        QuestionBox->exec();
+
+        if(this->QuestionBox->MaintainMontage)
+        {
+            this->NewPath = path;
+            this->XMLComparator->LoadXMLDefault(this->OldPath.c_str());
+            this->XMLComparator->LoadXMLComparable(this->NewPath.c_str());
+        }
+        else
+        {
+            //this->OldPath = this->NewPath;
+            this->OldPath = path;
+        }
+    }
+
+    // with one file is already choosen start the process
+    if (this->Provision && this->NewPath.empty())
+    {
+        QuestionBox->exec();
+
+        if(this->QuestionBox->MaintainMontage)
+        {
+        this->NewPath = path;
+        // start to compare the file 
+        this->XMLComparator->LoadXMLDefault(this->OldPath.c_str());
+        this->XMLComparator->LoadXMLComparable(this->NewPath.c_str());
+        }
+        else
+        {
+             this->OldPath = path;
+        }
+
+    }
+
+    if (this->Provision == false && this->OldPath.empty())
+    {
+        this->Provision = true;
+        this->OldPath = path;
+    }
+
+}
+
+// This block of code update the TrackManager, Canvas and TrackLabelBar
+void SignalFileBrowserWindow::UpdateTracksComparable()
+{
+    int i = 0;
+    auto oldDataModel = fileResources->dataModel.get();
+
+    // In this part we put the XML Montage o the objects
+    foreach (MontageXML montageXML, this->XMLComparator->ReturnMontageComparable())
+    {
+        Montage montageRow;
+        montageRow.name = montageXML.Name;
+        montageRow.save = montageXML.Save;
+
+        auto mont = oldDataModel->montageTable();
+        mont->insertRows(i);
+        mont->row(i, montageRow);
+        auto trackTable = mont->trackTable(i);
+
+        for (size_t j = 0; j < montageXML.TrackTable.size() ; j++)
+        {
+            auto track = this->XMLComparator->ReturnTrackTableFromResult(i, j);
+            Track tracker;
+            tracker.amplitude = track.Amplitude;
+            tracker.code = track.Code;
+            tracker.hidden = track.Hidden;
+            tracker.label = track.Label;
+            tracker.color = DataModel::str2colorArray(track.Color.c_str());
+            tracker.x = track.X;
+            tracker.y = track.Y;
+            tracker.z = track.Z;
+
+            trackTable->insertRows(j);
+            trackTable->row(j, tracker);
+        }
+
+        i++;
+    }
+}
+
+void SignalFileBrowserWindow::UpadateEventsComparable(){
+    // In this part we put the events
+      int j = 0;
+      auto oldDataModel = fileResources->dataModel.get();
+
+     foreach (EventTypeXML eventTypeXML , this->XMLComparator->ReturnEventComparable())
+     {
+          EventType eventType;
+          auto tableEvent = oldDataModel->eventTypeTable();
+          tableEvent->insertRows(j);
+
+          eventType.id = eventTypeXML.Id;
+          eventType.name = eventTypeXML.Name;
+          eventType.opacity = eventTypeXML.Opacity;
+          eventType.hidden = eventTypeXML.Hidden;
+          eventType.color = DataModel::str2colorArray(eventTypeXML.Color.c_str());
+          tableEvent->row(j, eventType);
+
+          j++;
+     }
+}
+
+#pragma endregion
+
+
+
+

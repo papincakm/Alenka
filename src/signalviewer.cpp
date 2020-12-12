@@ -1,18 +1,16 @@
-#include "signalviewer.h"
+#include <QKeyEvent>
+#include <QScrollBar>
+#include <QSplitter>
+#include <QVBoxLayout>
+#include <algorithm>
+#include <cmath>
 
+#include "signalviewer.h"
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
 #include "DataModel/opendatafile.h"
 #include "canvas.h"
 #include "options.h"
 #include "tracklabelbar.h"
-
-#include <QKeyEvent>
-#include <QScrollBar>
-#include <QSplitter>
-#include <QVBoxLayout>
-
-#include <algorithm>
-#include <cmath>
 
 using namespace std;
 
@@ -56,7 +54,8 @@ SignalViewer::~SignalViewer() {
                             splitter->saveState());
 }
 
-void SignalViewer::changeFile(OpenDataFile *const file) {
+void SignalViewer::changeFile(OpenDataFile *const file) 
+{
   canvas->changeFile(file);
   trackLabelBar->changeFile(file);
 
@@ -66,26 +65,24 @@ void SignalViewer::changeFile(OpenDataFile *const file) {
     disconnect(e);
   openFileConnections.clear();
 
-  if (file) {
-    auto c = connect(scrollBar, SIGNAL(valueChanged(int)),
-                     &OpenDataFile::infoTable, SLOT(setPosition(int)));
+  if (file) 
+  {
+    auto c = connect(scrollBar, SIGNAL(valueChanged(int)), &OpenDataFile::infoTable, SLOT(setPosition(int)));
     openFileConnections.push_back(c);
 
-    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
-                scrollBar, SLOT(setValue(int)));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)), scrollBar, SLOT(setValue(int)));
     openFileConnections.push_back(c);
 
-    c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)),
-                this, SLOT(resize()));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(virtualWidthChanged(int)), this, SLOT(resize()));
     openFileConnections.push_back(c);
 
-    c = connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar,
-                SLOT(setSelectedTrack(int)));
+    c = connect(canvas, SIGNAL(cursorPositionTrackChanged(int)), trackLabelBar, SLOT(setSelectedTrack(int)));
     openFileConnections.push_back(c);
 
     scrollBar->setRange(0, file->file->getSamplesRecorded());
     resize();
   }
+
 }
 
 void SignalViewer::updateSignalViewer() {
@@ -114,17 +111,13 @@ void SignalViewer::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void SignalViewer::resize() {
-  if (file) {
+   if (file) {
     const int pageWidth = canvas->width();
-    const double ratio = static_cast<double>(file->file->getSamplesRecorded()) /
-                         OpenDataFile::infoTable.getVirtualWidth();
+    const double ratio = static_cast<double>(file->file->getSamplesRecorded()) / OpenDataFile::infoTable.getVirtualWidth();
     const int samplesPerPage = static_cast<int>(pageWidth * ratio);
-
     scrollBar->setPageStep(samplesPerPage);
     scrollBar->setSingleStep(max(1, samplesPerPage / SCROLLBAR_STEP));
-
     OpenDataFile::infoTable.setPixelViewWidth(pageWidth); // TODO: check this
-
     canvas->update(); // TODO: Figure out whether this is necessary.
   }
 }

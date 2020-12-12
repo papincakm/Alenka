@@ -1,17 +1,14 @@
 #include "tracktablemodel.h"
-
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/trackcodevalidator.h"
 #include "../DataModel/undocommandfactory.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "codeeditdialog.h"
-
 #include <QAction>
 #include <QColor>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QLocale>
-
 #include <memory>
 
 using namespace std;

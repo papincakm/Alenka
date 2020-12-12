@@ -40,7 +40,7 @@ Thumbs.db
 # Vim temporary files
 .*.swp
 
-# Added by me
+# Added by morona
 # ----------------------------------------------------------------------------
 CMakeLists.txt.user
 build*

@@ -1,10 +1,8 @@
 #include "eventtypetablemodel.h"
-
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../signalfilebrowserwindow.h"
-
 #include <QColor>
 #include <QLocale>
 
@@ -163,14 +161,13 @@ EventTypeTableModel::EventTypeTableModel(OpenDataFile *file, QObject *parent)
   columns.push_back(make_unique<Color>(file));
   columns.push_back(make_unique<Hidden>(file));
 
-  auto vitness =
-      VitnessEventTypeTable::vitness(file->dataModel->eventTypeTable());
-  connect(vitness, SIGNAL(valueChanged(int, int)), this,
-          SLOT(emitDataChanged(int, int)));
-  connect(vitness, SIGNAL(rowsInserted(int, int)), this,
-          SLOT(insertDataModelRows(int, int)));
-  connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
-          SLOT(removeDataModelRows(int, int)));
+  auto vitness = VitnessEventTypeTable::vitness(file->dataModel->eventTypeTable());
+
+  connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(emitDataChanged(int, int)));
+
+  connect(vitness, SIGNAL(rowsInserted(int, int)), this,SLOT(insertDataModelRows(int, int)));
+
+  connect(vitness, SIGNAL(rowsRemoved(int, int)), this,SLOT(removeDataModelRows(int, int)));
 }
 
 int EventTypeTableModel::rowCount(const QModelIndex & /*parent*/) const {

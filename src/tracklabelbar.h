@@ -9,7 +9,7 @@
 
 class OpenDataFile;
 
-/**
+/*
  * @brief This class implements the GUI control responsible for displaying track
  * names.
  */

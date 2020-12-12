@@ -2,9 +2,11 @@
 #define MANAGER_H
 
 #include <QWidget>
-
 #include <map>
 #include <utility>
+
+// Add from lucas 
+#include "../ColumnCellView.cpp"
 
 class QTableView;
 class TableModel;
@@ -98,6 +100,26 @@ private slots:
   void paste();
 
   void setColumn();
+
+#pragma region Lucas
+  // New components add from lucas 
+  std::list<ColumnCellView> GetAllColumnsView();
+
+  void ChangeColor();
+
+  void ChangeMath();
+
+  void ChangeAmplitude();
+
+  void ChangeHidden();
+
+   void ChangeX();
+
+  void ChangeY();
+
+  void ChangeZ();
+
+#pragma region 
 };
 
 #endif // MANAGER_H

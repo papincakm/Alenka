@@ -75,7 +75,8 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
     : nBlock(nBlock), parallelQueues(parallelQueues),
       montageCopyCount(montageCopyCount), glSharing(std::move(glSharing)),
       file(file), context(context), extraSamplesFront(extraSamplesFront),
-      extraSamplesBack(extraSamplesBack) {
+      extraSamplesBack(extraSamplesBack) 
+{
   maxMontageTracks = programOption<int>("kernelCacheSize");
 
   fileChannels = file->file->getChannelCount();
@@ -83,13 +84,10 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
   size_t size = (nBlock + 2) * fileChannels * sizeof(float);
 
   for (unsigned int i = 0; i < parallelQueues; ++i) {
-    commandQueues.push_back(clCreateCommandQueue(
-        context->getCLContext(), context->getCLDevice(), 0, &err));
+    commandQueues.push_back(clCreateCommandQueue( context->getCLContext(), context->getCLDevice(), 0, &err));
     checkClErrorCode(err, "clCreateCommandQueue()");
 
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    rawBuffers.push_back(
-        clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
+    cl_mem_flags flags = CL_MEM_READ_WRITE; rawBuffers.push_back(clCreateBuffer(context->getCLContext(), flags, size, nullptr, &err));
     checkClErrorCode(err, "clCreateBuffer()");
 
 #ifdef NDEBUG
@@ -113,12 +111,11 @@ SignalProcessor::SignalProcessor(unsigned int nBlock,
   logToFile("Creating File cache with " << capacity
                                         << " capacity and blocks of size "
                                         << blockFloats * sizeof(float) << ".");
-  cache = make_unique<LRUCache<int, float>>(
-      capacity, make_unique<FloatAllocator>(blockFloats));
+
+  cache = make_unique<LRUCache<int, float>>(capacity, make_unique<FloatAllocator>(blockFloats));
 
   updateFilter();
   setUpdateMontageFlag();
-
   createXyzBuffer();
 }
 
@@ -152,8 +149,7 @@ void SignalProcessor::updateFilter() {
 
   M = file->file->getSamplingFrequency() + 1;
 
-  filter = make_unique<AlenkaSignal::Filter<float>>(
-      M, file->file->getSamplingFrequency());
+  filter = make_unique<AlenkaSignal::Filter<float>>(M, file->file->getSamplingFrequency());
 
   filter->setLowpassOn(OpenDataFile::infoTable.getLowpassOn());
   filter->setLowpass(OpenDataFile::infoTable.getLowpassFrequency());
@@ -178,29 +174,30 @@ void SignalProcessor::updateFilter() {
   nMontage = nBlock - nDiscard;
   nSamples = nMontage - (extraSamplesFront + extraSamplesBack);
 
-  OpenDataFile::infoTable.setFilterCoefficients(
-      filterProcessors[0]->getCoefficients());
+  OpenDataFile::infoTable.setFilterCoefficients(filterProcessors[0]->getCoefficients());
 }
 
 void SignalProcessor::setUpdateMontageFlag() {
-  if (file) {
+    
+  if (file) 
+  {
     trackCount = 0;
 
     if (0 < file->dataModel->montageTable()->rowCount()) {
       for (int i = 0; i < getTrackTable(file)->rowCount(); ++i) {
         const Track t = getTrackTable(file)->row(i);
-        if (!t.hidden)
-          ++trackCount;
-      }
+         if (!t.hidden)
+           ++trackCount;
+      }   
     }
-
+    
     if (trackCount > 0)
-      updateMontageFlag = true;
+     updateMontageFlag = true;
   }
+ 
 }
 
-void SignalProcessor::process(const vector<int> &indexVector,
-                              const vector<cl_mem> &outBuffers) {
+void SignalProcessor::process(const vector<int> &indexVector, const vector<cl_mem> &outBuffers) {
 #ifndef NDEBUG
   assert(ready());
   assert(0 < indexVector.size());
@@ -248,16 +245,13 @@ void SignalProcessor::process(const vector<int> &indexVector,
     size_t rowLen = nBlock * sizeof(float);
     size_t region[] = {rowLen, fileChannels, 1};
 
-    err = clEnqueueWriteBufferRect(
-        commandQueues[i], rawBuffers[i], CL_TRUE, origin, origin, region,
-        rowLen + 2 * sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
+    err = clEnqueueWriteBufferRect(commandQueues[i], rawBuffers[i], CL_TRUE, origin, origin, region, rowLen + 2 * sizeof(float), 0, 0, 0, fileBuffer, 0, nullptr, nullptr);
     checkClErrorCode(err, "clEnqueueWriteBufferRect()");
 
     if (!allpass()) {
       // Enqueu the filter operation, and store the result in the second buffer.
       printBuffer("before_filter.txt", rawBuffers[i], commandQueues[i]);
-      filterProcessors[i]->process(rawBuffers[i], filterBuffers[i],
-                                   commandQueues[i]);
+      filterProcessors[i]->process(rawBuffers[i], filterBuffers[i],commandQueues[i]);
       printBuffer("after_filter.txt", filterBuffers[i], commandQueues[i]);
     }
   }
@@ -273,8 +267,7 @@ void SignalProcessor::process(const vector<int> &indexVector,
   // buffer.
   for (unsigned int i = 0; i < iters; ++i) {
     if (glSharing) {
-      err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &outBuffers[i], 0,
-                                      nullptr, nullptr);
+      err = clEnqueueAcquireGLObjects(commandQueues[i], 1, &outBuffers[i], 0, nullptr, nullptr);
       checkClErrorCode(err, "clEnqueueAcquireGLObjects()");
     }
 
@@ -304,8 +297,7 @@ void SignalProcessor::process(const vector<int> &indexVector,
   }
 }
 
-void SignalProcessor::updateXyzBuffer(cl_command_queue queue, cl_mem xyzBuffer,
-                                      const AbstractTrackTable *trackTable) {
+void SignalProcessor::updateXyzBuffer(cl_command_queue queue, cl_mem xyzBuffer, const AbstractTrackTable *trackTable) {
   const int tracks = trackTable->rowCount();
   vector<float> xyz(3 * tracks);
 
@@ -363,10 +355,9 @@ void SignalProcessor::updateMontage() {
 
   updateXyzBuffer(commandQueues[0], xyzBuffer, defaultTrackTable);
 
-  const string header =
-      OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
-  montage = makeMontage<float>(montageCode, context, header,
-                               collectLabels(defaultTrackTable));
+  const string header = OpenDataFile::infoTable.getGlobalMontageHeader().toStdString();
+
+  montage = makeMontage<float>(montageCode, context, header, collectLabels(defaultTrackTable));
 }
 
 bool SignalProcessor::allpass() {

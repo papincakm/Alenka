@@ -65,8 +65,7 @@ class SignalProcessor {
   std::function<void()> glSharing;
   OpenDataFile *file;
   AlenkaSignal::OpenCLContext *context;
-  std::vector<std::unique_ptr<AlenkaSignal::FilterProcessor<float>>>
-      filterProcessors;
+  std::vector<std::unique_ptr<AlenkaSignal::FilterProcessor<float>>> filterProcessors;
   std::unique_ptr<AlenkaSignal::MontageProcessor<float>> montageProcessor;
   std::vector<std::unique_ptr<AlenkaSignal::Montage<float>>> montage;
   int extraSamplesFront, extraSamplesBack;
@@ -131,9 +130,7 @@ public:
   }
 
   // TODO: Make sure you don't cache copy-montages.
-  template <class T>
-  static auto
-  makeMontage(const std::vector<std::pair<std::string, cl_int>> &montageCode,
+  template <class T> static auto makeMontage(const std::vector<std::pair<std::string, cl_int>> &montageCode,
               AlenkaSignal::OpenCLContext *context, const std::string &header,
               const std::vector<std::string> &labels) {
     using namespace std;
@@ -147,8 +144,7 @@ public:
     std::vector<std::unique_ptr<AlenkaSignal::Montage<T>>> montage;
 
     for (const auto &e : montageCode) {
-      auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(
-          simplifyMontage<T>(e.first), context, header, labels);
+      auto sourceMontage = make_unique<AlenkaSignal::Montage<T>>(simplifyMontage<T>(e.first), context, header, labels);
       sourceMontage->setMontageIndex(e.second);
 
       if (AlenkaSignal::NormalMontage != sourceMontage->getMontageType()) {
@@ -174,12 +170,13 @@ public:
 #ifndef NDEBUG
     auto end = high_resolution_clock::now();
     nanoseconds time = end - start;
-    string str = "Need to compile " + to_string(needToCompile) + " montages: " +
-                 to_string(static_cast<double>(time.count()) / 1000 / 1000) +
-                 " ms";
-    if (needToCompile > 0) {
+    string str = "Need to compile " + to_string(needToCompile) + " montages: " + to_string(static_cast<double>(time.count()) / 1000 / 1000) + " ms";
+    if (needToCompile > 0) 
+    {
       logToFileAndConsole(str);
-    } else {
+    } 
+    else 
+    {
       logToFile(str);
     }
 #endif

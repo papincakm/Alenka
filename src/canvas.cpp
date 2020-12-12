@@ -346,60 +346,53 @@ Canvas::~Canvas() {
 }
 
 void Canvas::changeFile(OpenDataFile *file) {
+
   makeCurrent();
 
   this->file = file;
 
   if (file) {
-    auto c = connect(&OpenDataFile::infoTable,
-                     SIGNAL(lowpassFrequencyChanged(double)), this,
-                     SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this,
-                SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable,
-                SIGNAL(highpassFrequencyChanged(double)), this,
-                SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this,
-                SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), this,
-                SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable,
-                SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this,
-                SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()),
-                this, SLOT(updateFilter()));
-    openFileConnections.push_back(c);
-    c = connect(&OpenDataFile::infoTable,
-                SIGNAL(frequencyMultipliersOnChanged(bool)), this,
-                SLOT(updateFilter()));
+    auto c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassFrequencyChanged(double)), this, SLOT(updateFilter()));
     openFileConnections.push_back(c);
 
-    c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)),
-                this, SLOT(selectMontage()));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(lowpassOnChanged(bool)), this, SLOT(updateFilter()));
     openFileConnections.push_back(c);
 
-    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),
-                this, SLOT(updateCursor()));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(highpassFrequencyChanged(double)), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(highpassOnChanged(bool)), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(notchOnChanged(bool)), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(filterWindowChanged(AlenkaSignal::WindowFunction)), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersChanged()), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(frequencyMultipliersOnChanged(bool)), this, SLOT(updateFilter()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this, SLOT(selectMontage()));
+    openFileConnections.push_back(c);
+
+    c = connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)), this, SLOT(updateCursor()));
     openFileConnections.push_back(c);
 
     function<void()> sharingFunction = nullptr;
     if (glSharing)
       sharingFunction = [this]() { gl()->glFinish(); };
 
-    signalProcessor = make_unique<SignalProcessor>(
-        nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file,
-        globalContext.get(), extraSamplesFront, extraSamplesBack);
-  } else {
+   signalProcessor = make_unique<SignalProcessor>( nBlock, parallelQueues, duplicateSignal ? 2 : 1, sharingFunction, file, globalContext.get(), extraSamplesFront, extraSamplesBack );
+  } 
+  else 
+  {
     for (auto e : openFileConnections)
-      disconnect(e);
+        disconnect(e);
     openFileConnections.clear();
-
     signalProcessor.reset(nullptr);
   }
 
@@ -450,8 +443,7 @@ void Canvas::updateCursor() {
     const QPoint pos = mapFromGlobal(QCursor::pos());
     const int sample = round(pos.x() * virtualRatio() + leftEdgePosition());
 
-    const double trackHeigth =
-        static_cast<double>(height()) / signalProcessor->getTrackCount();
+    const double trackHeigth = static_cast<double>(height()) / signalProcessor->getTrackCount();
     const int track = static_cast<int>(pos.y() / trackHeigth);
 
     setCursorPositionSample(sample);
@@ -576,8 +568,7 @@ void Canvas::paintGL() {
 
     // Set uniform variables.
     const vector<float> units = {1000 * 1000, 1000, 1, 0.001f, 0.001f * 0.001f};
-    sampleScale = OpenDataFile::infoTable.getSampleScale() /
-                  units[OpenDataFile::infoTable.getSampleUnits()];
+    sampleScale = OpenDataFile::infoTable.getSampleScale() /units[OpenDataFile::infoTable.getSampleUnits()];
     sampleScale /= physicalDpiY() / 2.54;
 
     gl()->glUseProgram(signalProgram->getGLProgram());
@@ -585,8 +576,7 @@ void Canvas::paintGL() {
 
     gl()->glUseProgram(eventProgram->getGLProgram());
     setUniformTransformMatrix(eventProgram.get(), matrix.data());
-    setUniformEventWidth(eventProgram.get(),
-                         0.45 * height() / signalProcessor->getTrackCount());
+    setUniformEventWidth(eventProgram.get(),0.45 * height() / signalProcessor->getTrackCount());
 
     gl()->glUseProgram(rectangleLineProgram->getGLProgram());
     setUniformTransformMatrix(rectangleLineProgram.get(), matrix.data());
@@ -595,8 +585,7 @@ void Canvas::paintGL() {
     const int firstSample = static_cast<int>(floor(position));
     const int lastSample = static_cast<int>(ceil(position + width() * ratio));
 
-    const auto fromTo =
-        sampleRangeToBlockRange(firstSample, lastSample, nSamples);
+    const auto fromTo = sampleRangeToBlockRange(firstSample, lastSample, nSamples);
 
     auto tr = SignalProcessor::blockIndexToSampleRange(fromTo.first, nSamples);
     assert(true || tr.first <= firstSample);
@@ -655,8 +644,7 @@ void Canvas::paintGL() {
       if (!glSharing) {
         // Pull the data from CL buffer and copy it to the GL buffer.
         cl_int err;
-        size_t size = signalProcessor->montageLength() *
-                      signalProcessor->getTrackCount() * sizeof(float);
+        size_t size = signalProcessor->montageLength() * signalProcessor->getTrackCount() * sizeof(float);
         if (duplicateSignal)
           size *= 2;
 
@@ -779,7 +767,8 @@ void Canvas::mouseMoveEvent(QMouseEvent * /*event*/) {
   }
 }
 
-void Canvas::mousePressEvent(QMouseEvent *event) {
+void Canvas::mousePressEvent(QMouseEvent* event) {
+
   if (event->button() == Qt::LeftButton) {
     if (event->modifiers() == Qt::ShiftModifier ||
         event->modifiers() == Qt::ControlModifier || isShiftChecked ||
@@ -1056,12 +1045,10 @@ void Canvas::drawTimeLine(const double position) {
                    static_cast<float>(position), static_cast<float>(height())};
 
   gl()->glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-
   gl()->glDrawArrays(GL_LINE_STRIP, 0, 2);
 }
 
-void Canvas::drawSingleChannelEvents(
-    int index, const vector<tuple<int, int, int, int>> &eventVector) {
+void Canvas::drawSingleChannelEvents( int index, const vector<tuple<int, int, int, int>> &eventVector) {
   gl()->glUseProgram(eventProgram->getGLProgram());
 
   bindArray(eventArray, signalBuffer, 1, 0);
@@ -1141,28 +1128,24 @@ void Canvas::drawSingleChannelEvent(int index, int track, int from, int to) {
   }
 }
 
-void Canvas::drawSignal(int index) {
+void Canvas::drawSignal(int index) 
+{
   gl()->glUseProgram(signalProgram->getGLProgram());
+  bindArray(signalArray, signalBuffer, 1, duplicateSignal ? 2 * sizeof(float) : 0);
 
-  bindArray(signalArray, signalBuffer, 1,
-            duplicateSignal ? 2 * sizeof(float) : 0);
-
-  for (int track = 0; track < signalProcessor->getTrackCount(); ++track) {
+  for (int track = 0; track < signalProcessor->getTrackCount(); ++track) 
+  {
     int hidden = countHiddenTracks(track);
+    setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden, index);
+    QColor color = DataModel::array2color<QColor>( getTrackTable(file)->row(track + hidden).color );
 
-    setUniformTrack(signalProgram->getGLProgram(), track + hidden, hidden,
-                    index);
-
-    QColor color = DataModel::array2color<QColor>(
-        getTrackTable(file)->row(track + hidden).color);
     if (isSelectingTrack && track == cursorTrack)
       color = modifySelectionColor(color);
 
     setUniformColor(signalProgram->getGLProgram(), color, 1);
-
-    gl()->glDrawArrays(GL_LINE_STRIP, track * signalProcessor->montageLength(),
-                       nSamples);
+    gl()->glDrawArrays(GL_LINE_STRIP, track * signalProcessor->montageLength(), nSamples);
   }
+
 }
 
 void Canvas::setUniformTrack(GLuint program, int track, int hidden, int index) {
@@ -1238,8 +1221,7 @@ void Canvas::addEvent(int channel) {
   e.duration = eventEnd - eventStart + 1;
   e.channel = channel + countHiddenTracks(channel);
 
-  file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(),
-                                 index, e);
+  file->undoFactory->changeEvent(OpenDataFile::infoTable.getSelectedMontage(),index, e);
 
   file->undoFactory->endMacro();
 }
@@ -1309,8 +1291,7 @@ void Canvas::setUniformEventWidth(OpenGLProgram *program, float value) {
 
 void Canvas::logLastGLMessage() {
   if (lastGLMessageCount > 1) {
-    logToFile("OpenGL message (" << lastGLMessageCount - 1
-                                 << "x): " << lastGLMessage);
+    logToFile("OpenGL message (" << lastGLMessageCount - 1 << "x): " << lastGLMessage);
   }
 }
 
@@ -1355,16 +1336,13 @@ void Canvas::selectMontage() {
     auto trackTable = getTrackTable(file);
     auto vitness = VitnessTrackTable::vitness(trackTable);
 
-    auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this,
-                     SLOT(updateMontage(int, int)));
+    auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateMontage(int, int)));
     montageConnections.push_back(c);
 
-    c = connect(vitness, SIGNAL(rowsInserted(int, int)), this,
-                SLOT(updateMontage()));
+     c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateMontage()));
     montageConnections.push_back(c);
 
-    c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
-                SLOT(updateMontage()));
+    c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateMontage()));
     montageConnections.push_back(c);
 
     // Also connect the default montage, so that the view gets updated when
@@ -1373,16 +1351,13 @@ void Canvas::selectMontage() {
     auto defaultTrackTable = file->dataModel->montageTable()->trackTable(0);
     if (trackTable != defaultTrackTable) {
       auto defaultVitness = VitnessTrackTable::vitness(defaultTrackTable);
-      c = connect(defaultVitness, SIGNAL(valueChanged(int, int)), this,
-                  SLOT(updateMontage()));
+      c = connect(defaultVitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateMontage()));
       montageConnections.push_back(c);
     }
 
     // Also connect the global OpenCL header so that the montage gets recompiled
     // every time it changes.
-    c = connect(&OpenDataFile::infoTable,
-                SIGNAL(globalMontageHeaderChanged(QString)), this,
-                SLOT(updateMontage()));
+    c = connect(&OpenDataFile::infoTable, SIGNAL(globalMontageHeaderChanged(QString)), this, SLOT(updateMontage()));
     montageConnections.push_back(c);
   }
 
