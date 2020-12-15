@@ -34,6 +34,10 @@ Thumbs.db
 /.qmake.cache
 /.qmake.stash
 
+# TODO: temp set by papi
+CMakeLists*
+.gitignore
+
 # qtcreator generated files
 *.pro.user*
 

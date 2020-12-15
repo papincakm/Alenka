@@ -15,6 +15,7 @@
 #include "Manager/trackmanager.h"
 #include "Manager/tracktablemodel.h"
 #include "Manager/videoplayer.h"
+#include "Manager/scalpmap.h"
 #include "SignalProcessor/automaticmontage.h"
 #include "SignalProcessor/bipolarmontage.h"
 #include "SignalProcessor/clusteranalysis.h"
@@ -167,17 +168,23 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   filterManager = new FilterManager(this);
   filterManagerDockWidget->setWidget(filterManager);
 
-  auto vieoPlayerDockWidget = new QDockWidget("Video Player", this);
-  vieoPlayerDockWidget->setObjectName("Video Player QDockWidget");
+  auto videoPlayerDockWidget = new QDockWidget("Video Player", this);
+  videoPlayerDockWidget->setObjectName("Video Player QDockWidget");
   videoPlayer = new VideoPlayer(this);
-  vieoPlayerDockWidget->setWidget(videoPlayer);
+  videoPlayerDockWidget->setWidget(videoPlayer);
+
+  auto scalpMapDockWidget = new QDockWidget("Scalp Map", this);
+  scalpMapDockWidget->setObjectName("Scalp Map QDockWidget");
+  scalpMap = new ScalpMap(this);
+  scalpMapDockWidget->setWidget(scalpMap);
 
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
   tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
   tabifyDockWidget(eventManagerDockWidget, eventTypeManagerDockWidget);
   tabifyDockWidget(eventTypeManagerDockWidget, montageManagerDockWidget);
   tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
-  tabifyDockWidget(filterManagerDockWidget, vieoPlayerDockWidget);
+  tabifyDockWidget(filterManagerDockWidget, videoPlayerDockWidget);
+  tabifyDockWidget(videoPlayerDockWidget, scalpMapDockWidget);
 
   // Construct File actions.
   QAction *openFileAction = new QAction("&Open File...", this);
@@ -624,7 +631,8 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   windowMenu->addAction(eventTypeManagerDockWidget->toggleViewAction());
   windowMenu->addAction(montageManagerDockWidget->toggleViewAction());
   windowMenu->addAction(filterManagerDockWidget->toggleViewAction());
-  windowMenu->addAction(vieoPlayerDockWidget->toggleViewAction());
+  windowMenu->addAction(videoPlayerDockWidget->toggleViewAction());
+  windowMenu->addAction(scalpMapDockWidget->toggleViewAction());
 
   windowMenu->addSeparator();
   windowMenu->addAction(fileToolBar->toggleViewAction());

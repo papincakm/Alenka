@@ -33,6 +33,7 @@ class EventTypeManager;
 class MontageManager;
 class FilterManager;
 class VideoPlayer;
+class ScalpMap;
 class QComboBox;
 class QCheckBox;
 class QActionGroup;
@@ -71,6 +72,7 @@ class SignalFileBrowserWindow : public QMainWindow {
   MontageManager *montageManager;
   FilterManager *filterManager;
   VideoPlayer *videoPlayer;
+  ScalpMap *scalpMap;
   QComboBox *lowpassComboBox;
   QComboBox *highpassComboBox;
   QCheckBox *notchCheckBox;

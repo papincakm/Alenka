@@ -151,6 +151,8 @@ set(SRC
   src/Manager/tracktablemodel.h
   src/Manager/videoplayer.cpp
   src/Manager/videoplayer.h
+  src/Manager/scalpmap.cpp
+  src/Manager/scalpmap.h
   src/SignalProcessor/analysis.h
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
