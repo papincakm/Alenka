@@ -1218,6 +1218,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   filterManager->changeFile(openDataFile.get());
   //TODO: (papi) video error here
   videoPlayer->changeFile(openDataFile.get());
+  scalpMap->changeFile(openDataFile.get());
   syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());
   
@@ -1819,6 +1820,9 @@ void SignalFileBrowserWindow::closeFilePropagate() {
   montageManager->changeFile(nullptr);
   filterManager->changeFile(nullptr);
   videoPlayer->changeFile(nullptr);
+  //TODO: find out why is this out of scope here
+  if (scalpMap)
+	scalpMap->changeFile(nullptr);
 
   syncDialog->changeFile(nullptr);
   signalViewer->changeFile(nullptr);

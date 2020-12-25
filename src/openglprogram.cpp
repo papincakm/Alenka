@@ -40,6 +40,37 @@ OpenGLProgram::OpenGLProgram(const string &vertSource,
   checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram link failed.");
 }
 
+OpenGLProgram::OpenGLProgram(const string &fragSource) {
+	program = gl()->glCreateProgram();
+
+	string shaderHeader;
+	if (programOption<bool>("gl20"))
+		shaderHeader = "#version 110\n#define GLSL_110\n";
+	else
+		shaderHeader = "#version 130\n";
+
+	addShader(shaderHeader + fragSource, GL_FRAGMENT_SHADER);
+
+	gl()->glLinkProgram(program);
+
+	GLint linkStatus;
+	gl()->glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+
+#ifndef NDEBUG
+	GLint logLength;
+	gl()->glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+
+	if (logLength > 1) {
+		auto log = make_unique<char[]>(logLength);
+		gl()->glGetProgramInfoLog(program, logLength, &logLength, log.get());
+
+		logToFileAndConsole("OpenGLProgram link log:" << endl << log.get());
+	}
+#endif
+
+	checkNotErrorCode(linkStatus, GL_FALSE, "OpenGLProgram link failed.");
+}
+
 OpenGLProgram::~OpenGLProgram() {
   gl()->glDeleteProgram(program);
 

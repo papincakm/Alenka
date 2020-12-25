@@ -14,6 +14,7 @@ public:
    * @brief Constructor taking strings as shader sources.
    */
   OpenGLProgram(const std::string &vertSource, const std::string &fragSource);
+  OpenGLProgram(const std::string &fragSource);
   ~OpenGLProgram();
 
   /**

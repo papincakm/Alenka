@@ -39,7 +39,7 @@ BUILD32=build-Release-32
 cp -v `find $BUILD64 -name Alenka.exe` $folder/$name && alenka=OK || alenka=fail
 cp -v `find $BUILD32 -name Alenka.exe` $folder32/$name-32 && alenka32=OK || alenka32=fail
 
-QT_DIR=C:/Qt/5.9.5/msvc2015_64 &&
+QT_DIR=D:\\Qt\\Qt5.9.5\\5.9.5\\msvc2015_64 &&
 cp -v `find $BUILD64 -name hdf5.dll | head -1` $folder/$name &&
 cp -v `find $BUILD64 -name libmatio.dll | head -1` $folder/$name &&
 cp -v `find $BUILD64 -name szip.dll | head -1` $folder/$name &&
@@ -65,7 +65,7 @@ cp -v $QT_DIR/plugins/imageformats/qjpeg.dll $folder/$name/imageformats &&
 cp -vr $QT_DIR/qml/{Qt,QtQuick,QtQuick.2} $folder/$name &&
 libraries=OK || libraries=fail
 
-QT_DIR=C:/Qt/5.9.5/msvc2015 &&
+QT_DIR=D:\\Qt\\Qt5.9.5\\5.9.5\\msvc2015_64 &&
 cp -v `find $BUILD32 -name hdf5.dll | head -1` $folder32/$name-32 &&
 cp -v `find $BUILD32 -name libmatio.dll | head -1` $folder32/$name-32 &&
 cp -v `find $BUILD32 -name szip.dll | head -1` $folder32/$name-32 &&

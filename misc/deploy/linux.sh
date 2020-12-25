@@ -34,7 +34,7 @@ mkdir -p $folder/$name/imageformats
 cp -v build-Release/Alenka $folder/$name/Alenka.bin &&
   alenka=OK || alenka=fail
 
-QT_DIR=/opt/Qt/5.9.5/gcc_64
+QT_DIR=D:\\Qt\\Qt5.9.5\\5.9.5\\msvc2015_64
 
 cp -vr $QT_DIR/qml/{Qt,QtQuick,QtQuick.2} $folder/$name &&
   qml=OK || qml=fail

@@ -4,6 +4,7 @@ project(Alenka)
 # Options.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+list(APPEND CMAKE_PREFIX_PATH "D:\\Qt\\Qt5.9.5\\5.9.5\\msvc2015_64")
 
 option(ALENKA_STATIC_LINK
 "Link some libraries statically to make a portable binary.
@@ -190,6 +191,8 @@ set(SRC
   src/openglprogram.h
   src/options.cpp
   src/options.h
+  src/scalpcanvas.h
+  src/scalpcanvas.cpp
   src/signalfilebrowserwindow.cpp
   src/signalfilebrowserwindow.h
   src/signalviewer.cpp
