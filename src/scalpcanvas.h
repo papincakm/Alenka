@@ -11,6 +11,10 @@
 #endif
 
 #include <QOpenGLWidget>
+#include <QPainter>
+#include <QString>
+#include <QFont>
+#include <QVector2D>
 #include <cassert>
 #include <memory>
 #include <string>
@@ -22,6 +26,13 @@ class OpenCLContext;
 }
 class OpenDataFile;
 class OpenGLProgram;
+
+struct CanvasTrack {
+	CanvasTrack(const QString& label, const QVector2D& positions) : label(label), position(position) {};
+
+	QString label;
+	QVector2D position;
+};
 
 /**
  * @brief This class implements a GUI control for rendering signal data and
@@ -37,14 +48,20 @@ class ScalpCanvas : public QOpenGLWidget {
 	
   std::unique_ptr<OpenGLProgram> signalProgram;
   std::unique_ptr<OpenGLProgram> channelProgram;
-  std::vector<QVector2D> channelPositions;
   bool paintingDisabled = false;
+  std::vector<CanvasTrack> tracks;
+  std::vector<QString> labels;
+  std::vector<QVector2D> positions;
 
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
   ~ScalpCanvas() override;
 
-  void setChannelPositions(const std::vector<QVector2D>& positions);
+  //TODO: refactor, right now labels and positions are instanced twice, here and in scalpMap
+  void setChannelLabels(const std::vector<QString>& channelLabels);
+  void setChannelPositions(const std::vector<QVector2D>& channelPositions);
+  void addTrack(const QString& label, const QVector2D& position);
+  void resetTracks();
 
 protected:
   void initializeGL() override;
@@ -71,6 +88,8 @@ private:
   //TODO:: move to approp file
   //source: http://slabode.exofire.net/circle_draw.shtml
   void drawCircle(float cx, float cy, float r, int num_segments);
+
+  void renderText(float x, float y, const QString &str, const QFont &font);
 };
 
 #endif // SCALPCANVAS_H

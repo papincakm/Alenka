@@ -68,8 +68,19 @@ ScalpCanvas::~ScalpCanvas() {
   doneCurrent();
 }
 
-void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& positions) {
-	channelPositions = positions;
+void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
+	positions = channelPositions;
+}
+void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
+	labels = channelLabels;
+}
+
+void ScalpCanvas::addTrack(const QString& label, const QVector2D& position) {
+	tracks.push_back(CanvasTrack(label, position));
+}
+
+void ScalpCanvas::resetTracks() {
+	tracks.clear();
 }
 
 void ScalpCanvas::initializeGL() {
@@ -101,20 +112,24 @@ void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
   // checkGLMessages();
 }
 
+//TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
 	using namespace chrono;
 
 	if (paintingDisabled)
 		return;
+	
+	QString test = QString("TEST");
+	QFont labelFont = QFont("Times", 8, QFont::Bold);
 
 #ifndef NDEBUG
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
-		glColor3f(1, 0, 0);
-
-		for (auto v : channelPositions) {
-			drawCircle(v.x(), v.y(), 0.01, 30);
+		for (int i = 0; i < positions.size(); i++) {
+			glColor3f(1, 0, 0);
+			drawCircle(-1 * positions[i].y(), positions[i].x(), 0.01, 30);
+			renderText(-1 * positions[i].y(), -1 * positions[i].x(), labels[i], labelFont);
 		}
 	}
 }
@@ -163,4 +178,20 @@ void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
 		y = s * t + c * y;
 	}
 	glEnd();
+}
+
+void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font) {
+	int realX = width() / 2 + (width() / 2) * x;
+	int realY = height() / 2 + (height() / 2) * y;
+
+	GLdouble glColor[4];
+	glGetDoublev(GL_CURRENT_COLOR, glColor);
+	QColor fontColor = QColor(glColor[0] * 255, glColor[1] * 255, glColor[2] * 255, glColor[3] * 255);
+
+	// Render text
+	QPainter painter(this);
+	painter.setPen(fontColor);
+	painter.setFont(font);
+	painter.drawText(realX, realY, str);
+	painter.end();
 }

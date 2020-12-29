@@ -16,6 +16,7 @@
 using namespace AlenkaFile;
 using namespace std;
 
+
 ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
 		SLOT(updateConnections(int)));
@@ -82,6 +83,7 @@ void ScalpMap::updateLabels() {
 		Track t = trackTable->row(i);
 
 		if (t.hidden == false) {
+			//TODO: labels, colors and positions should be in one class and one vector
 			labels.push_back(QString::fromStdString(t.label));
 			colors.push_back(DataModel::array2color<QColor>(t.color));
 			positions.push_back(QVector3D(t.x, t.y, t.z));
@@ -95,46 +97,97 @@ void ScalpMap::updateLabels() {
 
 	updatePositionsProjected();
 
+	//TODO: refactor this
+	scalpCanvas->resetTracks();
+	for (int i = 0; i < positionsProjected.size(); i++) {
+		try {
+			scalpCanvas->addTrack(labels[i], positionsProjected[i]);
+		}
+		catch (exception) {
+		}
+	}
+
+	scalpCanvas->setChannelLabels(labels);
 	scalpCanvas->setChannelPositions(positionsProjected);
 
 	update();
+}
+
+float degToRad(float n) {
+	return n * M_PI / 180;
+}
+
+float radToDeg(float n) {
+	return n * 180 / M_PI;
 }
 
 //TODO: improvised algorithm, find a better way to do this
 void ScalpMap::updatePositionsProjected() {
 	positionsProjected.clear();
 
-	// project 3D vector to 2D
+	//compute radius of sphere
+	float r = 0;
 	for (auto vec : positions) {
-		auto vecCut = QVector2D(vec.x(), vec.y());
+		float rCan = std::abs(vec.x());
 
-		float distFromZero3D = vec.distanceToPoint(QVector3D(0, 0, 0));
-		float distFromZero2D = vecCut.distanceToPoint(QVector2D(0, 0));
-		
-		float project = distFromZero3D / distFromZero2D;
 
-		positionsProjected.push_back(QVector2D(vecCut.x() * project, vecCut.y() * project));
-		//positionsProjected.push_back(QVector2D(vecCut.x(), vecCut.y()));
+		rCan = std::abs(vec.x());
+		if (rCan > r) {
+			r = rCan;
+		}
+
+		rCan = std::abs(vec.x());
+		if (rCan > r) {
+			r = rCan;
+		}
 	}
 
-	// move positions to positive values
-	/*float minValue = 0;
-	for (auto vec : positionsProjected) {
-		if (vec.x() < minValue)
-			minValue = vec.x();
-
-		if (vec.y() < minValue)
-			minValue = vec.y();
+	//compute unit sphere
+	std::vector<QVector3D> nPos;
+	for (auto vec : positions) {
+		float n = sqrt(vec.x() * vec.x() + vec.y() * vec.y()
+			+ vec.z() * vec.z());
+		nPos.push_back(vec / n);
 	}
-	minValue = std::abs(minValue);
 
-	for_each(positionsProjected.begin(), positionsProjected.end(), [minValue](auto& v)
-	{
-		v.setX(v.x() + minValue);
-		v.setY(v.y() + minValue);
-	});*/
+	//compute radiuses
+	std::vector<float> rads;
+	for (auto vec : nPos) {
+		rads.push_back(sqrt(vec.x() * vec.x() + vec.y() * vec.y()
+			+ vec.z() * vec.z()));
+	}
+
+	//compute thetas
+	int i = 0;
+	std::vector<float> thetas;
+	for (auto vec : nPos) {
+		float theta = radToDeg(acos(vec.z() / rads[i]));
+		theta = (vec.x() >= 0) ? theta : -1 * theta;
+		thetas.push_back(theta);
+
+		i++;
+	}
+
+	//compute phis
+	std::vector<float> phis;
+	for (auto vec : nPos) {
+		float phi = radToDeg(atan(vec.y() / vec.x()));
+		phi = (vec.x() == 0) ? -1 * phi : phi;
+		phis.push_back(phi);
+	}
+
+	// project 3D vector to 2D
+	i = 0;
+	for (auto vec : nPos) {
+		float newX = degToRad(thetas[i]) * cos(degToRad(phis[i]));
+		float newY = degToRad(thetas[i]) * sin(degToRad(phis[i]));
+
+		positionsProjected.push_back(QVector2D(radToDeg(newX), radToDeg(newY)));
+		i++;
+	}
 
 	// normalize positions for opengl
+	//TODO: this should be in scalpcanvas
 	float maxValue = 0;
 	for (auto vec : positionsProjected) {
 		if (std::abs(vec.x()) > maxValue)
@@ -144,16 +197,11 @@ void ScalpMap::updatePositionsProjected() {
 			maxValue = std::abs(vec.y());
 	}
 
+	//TODO: temp scaling
+	maxValue *= 1.5;
+
 	for_each(positionsProjected.begin(), positionsProjected.end(), [maxValue](auto& v)
 	{
 		v *= 1 / maxValue;
 	});
-
-	/*for (auto vec : positionsProjected) {
-		vec.setX(vec.x() / maxValue);
-		vec.setY(vec.y() / maxValue);
-		//vec.setX(0.2);
-		//vec.setY(0.3);
-		//vec *= 1/maxValue;
-	}*/
 }

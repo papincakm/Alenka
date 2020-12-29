@@ -12,6 +12,7 @@
 
 class OpenDataFile;
 class ScalpCanvas;
+//struct CanvasTrack;
 
 /**
 * @brief Implements 2D scalp map.
