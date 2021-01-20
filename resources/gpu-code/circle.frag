@@ -2,31 +2,47 @@
  * @brief Source code of fragment shader used to draw a circle.
  *
  * @file
- * @include signal.vert
+ * @include single.vert
  */
 /// @cond
 
+precision highp float;
+
 #ifdef GLSL_110
 #extension GL_EXT_gpu_shader4 : enable
-attribute vec2 pointPos;
+attribute vec2  pointPos;
 #else
-in vec2 pointPos;
+in vec2  pointPos;
 #endif
 
+uniform float aRadius;
+uniform vec4  aColor;
 uniform vec2 u_resolution;
 
-float circle(in vec2 _st, in float _radius){
-    vec2 dist = _st;
-	return 1.-smoothstep(_radius-(_radius*0.01),
-                         _radius+(_radius*0.01),
-                         dot(dist,dist)*4.0);
-}
+#ifndef GLSL_110
+out vec4  outColor;
+#endif
 
-void main(){
-	vec2 st = gl_FragCoord.xy/u_resolution.xy;
+const float threshold = 0.3;
 
-	vec3 color = vec3(circle(st - vec2(0.5),0.1));
+void main()
+{
+	vec2 st = gl_PointCoord.xy;
 
-	gl_FragColor = vec4( color, 1.0 );
+    float dist = distance(pointPos, st - 0.5);
+
+	//dont touch pixels beyond radius of the circle
+    if (dist > 0.5)
+    	discard;
+
+	float accelerator = 2;
+		
+	vec3 color = vec3(0.6, 0.6, 0.6);
+
+#ifdef GLSL_110
+  	gl_FragColor = vec4(color, 1.0);
+#else
+  	outColor = vec4(color, 1.0);
+#endif
 }
 /// @endcond

@@ -34,6 +34,17 @@ struct CanvasTrack {
 	QVector2D position;
 };
 
+struct Edge {
+	QVector2D from;
+	QVector2D to;
+	float length;
+
+	bool operator > (const Edge& edge) const
+	{
+		return (length > edge.length);
+	}
+};
+
 /**
  * @brief This class implements a GUI control for rendering signal data and
  * events.
@@ -46,12 +57,18 @@ struct CanvasTrack {
 class ScalpCanvas : public QOpenGLWidget {
   Q_OBJECT
 	
-  std::unique_ptr<OpenGLProgram> signalProgram;
+  std::unique_ptr<OpenGLProgram> labelProgram;
   std::unique_ptr<OpenGLProgram> channelProgram;
   bool paintingDisabled = false;
   std::vector<CanvasTrack> tracks;
   std::vector<QString> labels;
+  //TODO: should be pair of floats probably or custom class
   std::vector<QVector2D> positions;
+  GLuint posBuffer;
+  //TODO: replace with single struct
+  std::vector<QVector2D> trianglePositions;
+  std::vector<QVector3D> triangleColors;
+  std::vector<GLfloat> posBufferData;
 
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
@@ -62,6 +79,7 @@ public:
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
   void addTrack(const QString& label, const QVector2D& position);
   void resetTracks();
+  void updatePositions();
 
 protected:
   void initializeGL() override;
@@ -90,6 +108,11 @@ private:
   void drawCircle(float cx, float cy, float r, int num_segments);
 
   void renderText(float x, float y, const QString &str, const QFont &font);
+
+  std::vector<QVector2D> generateScalpTrianglePositions(std::vector<QVector2D> channels);
+  std::vector<QVector2D> generateScalpTrianglePositionsBetter(std::vector<QVector2D> channels);
+  std::vector<QVector3D> generateScalpTriangleColors(std::vector<QVector2D> channels);
+  std::vector<GLfloat> generateScalpTriangleArray();
 };
 
 #endif // SCALPCANVAS_H

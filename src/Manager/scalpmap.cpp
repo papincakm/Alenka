@@ -183,6 +183,7 @@ void ScalpMap::updatePositionsProjected() {
 		float newY = degToRad(thetas[i]) * sin(degToRad(phis[i]));
 
 		positionsProjected.push_back(QVector2D(radToDeg(newX), radToDeg(newY)));
+		//positionsProjected.push_back(QVector2D(positions[i].x(), positions[i].y()));
 		i++;
 	}
 

@@ -5,5 +5,9 @@
 		<file>montageHeader.cl</file>
 		<file>rectangleLine.vert</file>
 		<file>signal.vert</file>
+		<file>single.vert</file>
+		<file>circle.frag</file>
+		<file>triangle.vert</file>
+		<file>channel.frag</file>
 	</qresource>
 </RCC>
