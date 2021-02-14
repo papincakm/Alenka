@@ -66,8 +66,10 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<QVector2D> positions;
   GLuint posBuffer;
   //TODO: replace with single struct
-  std::vector<QVector2D> trianglePositions;
+  std::vector<QVector2D> triangleVertices;
   std::vector<QVector3D> triangleColors;
+  //TODO: for testing
+  std::vector<float> triangleFrequencies;
   std::vector<GLfloat> posBufferData;
 
 public:

@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 #include <QVector2D>
+#include <delaunator.hpp>
 
 #include <detailedexception.h>
 
@@ -114,6 +115,7 @@ void ScalpCanvas::initializeGL() {
 	glEnable(GL_POINT_SPRITE);
 	
 	//circle version
+	//TODO: rename shaders to something more meaningful
 	QFile pointVertFile(":/single.vert");
 	pointVertFile.open(QIODevice::ReadOnly);
 	string pointVert = pointVertFile.readAll().toStdString();
@@ -134,27 +136,105 @@ void ScalpCanvas::initializeGL() {
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
+	float aF = 0.2f;
+	float bF = 0.9f;
+	float cF = 0.6f;
+	float dF = 0.3f;
+	float eF = 0.2f;
+	float fF = 0.2f;
+	float gF = 0.3f;
+	float hF = 0.9f;
+	float iF = 0.2f;
+	float jF = 0.7f;
+
 	//initialize data
-	trianglePositions.push_back(QVector2D(0.5f, 0.5f));
-	trianglePositions.push_back(QVector2D(0.0f, 0.0f));
-	trianglePositions.push_back(QVector2D(0.5f, -0.5f));
-	triangleColors.push_back(QVector3D(1.0f, 0.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 1.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 0.0f, 1.0f));
+	//A B C
+	triangleVertices.push_back(QVector2D(-0.25721, -0.07583));
+	triangleVertices.push_back(QVector2D(-0.07736, 0.1205));
+	triangleVertices.push_back(QVector2D(-0.26021, 0.18427));
+	triangleFrequencies.push_back(aF);
+	triangleFrequencies.push_back(bF);
+	triangleFrequencies.push_back(cF);
 
-	trianglePositions.push_back(QVector2D(-0.45f, -0.45f));
-	trianglePositions.push_back(QVector2D(-0.45f, 0.0f));
-	trianglePositions.push_back(QVector2D(-0.25f, -0.25f));
-	triangleColors.push_back(QVector3D(1.0f, 0.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 1.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 0.0f, 1.0f));
+	//C B D
+	triangleVertices.push_back(QVector2D(-0.26021, 0.18427));
+	triangleVertices.push_back(QVector2D(-0.07736, 0.1205));
+	triangleVertices.push_back(QVector2D(-0.03607, 0.37819));
+	triangleFrequencies.push_back(cF);
+	triangleFrequencies.push_back(bF);
+	triangleFrequencies.push_back(dF);
 
-	trianglePositions.push_back(QVector2D(-0.45f, -0.45f));
-	trianglePositions.push_back(QVector2D(-0.45f, 0.0f));
-	trianglePositions.push_back(QVector2D(-0.25f, -0.25f));
-	triangleColors.push_back(QVector3D(1.0f, 0.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 1.0f, 0.0f));
-	triangleColors.push_back(QVector3D(0.0f, 0.0f, 1.0f));
+	//B D E
+	triangleVertices.push_back(QVector2D(-0.07736, 0.1205));
+	triangleVertices.push_back(QVector2D(-0.03607, 0.37819));
+	triangleVertices.push_back(QVector2D(0.05444, 0.13698));
+	triangleFrequencies.push_back(bF);
+	triangleFrequencies.push_back(dF);
+	triangleFrequencies.push_back(eF);
+
+	//D E F
+	triangleVertices.push_back(QVector2D(-0.03607, 0.37819));
+	triangleVertices.push_back(QVector2D(0.05444, 0.13698));
+	triangleVertices.push_back(QVector2D(0.11316, 0.33157));
+	triangleFrequencies.push_back(dF);
+	triangleFrequencies.push_back(eF);
+	triangleFrequencies.push_back(fF);
+
+	//A B G
+	triangleVertices.push_back(QVector2D(-0.25721, -0.07583));
+	triangleVertices.push_back(QVector2D(-0.07736, 0.1205));
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleFrequencies.push_back(aF);
+	triangleFrequencies.push_back(bF);
+	triangleFrequencies.push_back(gF);
+
+	//E B G
+	triangleVertices.push_back(QVector2D(0.05444, 0.13698));
+	triangleVertices.push_back(QVector2D(-0.07736, 0.1205));
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleFrequencies.push_back(eF);
+	triangleFrequencies.push_back(bF);
+	triangleFrequencies.push_back(gF);
+
+	//G E H
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleVertices.push_back(QVector2D(0.05444, 0.13698));
+	triangleVertices.push_back(QVector2D(0.072, -0.04267));
+	triangleFrequencies.push_back(gF);
+	triangleFrequencies.push_back(eF);
+	triangleFrequencies.push_back(hF);
+
+	//F E H
+	triangleVertices.push_back(QVector2D(0.11316, 0.33157));
+	triangleVertices.push_back(QVector2D(0.05444, 0.13698));
+	triangleVertices.push_back(QVector2D(0.072, -0.04267));
+	triangleFrequencies.push_back(fF);
+	triangleFrequencies.push_back(eF);
+	triangleFrequencies.push_back(hF);
+	
+	//A G I
+	triangleVertices.push_back(QVector2D(-0.25721, -0.07583));
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleVertices.push_back(QVector2D(-0.11384, -0.33526));
+	triangleFrequencies.push_back(aF);
+	triangleFrequencies.push_back(gF);
+	triangleFrequencies.push_back(iF);
+	
+	//J G I
+	triangleVertices.push_back(QVector2D(0.03223, -0.20319));
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleVertices.push_back(QVector2D(-0.11384, -0.33526));
+	triangleFrequencies.push_back(jF);
+	triangleFrequencies.push_back(gF);
+	triangleFrequencies.push_back(iF);
+
+	//J G H
+	triangleVertices.push_back(QVector2D(0.03223, -0.20319));
+	triangleVertices.push_back(QVector2D(-0.06179, -0.07551));
+	triangleVertices.push_back(QVector2D(0.072, -0.04267));
+	triangleFrequencies.push_back(jF);
+	triangleFrequencies.push_back(gF);
+	triangleFrequencies.push_back(hF);
 
 	posBufferData = generateScalpTriangleArray();
 
@@ -164,9 +244,9 @@ void ScalpCanvas::initializeGL() {
 }
 
 void ScalpCanvas::updatePositions() {
-	trianglePositions = generateScalpTrianglePositions(positions);
+	triangleVertices = generateScalpTrianglePositions(positions);
 
-	triangleColors = generateScalpTriangleColors(trianglePositions);
+	triangleColors = generateScalpTriangleColors(triangleVertices);
 }
 
 void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
@@ -324,13 +404,10 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	std::vector<GLfloat> triangles;
 
 	//TODO: refactor with single struct
-	for (int i = 0; i < trianglePositions.size(); i++) {
-		triangles.push_back(trianglePositions[i].x());
-		triangles.push_back(trianglePositions[i].y());
-
-		triangles.push_back(triangleColors[i].x());
-		triangles.push_back(triangleColors[i].y());
-		triangles.push_back(triangleColors[i].z());
+	for (int i = 0; i < triangleVertices.size(); i++) {
+		triangles.push_back(triangleVertices[i].x());
+		triangles.push_back(triangleVertices[i].y());
+		triangles.push_back(triangleFrequencies[i]);
 	}
 
 	return triangles;
@@ -363,12 +440,12 @@ void ScalpCanvas::paintGL() {
 		
 		// 1st attribute buffer : vertices
 		gl()->glEnableVertexAttribArray(0);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void*)0);
+		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
 
 		gl()->glEnableVertexAttribArray(1);
-		gl()->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (char*) (sizeof(GLfloat) * 2));
+		gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*) (sizeof(GLfloat) * 2));
 
-		gl()->glDrawArrays(GL_TRIANGLES, 0, trianglePositions.size());
+		gl()->glDrawArrays(GL_TRIANGLES, 0, triangleVertices.size());
 		gl()->glDisableVertexAttribArray(0);
 		gl()->glDisableVertexAttribArray(1);
 
@@ -378,12 +455,12 @@ void ScalpCanvas::paintGL() {
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-		gl()->glBufferData(GL_ARRAY_BUFFER, trianglePositions.size() * sizeof(QVector2D), &trianglePositions[0], GL_STATIC_DRAW);
+		gl()->glBufferData(GL_ARRAY_BUFFER, triangleVertices.size() * sizeof(QVector2D), &triangleVertices[0], GL_STATIC_DRAW);
 
 		gl()->glEnableVertexAttribArray(0);
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		gl()->glDrawArrays(GL_POINTS, 0, trianglePositions.size());
+		gl()->glDrawArrays(GL_POINTS, 0, triangleVertices.size());
 		gl()->glDisableVertexAttribArray(0);
 
 		gl()->glFlush();
