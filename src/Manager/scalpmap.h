@@ -46,6 +46,7 @@ private:
 private slots:
 	void updateConnections(int row);
 	void updateLabels();
+	void updateSpectrum();
 };
 
 #endif // SCALPMAP_H

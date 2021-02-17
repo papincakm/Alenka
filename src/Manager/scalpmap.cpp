@@ -53,6 +53,10 @@ void ScalpMap::updateConnections(int row) {
 				SLOT(updateLabels()));
 			trackConnections.push_back(c);
 
+			c = connect(&file->infoTable, SIGNAL(positionChanged(int, double)), this,
+				SLOT(updateSpectrum()));
+			trackConnections.push_back(c);
+
 			updateLabels();
 		}
 	}
@@ -111,6 +115,24 @@ void ScalpMap::updateLabels() {
 	scalpCanvas->setChannelPositions(positionsProjected);
 
 	update();
+}
+
+void ScalpMap::updateSpectrum() {
+	if (!file || !scalpCanvas)
+		return;
+
+	//assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
+
+	const int position = OpenDataFile::infoTable.getPosition();
+
+	std::vector<float> channelDataBuffer(file->file->getChannelCount());
+
+	file->file->readSignal(channelDataBuffer.data(), position, position);
+
+	assert(static_cast<int>(channelDataBuffer.size()) == static_cast<int>(file->file->getChannelCount()));
+
+	scalpCanvas->updatePositionFrequencies(channelDataBuffer);
+	//update();
 }
 
 float degToRad(float n) {

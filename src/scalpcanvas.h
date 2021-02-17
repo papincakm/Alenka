@@ -54,6 +54,17 @@ struct Edge {
  * This class also handles user keyboard and mouse input. Scrolling related
  * events are skipped and handled by the parent.
  */
+
+class ElectrodePosition {
+public:
+	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }
+	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), frequency(0) { }
+
+	GLfloat x = 0;
+	GLfloat y = 0;
+	GLfloat frequency = 0;
+};
+
 class ScalpCanvas : public QOpenGLWidget {
   Q_OBJECT
 	
@@ -63,13 +74,14 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<CanvasTrack> tracks;
   std::vector<QString> labels;
   //TODO: should be pair of floats probably or custom class
-  std::vector<QVector2D> positions;
+  std::vector<ElectrodePosition> positions;
   GLuint posBuffer;
   //TODO: replace with single struct
-  std::vector<QVector2D> triangleVertices;
+  std::vector<ElectrodePosition> triangulatedPositions;
   std::vector<QVector3D> triangleColors;
   //TODO: for testing
   std::vector<float> triangleFrequencies;
+  std::map<QVector2D, GLfloat> posFrequencies;
   std::vector<GLfloat> posBufferData;
 
 public:
@@ -82,6 +94,8 @@ public:
   void addTrack(const QString& label, const QVector2D& position);
   void resetTracks();
   void updatePositions();
+  void updatePositionFrequencies(const std::vector<float>& channelDataBuffer);
+  void updatePositionFrequencies();
 
 protected:
   void initializeGL() override;
@@ -111,10 +125,10 @@ private:
 
   void renderText(float x, float y, const QString &str, const QFont &font);
 
-  std::vector<QVector2D> generateScalpTrianglePositions(std::vector<QVector2D> channels);
-  std::vector<QVector2D> generateScalpTrianglePositionsBetter(std::vector<QVector2D> channels);
-  std::vector<QVector3D> generateScalpTriangleColors(std::vector<QVector2D> channels);
+  std::vector<ElectrodePosition> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
+  std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
+
 };
 
 #endif // SCALPCANVAS_H
