@@ -445,23 +445,6 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	//TODO: refactor with single struct
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
 
-		//Barycentric  coords
-		if (barZ == 1) {
-			barX = 1;
-			barY = 0;
-			barZ = 0;
-		}
-		else if (barX == 1) {
-			barX = 0;
-			barY = 1;
-			barZ = 0;
-		}
-		else if (barY == 1) {
-			barX = 0;
-			barY = 0;
-			barZ = 1;
-		}
-
 		//frequency vec
 		if (i % 3 == 0) {
 			freqVec = QVector3D(triangulatedPositions[i].frequency, triangulatedPositions[i + 1].frequency,
@@ -488,14 +471,6 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 		triangles.push_back(posVecB.y());
 		triangles.push_back(posVecC.x());
 		triangles.push_back(posVecC.y());
-
-		triangles.push_back(barX);
-		triangles.push_back(barY);
-		triangles.push_back(barZ);
-
-		triangles.push_back(freqVec.x());
-		triangles.push_back(freqVec.y());
-		triangles.push_back(freqVec.z());
 
 		//Colors
 		//TODO: use array or better(?), compute color from freq in vertex shader
@@ -532,31 +507,6 @@ void ScalpCanvas::paintGL() {
 		//setup
 		gl()->glUseProgram(channelProgram->getGLProgram());
 
-		//texture
-		/*const float texData[12] =
-			{	254, 217, 138,
-				252, 252, 252,
-				18, 139, 184,
-				203, 79, 121
-			};
-
-		int width = 2;
-		int height = 2;
-
-		uint tex;
-
-		glGenTextures(1, &tex);
-		glBindTexture(GL_TEXTURE_2D, tex);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// set texture wrapping to GL_REPEAT (default wrapping method)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		// set texture filtering parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texData);*/
-
-
 		//posBufferData.clear();
 		posBufferData = generateScalpTriangleArray();
 
@@ -566,31 +516,25 @@ void ScalpCanvas::paintGL() {
 		
 		// 1st attribute buffer : vertices
 		gl()->glEnableVertexAttribArray(0);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (void*)0);
+		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (void*)0);
 
 		gl()->glEnableVertexAttribArray(1);
-		gl()->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 2));
+		gl()->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*)(sizeof(GLfloat) * 2));
 
 		gl()->glEnableVertexAttribArray(2);
-		gl()->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 4));
+		gl()->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*)(sizeof(GLfloat) * 4));
 
 		gl()->glEnableVertexAttribArray(3);
-		gl()->glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 6));
+		gl()->glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*)(sizeof(GLfloat) * 6));
 
 		gl()->glEnableVertexAttribArray(4);
-		gl()->glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*) (sizeof(GLfloat) * 8));
+		gl()->glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*) (sizeof(GLfloat) * 8));
 
 		gl()->glEnableVertexAttribArray(5);
-		gl()->glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 11));
+		gl()->glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*)(sizeof(GLfloat) * 11));
 
 		gl()->glEnableVertexAttribArray(6);
-		gl()->glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 14));
-
-		gl()->glEnableVertexAttribArray(7);
-		gl()->glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 17));
-
-		gl()->glEnableVertexAttribArray(8);
-		gl()->glVertexAttribPointer(8, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 23, (char*)(sizeof(GLfloat) * 20));
+		gl()->glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 17, (char*)(sizeof(GLfloat) * 14));
 
 		gl()->glDrawArrays(GL_TRIANGLES, 0, triangulatedPositions.size());
 		gl()->glDisableVertexAttribArray(0);
@@ -600,8 +544,6 @@ void ScalpCanvas::paintGL() {
 		gl()->glDisableVertexAttribArray(4);
 		gl()->glDisableVertexAttribArray(5);
 		gl()->glDisableVertexAttribArray(6);
-		gl()->glDisableVertexAttribArray(7);
-		gl()->glDisableVertexAttribArray(8);
 
 
 		// draw channels TODO: refactor - dont use points

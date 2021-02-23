@@ -11,8 +11,9 @@ precision mediump float;
 #ifdef GLSL_110
 #extension GL_EXT_gpu_shader4 : enable
 attribute vec2 position;
-attribute vec3 barPosition;
-attribute vec3 freqVec;
+attribute vec2 positionA;
+attribute vec2 positionB;
+attribute vec2 positionC;
 attribute vec3 colorA;
 attribute vec3 colorB;
 attribute vec3 colorC;
@@ -21,8 +22,6 @@ in vec2 position;
 in vec2 positionA;
 in vec2 positionB;
 in vec2 positionC;
-in vec3 barPosition;
-in vec3 freqVec;
 in vec3 colorA;
 in vec3 colorB;
 in vec3 colorC;
@@ -32,8 +31,6 @@ out vec2 oPosition;
 out vec2 oPositionA;
 out vec2 oPositionB;
 out vec2 oPositionC;
-out vec3 oBarPosition;
-out vec3 oFreqVec;
 out vec3 oColorA;
 out vec3 oColorB;
 out vec3 oColorC;
@@ -50,6 +47,4 @@ void main()
   oColorA = colorA;
   oColorB = colorB;
   oColorC = colorC;
-  oBarPosition = barPosition;
-  oFreqVec = freqVec;
 }
