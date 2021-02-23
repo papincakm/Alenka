@@ -28,6 +28,8 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 
 	scalpCanvas = new ScalpCanvas(this);
 	box->addWidget(scalpCanvas);
+	setMinimumHeight(100);
+	setMinimumWidth(100);
 }
 
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel

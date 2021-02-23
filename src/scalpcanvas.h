@@ -20,6 +20,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <QVector3D>
 
 namespace AlenkaSignal {
 class OpenCLContext;
@@ -55,6 +56,53 @@ struct Edge {
  * events are skipped and handled by the parent.
  */
 
+class ElectrodePositionColored {
+public:
+	ElectrodePositionColored(GLfloat x, GLfloat y, GLfloat frequency, QVector3D frequencyVec) : x(x), y(y),
+		color(getFreqColor(frequency)), frequencyVec(frequencyVec) { }
+	ElectrodePositionColored(GLfloat x, GLfloat y) : x(x), y(y), color(getFreqColor(0)) { }
+
+	GLfloat x = 0;
+	GLfloat y = 0;
+	QVector3D frequencyVec;
+	GLfloat frequency = 0;
+	QVector3D color;
+private:
+
+	QVector3D getFreqColor(const float& oFrequency) {
+		const float firstT = 0.25;
+		const float secondT = 0.5;
+		const float thirdT = 0.75;
+
+		float red = 0;
+		float green = 0;
+		float blue = 0;
+
+		if (oFrequency < firstT) {
+			red = 0;
+			green = oFrequency * 4;
+			blue = 1;
+		}
+		else if (oFrequency < secondT) {
+			red = 0;
+			green = 1;
+			blue = 1 - ((oFrequency - firstT) * 4);
+		}
+		else if (oFrequency < thirdT) {
+			red = ((oFrequency - secondT) * 4);
+			green = 1;
+			blue = 0;
+		}
+		else {
+			red = 1;
+			green = 1 - ((oFrequency - thirdT) * 4);
+			blue = 0;
+		}
+
+		return QVector3D(red, green, blue);
+	}
+};
+
 class ElectrodePosition {
 public:
 	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }
@@ -77,7 +125,7 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<ElectrodePosition> positions;
   GLuint posBuffer;
   //TODO: replace with single struct
-  std::vector<ElectrodePosition> triangulatedPositions;
+  std::vector<ElectrodePositionColored> triangulatedPositions;
   std::vector<QVector3D> triangleColors;
   //TODO: for testing
   std::vector<float> triangleFrequencies;
@@ -125,7 +173,7 @@ private:
 
   void renderText(float x, float y, const QString &str, const QFont &font);
 
-  std::vector<ElectrodePosition> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
+  std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
 
