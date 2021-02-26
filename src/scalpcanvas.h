@@ -58,15 +58,28 @@ struct Edge {
 
 class ElectrodePositionColored {
 public:
+	ElectrodePositionColored() : color(QVector3D(0, 0, 0)) {};
 	ElectrodePositionColored(GLfloat x, GLfloat y, GLfloat frequency, QVector3D frequencyVec) : x(x), y(y),
 		color(getFreqColor(frequency)), frequencyVec(frequencyVec) { }
 	ElectrodePositionColored(GLfloat x, GLfloat y) : x(x), y(y), color(getFreqColor(0)) { }
+
+	//TODO: change float compare values to smthng more standard
+	bool operator == (const ElectrodePositionColored& position) const
+	{
+		return ((position.x - x < 0.00001 && position.y - y < 0.00001) || (position.x - y < 0.00001 && position.y - x < 0.00001));
+	}
+
+	bool operator != (const ElectrodePositionColored& position) const
+	{
+		return !((position.x - x < 0.00001 && position.y - y < 0.00001) || (position.x - y < 0.00001 && position.y - x < 0.00001));
+	}
 
 	GLfloat x = 0;
 	GLfloat y = 0;
 	QVector3D frequencyVec;
 	GLfloat frequency = 0;
 	QVector3D color;
+
 private:
 
 	QVector3D getFreqColor(const float& oFrequency) {
@@ -126,6 +139,7 @@ class ScalpCanvas : public QOpenGLWidget {
   GLuint posBuffer;
   //TODO: replace with single struct
   std::vector<ElectrodePositionColored> triangulatedPositions;
+  std::vector<int> triangleComplimentaryVertices;
   std::vector<QVector3D> triangleColors;
   //TODO: for testing
   std::vector<float> triangleFrequencies;
@@ -141,7 +155,7 @@ public:
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
   void addTrack(const QString& label, const QVector2D& position);
   void resetTracks();
-  void updatePositions();
+  void updatePositionTriangles();
   void updatePositionFrequencies(const std::vector<float>& channelDataBuffer);
   void updatePositionFrequencies();
 
@@ -176,7 +190,9 @@ private:
   std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
-
+  void generateComplimentaryVertices();
+  int getComplimentaryVertex(const ElectrodePositionColored& first,
+	  const ElectrodePositionColored& second, const ElectrodePositionColored& third);
 };
 
 #endif // SCALPCANVAS_H
