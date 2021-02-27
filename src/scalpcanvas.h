@@ -139,7 +139,6 @@ class ScalpCanvas : public QOpenGLWidget {
   GLuint posBuffer;
   //TODO: replace with single struct
   std::vector<ElectrodePositionColored> triangulatedPositions;
-  std::vector<int> triangleComplimentaryVertices;
   std::vector<QVector3D> triangleColors;
   //TODO: for testing
   std::vector<float> triangleFrequencies;
@@ -190,9 +189,6 @@ private:
   std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
-  void generateComplimentaryVertices();
-  int getComplimentaryVertex(const ElectrodePositionColored& first,
-	  const ElectrodePositionColored& second, const ElectrodePositionColored& third);
 };
 
 #endif // SCALPCANVAS_H

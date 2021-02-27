@@ -147,174 +147,62 @@ void ScalpCanvas::initializeGL() {
 	float iF = 0.2f;
 	float jF = 0.7f;
 
-	/*//initialize data
-	//A B C
-	triangulatedPositions.push_back(ElectrodePosition(-0.25721, -0.07583, aF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.07736, 0.1205, bF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.26021, 0.18427, cF));
-
-	//C B D
-	triangulatedPositions.push_back(ElectrodePosition(-0.26021, 0.18427, cF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.07736, 0.1205, bF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.03607, 0.37819, dF));
-
-	//B D E
-	triangulatedPositions.push_back(ElectrodePosition(-0.07736, 0.1205, bF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.03607, 0.37819, dF));
-	triangulatedPositions.push_back(ElectrodePosition(0.05444, 0.13698, eF));
-
-	//D E F
-	triangulatedPositions.push_back(ElectrodePosition(-0.03607, 0.37819, dF));
-	triangulatedPositions.push_back(ElectrodePosition(0.05444, 0.13698, eF));
-	triangulatedPositions.push_back(ElectrodePosition(0.11316, 0.33157, fF));
-
-	//A B G
-	triangulatedPositions.push_back(ElectrodePosition(-0.25721, -0.07583, aF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.07736, 0.1205, bF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-
-	//E B G
-	triangulatedPositions.push_back(ElectrodePosition(0.05444, 0.13698, eF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.07736, 0.1205, bF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-
-	//G E H
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-	triangulatedPositions.push_back(ElectrodePosition(0.05444, 0.13698, eF));
-	triangulatedPositions.push_back(ElectrodePosition(0.072, -0.04267, hF));
-
-	//F E H
-	triangulatedPositions.push_back(ElectrodePosition(0.11316, 0.33157, fF));
-	triangulatedPositions.push_back(ElectrodePosition(0.05444, 0.13698, eF));
-	triangulatedPositions.push_back(ElectrodePosition(0.072, -0.04267, hF));
-	
-	//A G I
-	triangulatedPositions.push_back(ElectrodePosition(-0.25721, -0.07583, aF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.11384, -0.33526, iF));
-	
-	//J G I
-	triangulatedPositions.push_back(ElectrodePosition(0.03223, -0.20319, jF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.11384, -0.33526, iF));
-
-	//J G H
-	triangulatedPositions.push_back(ElectrodePosition(0.03223, -0.20319, jF));
-	triangulatedPositions.push_back(ElectrodePosition(-0.06179, -0.07551, gF));
-	triangulatedPositions.push_back(ElectrodePosition(0.072, -0.04267, hF));
-	*/
+	//initialize data
 
 	//A B C
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, cF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(aF, bF, cF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.26021, 0.18427, cF, QVector3D(aF, bF, cF)));
 
-	//COMP D G
-	triangleComplimentaryVertices.push_back(5);
-	triangleComplimentaryVertices.push_back(14);
-	triangleComplimentaryVertices.push_back(-1);
-
 	//C B D
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.26021, 0.18427, cF, QVector3D(cF, bF, dF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(cF, bF, dF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(cF, bF, dF)));
-
-	//COMP A E
-	triangleComplimentaryVertices.push_back(0);
-	triangleComplimentaryVertices.push_back(8);
-	triangleComplimentaryVertices.push_back(-1);
 
 	//B D E
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(bF, dF, eF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(bF, dF, eF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(bF, dF, eF)));
 
-	//COMP C G F
-	triangleComplimentaryVertices.push_back(2);
-	triangleComplimentaryVertices.push_back(14);
-	triangleComplimentaryVertices.push_back(11);
-
 	//D E F
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(dF, eF, fF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(dF, eF, fF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.11316, 0.33157, fF, QVector3D(dF, eF, fF)));
-
-	//COMP B H
-	triangleComplimentaryVertices.push_back(1);
-	triangleComplimentaryVertices.push_back(20);
-	triangleComplimentaryVertices.push_back(-1);
 
 	//A B G
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, gF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(aF, bF, gF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(aF, bF, gF)));
 
-	//COMP C E I
-	triangleComplimentaryVertices.push_back(2);
-	triangleComplimentaryVertices.push_back(8);
-	triangleComplimentaryVertices.push_back(26);
-
 	//E B G
 	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(eF, bF, gF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(eF, bF, gF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(eF, bF, gF)));
-
-	//COMP D A H
-	triangleComplimentaryVertices.push_back(5);
-	triangleComplimentaryVertices.push_back(0);
-	triangleComplimentaryVertices.push_back(20);
 
 	//G E H
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(gF, eF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(gF, eF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(gF, eF, hF)));
 
-	//COMP B F J
-	triangleComplimentaryVertices.push_back(1);
-	triangleComplimentaryVertices.push_back(11);
-	triangleComplimentaryVertices.push_back(27);
-
 	//F E H
 	triangulatedPositions.push_back(ElectrodePositionColored(0.11316, 0.33157, fF, QVector3D(fF, eF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(fF, eF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(fF, eF, hF)));
-
-	//COMP D H
-	triangleComplimentaryVertices.push_back(5);
-	triangleComplimentaryVertices.push_back(20);
-	triangleComplimentaryVertices.push_back(-1);
 
 	//A G I
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, gF, iF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(aF, gF, iF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.11384, -0.33526, iF, QVector3D(aF, gF, iF)));
 
-	//COMP B J
-	triangleComplimentaryVertices.push_back(1);
-	triangleComplimentaryVertices.push_back(27);
-	triangleComplimentaryVertices.push_back(-1);
-
 	//J G I
 	triangulatedPositions.push_back(ElectrodePositionColored(0.03223, -0.20319, jF, QVector3D(jF, gF, iF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(jF, gF, iF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.11384, -0.33526, iF, QVector3D(jF, gF, iF)));
 
-	//COMP A H
-	triangleComplimentaryVertices.push_back(0);
-	triangleComplimentaryVertices.push_back(20);
-	triangleComplimentaryVertices.push_back(-1);
-
 	//J G H
 	triangulatedPositions.push_back(ElectrodePositionColored(0.03223, -0.20319, jF, QVector3D(jF, gF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(jF, gF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(jF, gF, hF)));
-
-	//COMP E I
-	triangleComplimentaryVertices.push_back(8);
-	triangleComplimentaryVertices.push_back(26);
-	triangleComplimentaryVertices.push_back(-1);
-
-    //generateComplimentaryVertices();
 
 	posBufferData = generateScalpTriangleArray();
 
@@ -424,59 +312,11 @@ void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDat
 	update();
 }
 
-//TODO: refactor (dont like the ifs, make it better)
-int ScalpCanvas::getComplimentaryVertex(const ElectrodePositionColored& first,
-	const ElectrodePositionColored& second, const ElectrodePositionColored& third) {
-	for (int i = 0; i < triangulatedPositions.size(); i += 3) {
-		if (first == triangulatedPositions[i] && second == triangulatedPositions[i + 1] &&
-			third != triangulatedPositions[i + 2]) {
-			return i + 2;
-		}
-
-		if (first == triangulatedPositions[i + 1] && second == triangulatedPositions[i + 2] &&
-			third != triangulatedPositions[i]) {
-			return i;
-		}
-
-		if (first == triangulatedPositions[i] && second == triangulatedPositions[i + 2] &&
-			third != triangulatedPositions[i + 1]) {
-			return i + 1;
-		}
-	}
-	// return default
-
-	return -1;
-}
-
-//TODO: refactor
-void ScalpCanvas::generateComplimentaryVertices() {
-	assert(static_cast<int>(triangulatedPositions.size()) % 3 == 0);
-
-	triangleComplimentaryVertices.clear();
-
-	for (int i = 0; i < triangulatedPositions.size(); i += 3) {
-		//first edge
-		triangleComplimentaryVertices.push_back(getComplimentaryVertex(triangulatedPositions[i],
-			triangulatedPositions[i + 1], triangulatedPositions[i + 2]));
-
-		//second edge
-		triangleComplimentaryVertices.push_back(getComplimentaryVertex(triangulatedPositions[i + 1],
-			triangulatedPositions[i + 2], triangulatedPositions[i]));
-
-		//third edge
-		triangleComplimentaryVertices.push_back(getComplimentaryVertex(triangulatedPositions[i],
-			triangulatedPositions[i + 2], triangulatedPositions[i + 1]));
-	}
-}
-
 void ScalpCanvas::updatePositionTriangles() {
 	updatePositionFrequencies();
 
 	triangulatedPositions = generateScalpTriangleDrawPositions(positions);
 	//triangleColors = generateScalpTriangleColors(triangleVertices);
-
-	generateComplimentaryVertices();
-	assert(static_cast<int>(triangleComplimentaryVertices.size()) == static_cast<int>(triangulatedPositions.size()));
 
 	//TODO: refactor
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
@@ -536,99 +376,19 @@ std::vector<QVector3D> ScalpCanvas::generateScalpTriangleColors(std::vector<Elec
 std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	std::vector<GLfloat> triangles;
 
-	int barX = 0;
-	int barY = 0;
-	int barZ = 1;
-
-	std::vector<GLfloat> vertices;
-	std::vector<GLfloat> colors;
-	int compCnt = 0;
-	int triangleCnt = 0;
-
 	//TODO: refactor with single struct
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
-		//Barycentric  coords
-		if (barZ == 1) {
-			barX = 1;
-			barY = 0;
-			barZ = 0;
-		}
-		else if (barX == 1) {
-			barX = 0;
-			barY = 1;
-			barZ = 0;
-		}
-		else if (barY == 1) {
-			barX = 0;
-			barY = 0;
-			barZ = 1;
-		}
-		//frequency vec
-		if (i % 3 == 0) {
-			//setup triangle colors and vertices
-			colors.clear();
-			vertices.clear();
-
-			triangleCnt++;
-
-			for (int j = 0; j < 3; j++) {
-				vertices.push_back(triangulatedPositions[i + j].x);
-				vertices.push_back(triangulatedPositions[i + j].y);
-
-				colors.push_back(triangulatedPositions[i + j].color.x());
-				colors.push_back(triangulatedPositions[i + j].color.y());
-				colors.push_back(triangulatedPositions[i + j].color.z());
-			}
-
-			for (int j = 0; j < 3; j++) {
-				//i + j is valid vertex
-				if (triangleComplimentaryVertices[i + j] >= 0) {
-					vertices.push_back(triangulatedPositions[triangleComplimentaryVertices[i + j]].x);
-					vertices.push_back(triangulatedPositions[triangleComplimentaryVertices[i + j]].y);
-
-					colors.push_back(triangulatedPositions[triangleComplimentaryVertices[i + j]].color.x());
-					colors.push_back(triangulatedPositions[triangleComplimentaryVertices[i + j]].color.y());
-					colors.push_back(triangulatedPositions[triangleComplimentaryVertices[i + j]].color.z());
-					compCnt++;
-				}
-				else {
-					//vertex doesn't exist but opengl expects float data here
-					//TODO: find out if its possible to avoid this
-					vertices.push_back(-1);
-					vertices.push_back(-1);
-
-					colors.push_back(0);
-					colors.push_back(0);
-					colors.push_back(0);
-				}
-			}
-		}
 		//current position
 		//TODO: can this be avoided?
 		triangles.push_back(triangulatedPositions[i].x);
 		triangles.push_back(triangulatedPositions[i].y);
 
-		//triangle vertices
-		assert(static_cast<int>(vertices.size()) == 12);
-		triangles.insert(triangles.end(), vertices.begin(), vertices.end());
-
-		//Colors
-		//TODO: compute color from freq in vertex shader (deprecated?)
-		assert(static_cast<int>(colors.size()) == 18);
-		triangles.insert(triangles.end(), colors.begin(), colors.end());
-
-		//Barycentric
-		triangles.push_back(barX);
-		triangles.push_back(barY);
-		triangles.push_back(barZ);
-
+		//frequency
 		triangles.push_back(triangulatedPositions[i].frequency);
+
 		if (triangulatedPositions[i].frequency < 0.000001)
 			std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
 	}
-
-	std::cout << "complimentary: " << compCnt << "\n";
-	std::cout << "triangles: " << triangleCnt << "\n";
 
 	return triangles;
 }
@@ -705,31 +465,19 @@ void ScalpCanvas::paintGL() {
 		// 1st attribute buffer : vertices
 		//current position
 		gl()->glEnableVertexAttribArray(0);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (void*)0);
+		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
 
-		//vertices
-		int offset = 2;
-		for (int i = 1; i < 7; i++) {
-			gl()->glEnableVertexAttribArray(i);
-			gl()->glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
-			offset += 2;
-		}
-
-		//colors
-		for (int i = 7; i < 14; i++) {
-			gl()->glEnableVertexAttribArray(i);
-			gl()->glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
-			offset += 3;
-		}
-
-		gl()->glEnableVertexAttribArray(14);
-		gl()->glVertexAttribPointer(14, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
+		gl()->glEnableVertexAttribArray(1);
+		gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
 
 		gl()->glDrawArrays(GL_TRIANGLES, 0, triangulatedPositions.size());
-		for (int i = 0; i < 15; i++) {
+
+		for (int i = 0; i < 2; i++) {
 			gl()->glDisableVertexAttribArray(i);
 		}
+
+		gl()->glFlush();
 
 		// draw channels TODO: refactor - dont use points
 		/*gl()->glUseProgram(labelProgram->getGLProgram());
