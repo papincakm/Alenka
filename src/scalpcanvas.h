@@ -60,7 +60,7 @@ class ElectrodePositionColored {
 public:
 	ElectrodePositionColored() : color(QVector3D(0, 0, 0)) {};
 	ElectrodePositionColored(GLfloat x, GLfloat y, GLfloat frequency, QVector3D frequencyVec) : x(x), y(y),
-		color(getFreqColor(frequency)), frequencyVec(frequencyVec) { }
+		color(getFreqColor(frequency)), frequencyVec(frequencyVec), frequency(frequency) { }
 	ElectrodePositionColored(GLfloat x, GLfloat y) : x(x), y(y), color(getFreqColor(0)) { }
 
 	//TODO: change float compare values to smthng more standard

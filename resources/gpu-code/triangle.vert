@@ -14,17 +14,20 @@ attribute vec2 currentPosition;
 attribute vec2 positions[6];
 attribute vec3 colors[6];
 attribute vec3 barCoords;
+attribute float frequency;
 #else
 in vec2 currentPosition;
 in vec2 positions[6];
 in vec3 colors[6];
 in vec3 barCoords;
+in float frequency;
 #endif
 
 out vec2 oCurrentPosition;
 flat out vec2 oPositions[6];
 flat out vec3 oColors[6];
 out vec3 oBarCoords;
+out float oFrequency;
 
 void main()
 {
@@ -37,4 +40,5 @@ void main()
     oColors[i] = colors[i];
   }
   oBarCoords = barCoords;
+  oFrequency = frequency;
 }

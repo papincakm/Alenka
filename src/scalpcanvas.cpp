@@ -314,7 +314,7 @@ void ScalpCanvas::initializeGL() {
 	triangleComplimentaryVertices.push_back(26);
 	triangleComplimentaryVertices.push_back(-1);
 
-	//generateComplimentaryVertices();
+    //generateComplimentaryVertices();
 
 	posBufferData = generateScalpTriangleArray();
 
@@ -621,6 +621,10 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 		triangles.push_back(barX);
 		triangles.push_back(barY);
 		triangles.push_back(barZ);
+
+		triangles.push_back(triangulatedPositions[i].frequency);
+		if (triangulatedPositions[i].frequency < 0.000001)
+			std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
 	}
 
 	std::cout << "complimentary: " << compCnt << "\n";
@@ -646,7 +650,52 @@ void ScalpCanvas::paintGL() {
 		//setup
 		gl()->glUseProgram(channelProgram->getGLProgram());
 
-		//posBufferData.clear();
+		posBufferData.clear();
+
+		//Create a 1D image - for this example it's just a red line
+		//test
+		/*const int stripeImageWidth = 32;
+		GLubyte stripeImage[3 * stripeImageWidth];
+		for (int j = 0; j < stripeImageWidth; j++) {
+			stripeImage[3 * j] = j * 255 / 32; // use a gradient instead of a line
+			stripeImage[3 * j + 1] = 255;
+			stripeImage[3 * j + 2] = 255;
+		}
+
+		GLuint texID;
+		gl()->glGenTextures(1, &texID);
+		gl()->glBindTexture(GL_TEXTURE_1D, texID);
+		gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		gl()->glTexImage1D(GL_TEXTURE_1D, 0, 3, stripeImageWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, stripeImage);
+
+		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		gl()->glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
+		gl()->glDisable(GL_TEXTURE_GEN_S);
+		gl()->glDisable(GL_TEXTURE_2D);
+		gl()->glEnable(GL_TEXTURE_1D);
+		gl()->glBindTexture(GL_TEXTURE_1D, texID);
+
+
+		const int grid_height = 100;
+		const int grid_width = 100;
+
+		GLfloat hist2D[grid_width][grid_height];
+
+		for (int y = 0; y < grid_height; y++) {
+			for (int x = 0; x < grid_width; x++) {
+				hist2D[x][y] = x * y;
+			}
+		}
+
+
+
+		gl()->glFlush();
+		*/
+
 		posBufferData = generateScalpTriangleArray();
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -656,25 +705,29 @@ void ScalpCanvas::paintGL() {
 		// 1st attribute buffer : vertices
 		//current position
 		gl()->glEnableVertexAttribArray(0);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 35, (void*)0);
+		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (void*)0);
 
 		//vertices
 		int offset = 2;
 		for (int i = 1; i < 7; i++) {
 			gl()->glEnableVertexAttribArray(i);
-			gl()->glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 35, (char*)(sizeof(GLfloat) * offset));
+			gl()->glVertexAttribPointer(i, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
 			offset += 2;
 		}
 
 		//colors
 		for (int i = 7; i < 14; i++) {
 			gl()->glEnableVertexAttribArray(i);
-			gl()->glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 35, (char*)(sizeof(GLfloat) * offset));
+			gl()->glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
 			offset += 3;
 		}
 
+		gl()->glEnableVertexAttribArray(14);
+		gl()->glVertexAttribPointer(14, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 36, (char*)(sizeof(GLfloat) * offset));
+
+
 		gl()->glDrawArrays(GL_TRIANGLES, 0, triangulatedPositions.size());
-		for (int i = 0; i < 14; i++) {
+		for (int i = 0; i < 15; i++) {
 			gl()->glDisableVertexAttribArray(i);
 		}
 
@@ -698,6 +751,7 @@ void ScalpCanvas::paintGL() {
 			renderText(positions[i].x, -1 * positions[i].y - 0.02, labels[i], labelFont);
 		}*/
 	}
+
 
 	gl()->glFinish();
 }
