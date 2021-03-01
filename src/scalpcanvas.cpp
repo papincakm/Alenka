@@ -56,7 +56,6 @@ const AbstractEventTable *getEventTable(OpenDataFile *file) {
 } // namespace
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
-
 }
 
 ScalpCanvas::~ScalpCanvas() {
@@ -278,14 +277,24 @@ void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDat
 			max = channelDataBuffer[i];
 		if (channelDataBuffer[i] < min)
 			min = channelDataBuffer[i];
-	}
 
-	max -= min;
-
-	for (int i = 0; i < positions.size(); i++) {
-		positions[i].frequency = (channelDataBuffer[i] - min) / max;
 	}
 	
+	minFrequency = min;
+	maxFrequency = max;
+
+	float maxMinusMin = max - min;
+
+	for (int i = 0; i < positions.size(); i++) {
+		positions[i].frequency = (channelDataBuffer[i] - min) / (maxMinusMin);
+
+		//TODO: use some better method or more formal reperssentation of near zero
+		//TODO: elsewhere too
+		// near 0 shows up as black, mby move this further in data setup
+		if (positions[i].frequency < 0.000001)
+			positions[i].frequency = 0.01f;
+	}
+
 
 	/*for (auto f : channelDataBuffer) {
 		std::cout << " " << f;
@@ -386,11 +395,159 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 		//frequency
 		triangles.push_back(triangulatedPositions[i].frequency);
 
+
 		if (triangulatedPositions[i].frequency < 0.000001)
 			std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
 	}
 
 	return triangles;
+}
+
+
+
+//TODO: refactor with triangle class and operations!!
+//TODO: consider using geometry shader
+std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles) {
+	assert(static_cast<int>(triangles.size()) % 3 == 0);
+
+	std::vector<GLfloat> splitTriangles;
+
+	for (int i = 0; i < triangles.size(); i += 9) {
+		const int vertexOffset = 3;
+		const int yOffset = 1;
+		const int freqOffset = 2;
+
+		//1. vertex, 2. vertex
+		float midPointAx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset];
+		float midPointAy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset + yOffset];
+		float midPointAfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset + freqOffset];
+
+		//1. vertex, 3. vertex
+		float midPointBx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset * 2];
+		float midPointBy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
+		float midPointBfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
+
+		//2. vertex, 3. vertex
+		float midPointCx = 0.5f * triangles[i + vertexOffset] + 0.5f * triangles[i + vertexOffset * 2];
+		float midPointCy = 0.5f * triangles[i + vertexOffset + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
+		float midPointCfreq = 0.5f * triangles[i + vertexOffset + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
+
+		//1. triangle
+		splitTriangles.push_back(triangles[i]);
+		splitTriangles.push_back(triangles[i + yOffset]);
+		splitTriangles.push_back(triangles[i + freqOffset]);
+
+		splitTriangles.push_back(midPointAx);
+		splitTriangles.push_back(midPointAy);
+		splitTriangles.push_back(midPointAfreq);
+
+		splitTriangles.push_back(midPointBx);
+		splitTriangles.push_back(midPointBy);
+		splitTriangles.push_back(midPointBfreq);
+
+		//2. triangle
+		splitTriangles.push_back(midPointAx);
+		splitTriangles.push_back(midPointAy);
+		splitTriangles.push_back(midPointAfreq);
+
+		splitTriangles.push_back(midPointBx);
+		splitTriangles.push_back(midPointBy);
+		splitTriangles.push_back(midPointBfreq);
+
+		splitTriangles.push_back(midPointCx);
+		splitTriangles.push_back(midPointCy);
+		splitTriangles.push_back(midPointCfreq);
+
+		//3. triangle
+		splitTriangles.push_back(triangles[i + vertexOffset]);
+		splitTriangles.push_back(triangles[i + vertexOffset + yOffset]);
+		splitTriangles.push_back(triangles[i + vertexOffset + freqOffset]);
+
+		splitTriangles.push_back(midPointAx);
+		splitTriangles.push_back(midPointAy);
+		splitTriangles.push_back(midPointAfreq);
+
+		splitTriangles.push_back(midPointCx);
+		splitTriangles.push_back(midPointCy);
+		splitTriangles.push_back(midPointCfreq);
+
+		//4. triangle
+		splitTriangles.push_back(triangles[i + vertexOffset * 2]);
+		splitTriangles.push_back(triangles[i + vertexOffset * 2 + yOffset]);
+		splitTriangles.push_back(triangles[i + vertexOffset * 2 + freqOffset]);
+
+		splitTriangles.push_back(midPointBx);
+		splitTriangles.push_back(midPointBy);
+		splitTriangles.push_back(midPointBfreq);
+
+		splitTriangles.push_back(midPointCx);
+		splitTriangles.push_back(midPointCy);
+		splitTriangles.push_back(midPointCfreq);
+	}
+
+	assert(static_cast<int>(splitTriangles.size()) % 3 == 0);
+
+	return splitTriangles;
+}
+
+//TODO: might want to separate frequencies and vertices
+std::vector<GLfloat> ScalpCanvas::generateGradient() {
+	std::vector<GLfloat> triangles;
+
+	float gradientWidth = 0.05f;
+
+	//1. triangle
+	triangles.push_back(gradientX);
+	triangles.push_back(gradientBotY);
+	triangles.push_back(0.01f);
+
+	triangles.push_back(gradientX + gradientWidth);
+	triangles.push_back(gradientBotY);
+	triangles.push_back(0.01f);
+
+	triangles.push_back(gradientX);
+	triangles.push_back(gradientTopY);
+	triangles.push_back(1);
+
+	//2. triangle
+	triangles.push_back(gradientX + gradientWidth);
+	triangles.push_back(gradientBotY);
+	triangles.push_back(0.01f);
+
+	triangles.push_back(gradientX + gradientWidth);
+	triangles.push_back(gradientTopY);
+	triangles.push_back(1);
+
+	triangles.push_back(gradientX);
+	triangles.push_back(gradientTopY);
+	triangles.push_back(1);
+
+	return triangles;
+}
+
+void ScalpCanvas::renderGradientText() {
+
+	QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
+
+	
+	float maxMinusMinY = gradientTopY - gradientBotY;
+	float maxMinusMinFreq = maxFrequency - minFrequency;
+
+	float binY = maxMinusMinY / 4;
+	float binFreq = maxMinusMinFreq / 4;
+
+	float freqToDisplay = minFrequency;
+	float yPos = gradientBotY;
+
+	for (int i = 0; i < 5; i += 1) {
+		//TODO: tie this to font height somehow
+		if (i == 4)
+			yPos -= 0.065;
+
+		renderText(0.8f, yPos, QString::number(((int) freqToDisplay)), gradientNumberFont);
+		freqToDisplay += binFreq;
+		yPos += binY;
+	}
 }
 
 //TODO: doesnt refresh on table change
@@ -456,7 +613,12 @@ void ScalpCanvas::paintGL() {
 		gl()->glFlush();
 		*/
 
+		//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
 		posBufferData = generateScalpTriangleArray();
+
+		std::vector<GLfloat> gradient = generateGradient();
+
+		posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
@@ -471,7 +633,7 @@ void ScalpCanvas::paintGL() {
 		gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
 
-		gl()->glDrawArrays(GL_TRIANGLES, 0, triangulatedPositions.size());
+		gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
 
 		for (int i = 0; i < 2; i++) {
 			gl()->glDisableVertexAttribArray(i);
@@ -479,29 +641,47 @@ void ScalpCanvas::paintGL() {
 
 		gl()->glFlush();
 
-		// draw channels TODO: refactor - dont use points
-		/*gl()->glUseProgram(labelProgram->getGLProgram());
+		// draw channels TODO: refactor - dont use points, add to main channel
+		// TODO!!!:draw once and set it to be top of screen so it cant be drawn over
+		//
+		//
+		//POINTS
+
+		gl()->glUseProgram(labelProgram->getGLProgram());
+
+		posBufferData.clear();
+
+		//TODO: use positions, triangulatedPositions are inflated, repeated draws
+		for (int i = 0; i < triangulatedPositions.size(); i++) {
+			posBufferData.push_back(triangulatedPositions[i].x);
+			posBufferData.push_back(triangulatedPositions[i].y);
+		}
 
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-		gl()->glBufferData(GL_ARRAY_BUFFER, triangulatedPositions.size() * sizeof(ElectrodePosition), &triangulatedPositions[0], GL_STATIC_DRAW);
+		gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
 
 		gl()->glEnableVertexAttribArray(0);
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		gl()->glDrawArrays(GL_POINTS, 0, triangulatedPositions.size());
+		gl()->glDrawArrays(GL_POINTS, 0, posBufferData.size());
 		gl()->glDisableVertexAttribArray(0);
+
+		//important for QPainter to work
+		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		gl()->glFlush();
 
-		for (int i = 0; i < positions.size(); i++) {
+		/*for (int i = 0; i < positions.size(); i++) {
 			glColor3f(0.6, 0.6, 0.6);
 			renderText(positions[i].x, -1 * positions[i].y - 0.02, labels[i], labelFont);
 		}*/
+
+		gl()->glFinish();
+
+		//QPainter part
+		renderGradientText();
 	}
-
-
-	gl()->glFinish();
 }
 
 float ScalpCanvas::virtualRatio() {
@@ -552,18 +732,17 @@ void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
 
 void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font) {
 	int realX = width() / 2 + (width() / 2) * x;
-	int realY = height() / 2 + (height() / 2) * y;
+	int realY = height() / 2 + (height() / 2) * y * -1;
 
-	GLdouble glColor[4];
-	glGetDoublev(GL_CURRENT_COLOR, glColor);
-	QColor fontColor = QColor(glColor[0] * 255, glColor[1] * 255, glColor[2] * 255, glColor[3] * 255);
+	//GLdouble glColor[4];
+	//glGetDoublev(GL_CURRENT_COLOR, glColor);
+	//QColor fontColor = QColor(glColor[0] * 255, glColor[1] * 255, glColor[2] * 255, glColor[3] * 255);
 
-	//QColor fontColor = QColor(0.6, 0.6, 0.6);
+	QColor fontColor = QColor(255, 255, 255);
 
-	// Render text
 	QPainter painter(this);
 	painter.setPen(fontColor);
+	painter.setBrush(fontColor);
 	painter.setFont(font);
 	painter.drawText(realX, realY, str);
-	painter.end();
 }

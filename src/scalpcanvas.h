@@ -145,6 +145,13 @@ class ScalpCanvas : public QOpenGLWidget {
   std::map<QVector2D, GLfloat> posFrequencies;
   std::vector<GLfloat> posBufferData;
 
+  float minFrequency = 0;
+  float maxFrequency = 0;
+
+  const float gradientX = 0.9f;
+  const float gradientBotY = -0.9f;
+  const float gradientTopY = 0.7f;
+
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
   ~ScalpCanvas() override;
@@ -189,6 +196,8 @@ private:
   std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
+  std::vector<GLfloat> ScalpCanvas::generateGradient();
+  void renderGradientText();
 };
 
 #endif // SCALPCANVAS_H

@@ -53,12 +53,14 @@ vec3 getColorGrad(float intensity) {
 void main() {
 	vec4 color;
 	
-	const float bins = 50.0f;	
-
+	const float bins = 150.0f;	
+	//float bin = 1 / bins;
 	for (float i = 0; i < bins; i++) {
 		float f = i / bins;
+		//float diff = oFrequency - f;
+
 		if (f > oFrequency) {
-			color = vec4(getColorGrad(f + 0.04 * oFrequency), 1);
+			color = vec4(getColorGrad(f), 1);
 			break;
 		}
 	}
