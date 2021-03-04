@@ -63,12 +63,14 @@ ScalpCanvas::~ScalpCanvas() {
 
   // Release these three objects here explicitly to make sure the right GL
   // context is bound by makeCurrent().
-  //signalProgram.reset();
+
+  gl()->glDeleteBuffers(1, &posBuffer);
 
   channelProgram.reset();
   labelProgram.reset();
 
   logLastGLMessage();
+
   OPENGL_INTERFACE->checkGLErrors();
   doneCurrent();
 }
@@ -107,14 +109,19 @@ void bindArray(GLuint array, GLuint buffer) {
 void ScalpCanvas::initializeGL() {
 	logToFile("Initializing OpenGL in ScalpCanvas.");
 
-	OPENGL_INTERFACE = make_unique<OpenGLInterface>();
-	OPENGL_INTERFACE->initializeOpenGLInterface();
+	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
+	if (!OPENGL_INTERFACE)
+	{
+		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
+		OPENGL_INTERFACE->initializeOpenGLInterface();
+	}
 
-	glEnable(GL_PROGRAM_POINT_SIZE);
-	glEnable(GL_POINT_SPRITE);
+	gl()->glEnable(GL_PROGRAM_POINT_SIZE);
+	gl()->glEnable(GL_POINT_SPRITE);
 	
 	//circle version
 	//TODO: rename shaders to something more meaningful
+
 	QFile pointVertFile(":/single.vert");
 	pointVertFile.open(QIODevice::ReadOnly);
 	string pointVert = pointVertFile.readAll().toStdString();
@@ -149,7 +156,7 @@ void ScalpCanvas::initializeGL() {
 	//initialize data
 
 	//A B C
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, cF)));
+	/*triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, cF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(aF, bF, cF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.26021, 0.18427, cF, QVector3D(aF, bF, cF)));
 
@@ -202,14 +209,28 @@ void ScalpCanvas::initializeGL() {
 	triangulatedPositions.push_back(ElectrodePositionColored(0.03223, -0.20319, jF, QVector3D(jF, gF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(jF, gF, hF)));
 	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(jF, gF, hF)));
-
-	posBufferData = generateScalpTriangleArray();
+	*/
 
 	gl()->glGenBuffers(1, &posBuffer);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	createContext();
 }
 
+void ScalpCanvas::cleanup() {
+	makeCurrent();
+
+	gl()->glDeleteBuffers(1, &posBuffer);
+
+	channelProgram.reset();
+
+	labelProgram.reset();
+
+	logLastGLMessage();
+	OPENGL_INTERFACE->checkGLErrors();
+
+	doneCurrent();
+}
 
 
 QVector3D getFreqColor(const float& oFrequency) {
@@ -556,7 +577,7 @@ void ScalpCanvas::paintGL() {
 
 	if (paintingDisabled)
 		return;
-	
+
 	QString test = QString("TEST");
 	QFont labelFont = QFont("Times", 8, QFont::Bold);
 
@@ -565,6 +586,8 @@ void ScalpCanvas::paintGL() {
 #endif
 	if (ready()) {
 		//setup
+		makeCurrent();
+
 		gl()->glUseProgram(channelProgram->getGLProgram());
 
 		posBufferData.clear();
@@ -677,11 +700,17 @@ void ScalpCanvas::paintGL() {
 			renderText(positions[i].x, -1 * positions[i].y - 0.02, labels[i], labelFont);
 		}*/
 
-		gl()->glFinish();
-
 		//QPainter part
 		renderGradientText();
+
+		gl()->glFinish();
+
+		doneCurrent();
 	}
+
+#ifndef NDEBUG
+	logToFile("Painting finished.");
+#endif
 }
 
 float ScalpCanvas::virtualRatio() {
@@ -704,7 +733,8 @@ void ScalpCanvas::logLastGLMessage() {
 }
 
 bool ScalpCanvas::ready() {
-	return true;
+	//TODO: think this through
+	return triangulatedPositions.size() > 0;
 }
 
 void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)

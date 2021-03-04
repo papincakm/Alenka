@@ -169,6 +169,7 @@ protected:
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
+  void cleanup();
 
 private:
   //! Multiply by this to convert virtual position to sample position.
