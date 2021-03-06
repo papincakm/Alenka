@@ -21,6 +21,7 @@
 #include <tuple>
 #include <vector>
 #include <QVector3D>
+#include <QMenu>
 
 namespace AlenkaSignal {
 class OpenCLContext;
@@ -121,6 +122,19 @@ public:
 	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }
 	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), frequency(0) { }
 
+	//TODO: change float compare values to smthng more standard
+	bool operator == (const ElectrodePosition& position) const
+	{
+			return ((std::abs(position.x - x) < 0.00001 && std::abs(position.y - y) < 0.00001) ||
+					(std::abs(position.x - y) < 0.00001 && std::abs(position.y - x) < 0.00001));
+	}
+
+	bool operator != (const ElectrodePosition& position) const
+	{
+			return !((std::abs(position.x - x) < 0.00001 && std::abs(position.y - y) < 0.00001) ||
+					(std::abs(position.x - y) < 0.00001 && std::abs(position.y - x) < 0.00001));
+	}
+
 	GLfloat x = 0;
 	GLfloat y = 0;
 	GLfloat frequency = 0;
@@ -144,6 +158,7 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<float> triangleFrequencies;
   std::map<QVector2D, GLfloat> posFrequencies;
   std::vector<GLfloat> posBufferData;
+	QAction *setChannelDrawing;
 
   float minFrequency = 0;
   float maxFrequency = 0;
@@ -151,6 +166,9 @@ class ScalpCanvas : public QOpenGLWidget {
   const float gradientX = 0.9f;
   const float gradientBotY = -0.9f;
   const float gradientTopY = 0.7f;
+	QString errorMsg;
+
+	bool shouldDrawChannels = true;
 
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
@@ -162,14 +180,17 @@ public:
   void addTrack(const QString& label, const QVector2D& position);
   void resetTracks();
   void updatePositionTriangles();
-  void updatePositionFrequencies(const std::vector<float>& channelDataBuffer);
-  void updatePositionFrequencies();
+	void updatePositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
+	void forbidDraw(QString errorString);
+	void allowDraw();
 
 protected:
+	void cleanup();
   void initializeGL() override;
+	void mouseReleaseEvent(QMouseEvent * event) override;
+	void paintGL() override;
   void resizeGL(int w, int h) override;
-  void paintGL() override;
-  void cleanup();
+
 
 private:
   //! Multiply by this to convert virtual position to sample position.
@@ -192,12 +213,13 @@ private:
   //source: http://slabode.exofire.net/circle_draw.shtml
   void drawCircle(float cx, float cy, float r, int num_segments);
 
-  void renderText(float x, float y, const QString &str, const QFont &font);
+  void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 
   std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
   std::vector<GLfloat> ScalpCanvas::generateGradient();
+	void renderErrorMsg();
   void renderGradientText();
 };
 

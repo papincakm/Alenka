@@ -75,16 +75,29 @@ ScalpCanvas::~ScalpCanvas() {
   doneCurrent();
 }
 
+void ScalpCanvas::forbidDraw(QString errorString) {
+		errorMsg = errorString;
+		shouldDrawChannels = false;
+}
+
+void ScalpCanvas::allowDraw() {
+		errorMsg = "";
+		shouldDrawChannels = true;
+}
+
 void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
 	positions.clear();
 	
 	for (auto v : channelPositions) {
+		//TODO: multiply more transparently, use different method, find proper way to do this
+		//std::cout << "POSITION x: " << v.x() << "y: " << v.y() << std::endl;
 		positions.push_back(ElectrodePosition(-1 * v.y(), v.x()));
 	}
 	
 	//TODO: refactor me
 	updatePositionTriangles();
 }
+
 void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
 	labels = channelLabels;
 }
@@ -217,6 +230,29 @@ void ScalpCanvas::initializeGL() {
 
 }
 
+void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
+		if (event->button() == Qt::RightButton)
+		{
+				//TODO: Move this to separate file
+				QMenu menu;
+
+				//QAction* openAct = new QAction("Open...", this);
+				QAction setChannelDrawing("draw channels", this);
+				QActionGroup displayAg(&menu);
+				connect(&setChannelDrawing, &QAction::triggered, [this]() {
+								shouldDrawChannels = !shouldDrawChannels;
+				});
+
+				menu.addAction(&setChannelDrawing);
+				menu.actions().back()->setCheckable(true);
+				menu.actions().back()->setChecked(shouldDrawChannels);
+
+				menu.addSeparator();
+				menu.exec(mapToGlobal(event->pos()));
+		}
+		QOpenGLWidget::mouseReleaseEvent(event);
+}
+
 void ScalpCanvas::cleanup() {
 	makeCurrent();
 
@@ -232,82 +268,18 @@ void ScalpCanvas::cleanup() {
 	doneCurrent();
 }
 
-
-QVector3D getFreqColor(const float& oFrequency) {
-	const float firstT = 0.25f;
-	const float secondT = 0.5f;
-	const float thirdT = 0.75f;
-
-	float red = 0;
-	float green = 0;
-	float blue = 0;
-
-	if (oFrequency < firstT) {
-		red = 0;
-		green = oFrequency * 4;
-		blue = 1;
-	}
-	else if (oFrequency < secondT) {
-		red = 0;
-		green = 1;
-		blue = 1 - ((oFrequency - firstT) * 4);
-	}
-	else if (oFrequency < thirdT) {
-		red = ((oFrequency - secondT) * 4);
-		green = 1;
-		blue = 0;
-	}
-	else {
-		red = 1;
-		green = 1 - ((oFrequency - thirdT) * 4);
-		blue = 0;
-	}
-
-	return QVector3D(red, green, blue);
-}
-
-void ScalpCanvas::updatePositionFrequencies() {
-
-	srand(time(NULL));
-
-	for (int i = 0; i < positions.size(); i++) {
-		positions[i].frequency = ((rand() % 100 + 1) / 100.0f);
-	}
-
-	//TODO: refactor
-	for (int i = 0; i < triangulatedPositions.size(); i++) {
-		for (auto p : positions) {
-			if (p.x - triangulatedPositions[i].x < 0.00001 && (p.y - triangulatedPositions[i].y < 0.00001)) {
-				triangulatedPositions[i].color = getFreqColor(p.frequency);
-			}
-		}
-	}
-
-	update();
-}
-
-void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDataBuffer) {
+void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
 	//TODO: theres less positions thant channelDataBuffer
-	assert(static_cast<int>(positions.size()) < static_cast<int>(channelDataBuffer.size()));
-	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
-	
-	float max = std::numeric_limits<int>::min();
-	float min = std::numeric_limits<int>::max();
-	for (int i = 0; i < positions.size(); i++) {
-		if (channelDataBuffer[i] > max)
-			max = channelDataBuffer[i];
-		if (channelDataBuffer[i] < min)
-			min = channelDataBuffer[i];
-
-	}
+	std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
+	assert(static_cast<int>(positions.size()) <= static_cast<int>(channelDataBuffer.size()));
 	
 	minFrequency = min;
 	maxFrequency = max;
 
-	float maxMinusMin = max - min;
+	float maxMinusMin = maxFrequency - minFrequency;
 
 	for (int i = 0; i < positions.size(); i++) {
-		positions[i].frequency = (channelDataBuffer[i] - min) / (maxMinusMin);
+		positions[i].frequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
 
 		//TODO: use some better method or more formal reperssentation of near zero
 		//TODO: elsewhere too
@@ -333,7 +305,6 @@ void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDat
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
 		for (auto p : positions) {
 			if (p.x - triangulatedPositions[i].x < 0.00001 && (p.y - triangulatedPositions[i].y < 0.00001)) {
-				triangulatedPositions[i].color = getFreqColor(p.frequency);
 				triangulatedPositions[i].frequency = p.frequency;
 			}
 		}
@@ -343,19 +314,8 @@ void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDat
 }
 
 void ScalpCanvas::updatePositionTriangles() {
-	updatePositionFrequencies();
-
 	triangulatedPositions = generateScalpTriangleDrawPositions(positions);
 	//triangleColors = generateScalpTriangleColors(triangleVertices);
-
-	//TODO: refactor
-	for (int i = 0; i < triangulatedPositions.size(); i++) {
-		for (auto p : positions) {
-			if (p.x - triangulatedPositions[i].x < 0.00001 && (p.y - triangulatedPositions[i].y < 0.00001)) {
-				triangulatedPositions[i].color = getFreqColor(p.frequency);
-			}
-		}
-	}
 
 	//update();
 }
@@ -373,7 +333,7 @@ std::vector<ElectrodePositionColored> ScalpCanvas::generateScalpTriangleDrawPosi
 		coords.push_back(ch.x);
 		coords.push_back(ch.y);
 	}
-
+	//TODO: vector out of bound, when montage changed(which has all 0 as coordinates - might be the reason)
 	delaunator::Delaunator d(coords);
 	
 	for (std::size_t i = 0; i < d.triangles.size(); i+=3) {
@@ -417,8 +377,8 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 		triangles.push_back(triangulatedPositions[i].frequency);
 
 
-		if (triangulatedPositions[i].frequency < 0.000001)
-			std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
+		//if (triangulatedPositions[i].frequency < 0.000001)
+			//std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
 	}
 
 	return triangles;
@@ -565,7 +525,7 @@ void ScalpCanvas::renderGradientText() {
 		if (i == 4)
 			yPos -= 0.065;
 
-		renderText(0.8f, yPos, QString::number(((int) freqToDisplay)), gradientNumberFont);
+		renderText(0.7f, yPos, QString::number(((int) freqToDisplay)), gradientNumberFont, QColor(255, 255, 255));
 		freqToDisplay += binFreq;
 		yPos += binY;
 	}
@@ -585,110 +545,110 @@ void ScalpCanvas::paintGL() {
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
-		//setup
-		makeCurrent();
+			//setup
+			makeCurrent();
 
-		gl()->glUseProgram(channelProgram->getGLProgram());
+			gl()->glUseProgram(channelProgram->getGLProgram());
 
-		posBufferData.clear();
+			posBufferData.clear();
 
-		//Create a 1D image - for this example it's just a red line
-		//test
-		/*const int stripeImageWidth = 32;
-		GLubyte stripeImage[3 * stripeImageWidth];
-		for (int j = 0; j < stripeImageWidth; j++) {
-			stripeImage[3 * j] = j * 255 / 32; // use a gradient instead of a line
-			stripeImage[3 * j + 1] = 255;
-			stripeImage[3 * j + 2] = 255;
-		}
-
-		GLuint texID;
-		gl()->glGenTextures(1, &texID);
-		gl()->glBindTexture(GL_TEXTURE_1D, texID);
-		gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		gl()->glTexImage1D(GL_TEXTURE_1D, 0, 3, stripeImageWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, stripeImage);
-
-		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		gl()->glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-		gl()->glDisable(GL_TEXTURE_GEN_S);
-		gl()->glDisable(GL_TEXTURE_2D);
-		gl()->glEnable(GL_TEXTURE_1D);
-		gl()->glBindTexture(GL_TEXTURE_1D, texID);
-
-
-		const int grid_height = 100;
-		const int grid_width = 100;
-
-		GLfloat hist2D[grid_width][grid_height];
-
-		for (int y = 0; y < grid_height; y++) {
-			for (int x = 0; x < grid_width; x++) {
-				hist2D[x][y] = x * y;
+			//Create a 1D image - for this example it's just a red line
+			//test
+			/*const int stripeImageWidth = 32;
+			GLubyte stripeImage[3 * stripeImageWidth];
+			for (int j = 0; j < stripeImageWidth; j++) {
+				stripeImage[3 * j] = j * 255 / 32; // use a gradient instead of a line
+				stripeImage[3 * j + 1] = 255;
+				stripeImage[3 * j + 2] = 255;
 			}
-		}
+
+			GLuint texID;
+			gl()->glGenTextures(1, &texID);
+			gl()->glBindTexture(GL_TEXTURE_1D, texID);
+			gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			gl()->glTexImage1D(GL_TEXTURE_1D, 0, 3, stripeImageWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, stripeImage);
+
+			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			gl()->glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+
+			gl()->glDisable(GL_TEXTURE_GEN_S);
+			gl()->glDisable(GL_TEXTURE_2D);
+			gl()->glEnable(GL_TEXTURE_1D);
+			gl()->glBindTexture(GL_TEXTURE_1D, texID);
+
+
+			const int grid_height = 100;
+			const int grid_width = 100;
+
+			GLfloat hist2D[grid_width][grid_height];
+
+			for (int y = 0; y < grid_height; y++) {
+				for (int x = 0; x < grid_width; x++) {
+					hist2D[x][y] = x * y;
+				}
+			}
 
 
 
-		gl()->glFlush();
-		*/
+			gl()->glFlush();
+			*/
 
-		//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
-		posBufferData = generateScalpTriangleArray();
+			//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
+			posBufferData = generateScalpTriangleArray();
 
-		std::vector<GLfloat> gradient = generateGradient();
+			std::vector<GLfloat> gradient = generateGradient();
 
-		posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
+			posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
 
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+			gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-		gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
-		
-		// 1st attribute buffer : vertices
-		//current position
-		gl()->glEnableVertexAttribArray(0);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
+			gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
 
-		gl()->glEnableVertexAttribArray(1);
-		gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
+			// 1st attribute buffer : vertices
+			//current position
+			gl()->glEnableVertexAttribArray(0);
+			gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
+
+			gl()->glEnableVertexAttribArray(1);
+			gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
 
-		gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
+			gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
 
-		for (int i = 0; i < 2; i++) {
-			gl()->glDisableVertexAttribArray(i);
-		}
+			for (int i = 0; i < 2; i++) {
+					gl()->glDisableVertexAttribArray(i);
+			}
 
-		gl()->glFlush();
+			gl()->glFlush();
 
-		// draw channels TODO: refactor - dont use points, add to main channel
-		// TODO!!!:draw once and set it to be top of screen so it cant be drawn over
-		//
-		//
-		//POINTS
+			// draw channels TODO: refactor - dont use points, add to main channel
+			// TODO!!!:draw once and set it to be top of screen so it cant be drawn over
+			//
+			//
+			//POINTS
 
-		gl()->glUseProgram(labelProgram->getGLProgram());
+			posBufferData.clear();
 
-		posBufferData.clear();
+			//TODO: use positions, triangulatedPositions are inflated, repeated draws
+			if (shouldDrawChannels) {
+				for (int i = 0; i < triangulatedPositions.size(); i++) {
+							posBufferData.push_back(triangulatedPositions[i].x);
+							posBufferData.push_back(triangulatedPositions[i].y);
+				}
+				gl()->glUseProgram(labelProgram->getGLProgram());
+				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-		//TODO: use positions, triangulatedPositions are inflated, repeated draws
-		for (int i = 0; i < triangulatedPositions.size(); i++) {
-			posBufferData.push_back(triangulatedPositions[i].x);
-			posBufferData.push_back(triangulatedPositions[i].y);
-		}
+				gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
 
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-
-		gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
-
-		gl()->glEnableVertexAttribArray(0);
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-		gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		gl()->glDrawArrays(GL_POINTS, 0, posBufferData.size());
-		gl()->glDisableVertexAttribArray(0);
+				gl()->glEnableVertexAttribArray(0);
+				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+				gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+				gl()->glDrawArrays(GL_POINTS, 0, posBufferData.size());
+				gl()->glDisableVertexAttribArray(0);
+	  }
 
 		//important for QPainter to work
 		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -708,9 +668,17 @@ void ScalpCanvas::paintGL() {
 		doneCurrent();
 	}
 
+	if (errorMsg != "")
+			renderErrorMsg();
+
 #ifndef NDEBUG
 	logToFile("Painting finished.");
 #endif
+}
+
+void ScalpCanvas::renderErrorMsg() {
+		auto errorFont = QFont("Times", 15, QFont::Bold);
+		renderText(-0.8f, 0, errorMsg, errorFont, QColor(255, 0, 0));
 }
 
 float ScalpCanvas::virtualRatio() {
@@ -734,7 +702,7 @@ void ScalpCanvas::logLastGLMessage() {
 
 bool ScalpCanvas::ready() {
 	//TODO: think this through
-	return triangulatedPositions.size() > 0;
+		return shouldDrawChannels && triangulatedPositions.size() > 0;
 }
 
 void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
@@ -760,15 +728,9 @@ void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
 	glEnd();
 }
 
-void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font) {
+void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
 	int realX = width() / 2 + (width() / 2) * x;
 	int realY = height() / 2 + (height() / 2) * y * -1;
-
-	//GLdouble glColor[4];
-	//glGetDoublev(GL_CURRENT_COLOR, glColor);
-	//QColor fontColor = QColor(glColor[0] * 255, glColor[1] * 255, glColor[2] * 255, glColor[3] * 255);
-
-	QColor fontColor = QColor(255, 255, 255);
 
 	QPainter painter(this);
 	painter.setPen(fontColor);

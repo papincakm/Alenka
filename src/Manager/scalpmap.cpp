@@ -7,6 +7,9 @@
 #include <elidedlabel.h>
 #include <helplink.h>
 #include <QVBoxLayout>
+//TODO: delete later
+#include <iostream>
+#include <string>
 
 
 #include <sstream>
@@ -64,6 +67,22 @@ void ScalpMap::updateConnections(int row) {
 	}
 }
 
+//TODO: refactor
+bool ScalpMap::positionsValid() {
+		for (auto p : positions) {
+				//std::cout << "POSITION x: " << p.x << "y: " << p.y << std::endl;
+				int same = 0;
+				for (auto cp : positions) {
+						if (cp == p)
+								same++;
+				}
+				if (same > 1)
+						return false;
+		}
+
+		return true;
+}
+
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateLabels() {
@@ -83,29 +102,41 @@ void ScalpMap::updateLabels() {
 
 	int hidden = 0;
 	int track = 0;
+	//TODO: what to do whith hidden channels
+	std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
+	assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
 
 	for (int i = 0; i < trackTable->rowCount(); ++i) {
-		assert(track + hidden == i);
+		//assert(track + hidden == i);
 		Track t = trackTable->row(i);
 
-		if (t.hidden == false) {
+		//if (t.hidden == false) {
 			//TODO: labels, colors and positions should be in one class and one vector
 			labels.push_back(QString::fromStdString(t.label));
 			colors.push_back(DataModel::array2color<QColor>(t.color));
 			positions.push_back(QVector3D(t.x, t.y, t.z));
+			//std::cout << "POSITION x: " << t.x << "y: " << t.y << std::endl;
 
 			++track;
-		}
-		else {
-			++hidden;
-		}
+		//}
+		//else {
+			//++hidden;
+		//}
 	}
+
+	if (!positionsValid()) {
+			scalpCanvas->forbidDraw("Channel positions are invalid(Two positions can't be the same).");
+			return;
+	}
+
+	scalpCanvas->allowDraw();
 
 	updatePositionsProjected();
 
 	//TODO: refactor this
 	scalpCanvas->resetTracks();
 	for (int i = 0; i < positionsProjected.size(); i++) {
+		std::cout << "POSITION x: " << positionsProjected[i].x() << "y: " << positionsProjected[i].y() << std::endl;
 		try {
 			scalpCanvas->addTrack(labels[i], positionsProjected[i]);
 		}
@@ -119,6 +150,12 @@ void ScalpMap::updateLabels() {
 	update();
 }
 
+//copied from canvas.cpp
+const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
+		return file->dataModel->montageTable()->trackTable(
+				OpenDataFile::infoTable.getSelectedMontage());
+}
+
 void ScalpMap::updateSpectrum() {
 	if (!file || !scalpCanvas)
 		return;
@@ -129,11 +166,35 @@ void ScalpMap::updateSpectrum() {
 
 	std::vector<float> channelDataBuffer(file->file->getChannelCount());
 
+	const AbstractTrackTable *trackTable = getTrackTable(file);
+
 	file->file->readSignal(channelDataBuffer.data(), position, position);
 
 	assert(static_cast<int>(channelDataBuffer.size()) == static_cast<int>(file->file->getChannelCount()));
 
-	scalpCanvas->updatePositionFrequencies(channelDataBuffer);
+	//float max = std::numeric_limits<int>::min();
+	//float min = std::numeric_limits<int>::max();
+	auto min = std::min_element(std::begin(channelDataBuffer), std::end(channelDataBuffer));
+	auto max = std::max_element(std::begin(channelDataBuffer), std::end(channelDataBuffer));
+	/*for (int i = 0; i < channelDataBuffer.size(); i++) {
+			if (channelDataBuffer[i] > max)
+					max = channelDataBuffer[i];
+			if (channelDataBuffer[i] < min)
+					min = channelDataBuffer[i];
+	}*/
+
+	//some signal channels are hidden
+	//TODO: might want to separate this and do it only when hidden channels change
+	/*std::vector<float> channelData;
+
+	for (int i = 0; i < file->file->getChannelCount(); i++) {
+			if (getTrackTable(file)->row(i).hidden) {
+					channelData.push_back(*min);
+			}
+			channelDataBuffer[i];
+	}*/
+
+	scalpCanvas->updatePositionFrequencies(channelDataBuffer, *min, *max);
 	//update();
 }
 
@@ -195,6 +256,7 @@ void ScalpMap::updatePositionsProjected() {
 	//compute phis
 	std::vector<float> phis;
 	for (auto vec : nPos) {
+		//TODO: divide by zero?
 		float phi = radToDeg(atan(vec.y() / vec.x()));
 		phi = (vec.x() == 0) ? -1 * phi : phi;
 		phis.push_back(phi);
