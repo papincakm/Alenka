@@ -270,7 +270,7 @@ void ScalpCanvas::cleanup() {
 
 void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
 	//TODO: theres less positions thant channelDataBuffer
-	std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
+	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
 	assert(static_cast<int>(positions.size()) <= static_cast<int>(channelDataBuffer.size()));
 	
 	minFrequency = min;

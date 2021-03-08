@@ -2,6 +2,7 @@
 #define MANAGER_H
 
 #include <QWidget>
+#include <QtWidgets>
 #include <map>
 #include <utility>
 
@@ -48,6 +49,7 @@ protected:
    * @brief Adds the button to the prepared layout on top of the widget.
    */
   void addButton(QPushButton *button);
+	void addSeparator();
 
 protected slots:
   /**
@@ -64,7 +66,6 @@ private:
    */
   std::map<std::pair<int, int>, QString> textOfSelection();
 
-  void addSeparator();
   std::vector<int> reverseSortedSelectedRows();
   bool askToDeleteRows(int rowCount);
   void pasteSingleCell(const std::string &cell);

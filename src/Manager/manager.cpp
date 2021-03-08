@@ -4,7 +4,6 @@
 #include "../myapplication.h"
 #include "sortproxymodel.h"
 #include "tablemodel.h"
-#include <QtWidgets>
 #include <algorithm>
 #include <cassert>
 #include <sstream>

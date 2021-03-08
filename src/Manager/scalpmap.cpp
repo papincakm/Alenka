@@ -103,7 +103,7 @@ void ScalpMap::updateLabels() {
 	int hidden = 0;
 	int track = 0;
 	//TODO: what to do whith hidden channels
-	std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
+	//std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
 	assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
 
 	for (int i = 0; i < trackTable->rowCount(); ++i) {
@@ -156,6 +156,7 @@ const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
 				OpenDataFile::infoTable.getSelectedMontage());
 }
 
+//TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
 	if (!file || !scalpCanvas)
 		return;
@@ -164,13 +165,33 @@ void ScalpMap::updateSpectrum() {
 
 	const int position = OpenDataFile::infoTable.getPosition();
 
-	std::vector<float> channelDataBuffer(file->file->getChannelCount());
+	const int nSamples = 1;
+
+	//TODO: workaround (mat files dont work with readSignal 1 sample size)
+	std::vector<float> channelDataBufferWorkAround;
+	std::vector<float> channelDataBuffer;
+	channelDataBufferWorkAround.resize(file->file->getChannelCount() * (nSamples + 1));
+	channelDataBuffer.resize(file->file->getChannelCount());
 
 	const AbstractTrackTable *trackTable = getTrackTable(file);
 
-	file->file->readSignal(channelDataBuffer.data(), position, position);
+	file->file->readSignal(channelDataBufferWorkAround.data(), position, position + nSamples);
 
-	assert(static_cast<int>(channelDataBuffer.size()) == static_cast<int>(file->file->getChannelCount()));
+	//assert(static_cast<int>(channelDataBuffer.size()) == static_cast<int>(file->file->getChannelCount()));
+
+	int cnt = 0;
+	for (int i = 0; i < file->file->getChannelCount() * (nSamples + 1); i += 1 + nSamples) {
+			channelDataBuffer[cnt] = channelDataBufferWorkAround[i];
+			cnt++;
+	}
+
+	std::cout << "FREQ: " << std::endl;
+	for (int i = 0; i < file->file->getChannelCount(); i += 1) {
+			std::cout << channelDataBuffer[i] << " ";
+
+	}
+	std::cout << std::endl;
+
 
 	//float max = std::numeric_limits<int>::min();
 	//float min = std::numeric_limits<int>::max();
@@ -193,6 +214,8 @@ void ScalpMap::updateSpectrum() {
 			}
 			channelDataBuffer[i];
 	}*/
+
+	std::cout << "FREQUENCIES min: " << *min << " max: " << *max << std::endl;
 
 	scalpCanvas->updatePositionFrequencies(channelDataBuffer, *min, *max);
 	//update();
