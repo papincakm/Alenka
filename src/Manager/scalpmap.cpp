@@ -35,6 +35,13 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 	setMinimumWidth(100);
 }
 
+void ScalpMap::changeFile(OpenDataFile *file) {
+		this->file = file;
+		scalpCanvas->clear();
+		updateLabels();
+		updateSpectrum();
+}
+
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateConnections(int row) {
@@ -100,28 +107,22 @@ void ScalpMap::updateLabels() {
 	if (trackTable->rowCount() <= 0)
 		return;
 
-	int hidden = 0;
 	int track = 0;
 	//TODO: what to do whith hidden channels
 	//std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
-	assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
+	//assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
 
 	for (int i = 0; i < trackTable->rowCount(); ++i) {
-		//assert(track + hidden == i);
 		Track t = trackTable->row(i);
 
-		//if (t.hidden == false) {
+		if (!t.hidden) {
 			//TODO: labels, colors and positions should be in one class and one vector
 			labels.push_back(QString::fromStdString(t.label));
 			colors.push_back(DataModel::array2color<QColor>(t.color));
 			positions.push_back(QVector3D(t.x, t.y, t.z));
-			//std::cout << "POSITION x: " << t.x << "y: " << t.y << std::endl;
-
+		 
 			++track;
-		//}
-		//else {
-			//++hidden;
-		//}
+		}
 	}
 
 	if (!positionsValid()) {
@@ -129,25 +130,17 @@ void ScalpMap::updateLabels() {
 			return;
 	}
 
-	scalpCanvas->allowDraw();
-
 	updatePositionsProjected();
-
-	//TODO: refactor this
-	scalpCanvas->resetTracks();
-	for (int i = 0; i < positionsProjected.size(); i++) {
-		std::cout << "POSITION x: " << positionsProjected[i].x() << "y: " << positionsProjected[i].y() << std::endl;
-		try {
-			scalpCanvas->addTrack(labels[i], positionsProjected[i]);
-		}
-		catch (exception) {
-		}
-	}
 
 	scalpCanvas->setChannelLabels(labels);
 	scalpCanvas->setChannelPositions(positionsProjected);
 
+	scalpCanvas->allowDraw();
+
+	updateSpectrum();
+
 	update();
+	scalpCanvas->update();
 }
 
 //copied from canvas.cpp
@@ -161,48 +154,48 @@ void ScalpMap::updateSpectrum() {
 	if (!file || !scalpCanvas)
 		return;
 
+	const AbstractTrackTable *trackTable =
+			file->dataModel->montageTable()->trackTable(
+					OpenDataFile::infoTable.getSelectedMontage());
+
+	if (trackTable->rowCount() <= 0)
+			return;
+
 	//assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
 
 	const int position = OpenDataFile::infoTable.getPosition();
 
 	const int nSamples = 1;
+	int mult = (nSamples + 1);
 
 	//TODO: workaround (mat files dont work with readSignal 1 sample size)
+	//TODO: Now its read twice from file, prob take this from signalProcessor cache somehow
 	std::vector<float> channelDataBufferWorkAround;
 	std::vector<float> channelDataBuffer;
-	channelDataBufferWorkAround.resize(file->file->getChannelCount() * (nSamples + 1));
-	channelDataBuffer.resize(file->file->getChannelCount());
-
-	const AbstractTrackTable *trackTable = getTrackTable(file);
+	channelDataBufferWorkAround.resize(file->file->getChannelCount() * mult);
 
 	file->file->readSignal(channelDataBufferWorkAround.data(), position, position + nSamples);
 
 	//assert(static_cast<int>(channelDataBuffer.size()) == static_cast<int>(file->file->getChannelCount()));
+	//TODO: check why this is
+	int size = std::min((int) file->file->getChannelCount(), trackTable->rowCount());
 
-	int cnt = 0;
-	for (int i = 0; i < file->file->getChannelCount() * (nSamples + 1); i += 1 + nSamples) {
-			channelDataBuffer[cnt] = channelDataBufferWorkAround[i];
-			cnt++;
+	for (int i = 0; i < size; i++) {
+			Track t = trackTable->row(i);
+			if (!t.hidden) {
+					channelDataBuffer.push_back(channelDataBufferWorkAround[i * mult]);
+			}
 	}
 
-	std::cout << "FREQ: " << std::endl;
-	for (int i = 0; i < file->file->getChannelCount(); i += 1) {
+	/*std::cout << "FREQ: " << std::endl;
+	for (int i = 0; i < channelDataBuffer.size(); i += 1) {
 			std::cout << channelDataBuffer[i] << " ";
 
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
-
-	//float max = std::numeric_limits<int>::min();
-	//float min = std::numeric_limits<int>::max();
 	auto min = std::min_element(std::begin(channelDataBuffer), std::end(channelDataBuffer));
 	auto max = std::max_element(std::begin(channelDataBuffer), std::end(channelDataBuffer));
-	/*for (int i = 0; i < channelDataBuffer.size(); i++) {
-			if (channelDataBuffer[i] > max)
-					max = channelDataBuffer[i];
-			if (channelDataBuffer[i] < min)
-					min = channelDataBuffer[i];
-	}*/
 
 	//some signal channels are hidden
 	//TODO: might want to separate this and do it only when hidden channels change
@@ -215,10 +208,12 @@ void ScalpMap::updateSpectrum() {
 			channelDataBuffer[i];
 	}*/
 
-	std::cout << "FREQUENCIES min: " << *min << " max: " << *max << std::endl;
+	//std::cout << "FREQUENCIES min: " << *min << " max: " << *max << std::endl;
 
-	scalpCanvas->updatePositionFrequencies(channelDataBuffer, *min, *max);
-	//update();
+	scalpCanvas->setPositionFrequencies(channelDataBuffer, *min, *max);
+
+	update();
+	scalpCanvas->update();
 }
 
 float degToRad(float n) {

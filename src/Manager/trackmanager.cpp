@@ -87,12 +87,14 @@ void TrackManager::loadCoordinates() {
 				int col = tableView->model()->columnCount();
 
 				const int tableLabel = 1;
+				const int tableHidden = 5;
 				const int tableX = 6;
 				const int tableY = 7;
 				const int tableZ = 8;
 
 				// TODO: refactor, there must be better way to iterate the table
 				for (int i = 0; i < row; i++) {
+						bool found = false;
 						std::string label = tableView->model()->data(tableView->model()->index(i, tableLabel), Qt::DisplayRole).toString().toStdString();
 						std::transform(label.begin(), label.end(), label.begin(), ::tolower);
 
@@ -101,8 +103,12 @@ void TrackManager::loadCoordinates() {
 										tableView->model()->setData(tableView->model()->index(i, tableX), v.second.x());
 										tableView->model()->setData(tableView->model()->index(i, tableY), v.second.y());
 										tableView->model()->setData(tableView->model()->index(i, tableZ), v.second.z());
+										found = true;
+										break;
 								}
 						}
+						if (!found)
+								tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
 				}
 		}
 

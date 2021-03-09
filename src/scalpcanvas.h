@@ -168,7 +168,9 @@ class ScalpCanvas : public QOpenGLWidget {
   const float gradientTopY = 0.7f;
 	QString errorMsg;
 
-	bool shouldDrawChannels = true;
+	bool shouldDrawChannels = false;
+	bool shouldDrawLabels = false;
+	bool shouldDraw = false;
 
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
@@ -177,12 +179,11 @@ public:
   //TODO: refactor, right now labels and positions are instanced twice, here and in scalpMap
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
-  void addTrack(const QString& label, const QVector2D& position);
-  void resetTracks();
   void updatePositionTriangles();
-	void updatePositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
+	void setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
 	void forbidDraw(QString errorString);
 	void allowDraw();
+	void clear();
 
 protected:
 	void cleanup();
@@ -198,7 +199,6 @@ private:
   //! Returns the sample position of the left screen edge.
   float leftEdgePosition();
 
-  void createContext();
   void logLastGLMessage();
 
   /**

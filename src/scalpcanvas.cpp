@@ -77,12 +77,19 @@ ScalpCanvas::~ScalpCanvas() {
 
 void ScalpCanvas::forbidDraw(QString errorString) {
 		errorMsg = errorString;
-		shouldDrawChannels = false;
+		shouldDraw = false;
 }
 
 void ScalpCanvas::allowDraw() {
 		errorMsg = "";
-		shouldDrawChannels = true;
+		shouldDraw = true;
+}
+
+void ScalpCanvas::clear() {
+		positions.clear();
+		triangulatedPositions.clear();
+
+		update();
 }
 
 void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
@@ -100,14 +107,6 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
 
 void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
 	labels = channelLabels;
-}
-
-void ScalpCanvas::addTrack(const QString& label, const QVector2D& position) {
-	tracks.push_back(CanvasTrack(label, position));
-}
-
-void ScalpCanvas::resetTracks() {
-	tracks.clear();
 }
 
 void bindArray(GLuint array, GLuint buffer) {
@@ -155,75 +154,6 @@ void ScalpCanvas::initializeGL() {
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
-	float aF = 0.2f;
-	float bF = 0.9f;
-	float cF = 0.6f;
-	float dF = 0.3f;
-	float eF = 0.2f;
-	float fF = 0.2f;
-	float gF = 0.3f;
-	float hF = 0.9f;
-	float iF = 0.2f;
-	float jF = 0.7f;
-
-	//initialize data
-
-	//A B C
-	/*triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, cF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(aF, bF, cF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.26021, 0.18427, cF, QVector3D(aF, bF, cF)));
-
-	//C B D
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.26021, 0.18427, cF, QVector3D(cF, bF, dF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(cF, bF, dF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(cF, bF, dF)));
-
-	//B D E
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(bF, dF, eF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(bF, dF, eF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(bF, dF, eF)));
-
-	//D E F
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.03607, 0.37819, dF, QVector3D(dF, eF, fF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(dF, eF, fF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.11316, 0.33157, fF, QVector3D(dF, eF, fF)));
-
-	//A B G
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, bF, gF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(aF, bF, gF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(aF, bF, gF)));
-
-	//E B G
-	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(eF, bF, gF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.07736, 0.1205, bF, QVector3D(eF, bF, gF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(eF, bF, gF)));
-
-	//G E H
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(gF, eF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(gF, eF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(gF, eF, hF)));
-
-	//F E H
-	triangulatedPositions.push_back(ElectrodePositionColored(0.11316, 0.33157, fF, QVector3D(fF, eF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.05444, 0.13698, eF, QVector3D(fF, eF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(fF, eF, hF)));
-
-	//A G I
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.25721, -0.07583, aF, QVector3D(aF, gF, iF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(aF, gF, iF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.11384, -0.33526, iF, QVector3D(aF, gF, iF)));
-
-	//J G I
-	triangulatedPositions.push_back(ElectrodePositionColored(0.03223, -0.20319, jF, QVector3D(jF, gF, iF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(jF, gF, iF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.11384, -0.33526, iF, QVector3D(jF, gF, iF)));
-
-	//J G H
-	triangulatedPositions.push_back(ElectrodePositionColored(0.03223, -0.20319, jF, QVector3D(jF, gF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(-0.06179, -0.07551, gF, QVector3D(jF, gF, hF)));
-	triangulatedPositions.push_back(ElectrodePositionColored(0.072, -0.04267, hF, QVector3D(jF, gF, hF)));
-	*/
-
 	gl()->glGenBuffers(1, &posBuffer);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -235,17 +165,31 @@ void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
 		{
 				//TODO: Move this to separate file
 				QMenu menu;
-
-				//QAction* openAct = new QAction("Open...", this);
-				QAction setChannelDrawing("draw channels", this);
 				QActionGroup displayAg(&menu);
+
+				//draw channels option
+				QAction setChannelDrawing("draw channels", this);
+
 				connect(&setChannelDrawing, &QAction::triggered, [this]() {
 								shouldDrawChannels = !shouldDrawChannels;
+								update();
 				});
 
 				menu.addAction(&setChannelDrawing);
 				menu.actions().back()->setCheckable(true);
 				menu.actions().back()->setChecked(shouldDrawChannels);
+
+				//draw labels option
+				QAction setLabelDrawing("draw labels", this);
+
+				connect(&setLabelDrawing, &QAction::triggered, [this]() {
+						shouldDrawLabels = !shouldDrawLabels;
+						update();
+				});
+
+				menu.addAction(&setLabelDrawing);
+				menu.actions().back()->setCheckable(true);
+				menu.actions().back()->setChecked(shouldDrawLabels);
 
 				menu.addSeparator();
 				menu.exec(mapToGlobal(event->pos()));
@@ -268,38 +212,27 @@ void ScalpCanvas::cleanup() {
 	doneCurrent();
 }
 
-void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
+void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
 	//TODO: theres less positions thant channelDataBuffer
 	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
-	assert(static_cast<int>(positions.size()) <= static_cast<int>(channelDataBuffer.size()));
+	//TODO: investigate, positions are sometimes smaller, even thoug scalpmap should take care of this
+	if (static_cast<int>(positions.size()) < static_cast<int>(channelDataBuffer.size()))
+		return;
 	
 	minFrequency = min;
 	maxFrequency = max;
 
 	float maxMinusMin = maxFrequency - minFrequency;
 
-	for (int i = 0; i < positions.size(); i++) {
+	int size = std::min(positions.size(), channelDataBuffer.size());
+
+	for (int i = 0; i < size; i++) {
 		positions[i].frequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
 
 		//TODO: use some better method or more formal reperssentation of near zero
 		//TODO: elsewhere too
 		// near 0 shows up as black, mby move this further in data setup
-		if (positions[i].frequency < 0.000001)
-			positions[i].frequency = 0.01f;
 	}
-
-
-	/*for (auto f : channelDataBuffer) {
-		std::cout << " " << f;
-	}
-
-	std::cout << "\nConvertedFreqs:\n";
-
-	for (auto f : positions) {
-		std::cout << " " << f.frequency;
-	}
-
-	std::cout << "\n";*/
 
 	//TODO: refactor
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
@@ -309,8 +242,6 @@ void ScalpCanvas::updatePositionFrequencies(const std::vector<float>& channelDat
 			}
 		}
 	}
-
-	update();
 }
 
 void ScalpCanvas::updatePositionTriangles() {
@@ -329,6 +260,7 @@ std::vector<ElectrodePositionColored> ScalpCanvas::generateScalpTriangleDrawPosi
 	std::vector<double> coords;
 	std::vector<ElectrodePositionColored> triangles;
 	
+	//TODO: do this is setChannelPositions and skip positions?
 	for (auto ch : channels) {
 		coords.push_back(ch.x);
 		coords.push_back(ch.y);
@@ -382,93 +314,6 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	}
 
 	return triangles;
-}
-
-
-
-//TODO: refactor with triangle class and operations!!
-//TODO: consider using geometry shader
-std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles) {
-	assert(static_cast<int>(triangles.size()) % 3 == 0);
-
-	std::vector<GLfloat> splitTriangles;
-
-	for (int i = 0; i < triangles.size(); i += 9) {
-		const int vertexOffset = 3;
-		const int yOffset = 1;
-		const int freqOffset = 2;
-
-		//1. vertex, 2. vertex
-		float midPointAx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset];
-		float midPointAy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset + yOffset];
-		float midPointAfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset + freqOffset];
-
-		//1. vertex, 3. vertex
-		float midPointBx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset * 2];
-		float midPointBy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
-		float midPointBfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
-
-		//2. vertex, 3. vertex
-		float midPointCx = 0.5f * triangles[i + vertexOffset] + 0.5f * triangles[i + vertexOffset * 2];
-		float midPointCy = 0.5f * triangles[i + vertexOffset + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
-		float midPointCfreq = 0.5f * triangles[i + vertexOffset + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
-
-		//1. triangle
-		splitTriangles.push_back(triangles[i]);
-		splitTriangles.push_back(triangles[i + yOffset]);
-		splitTriangles.push_back(triangles[i + freqOffset]);
-
-		splitTriangles.push_back(midPointAx);
-		splitTriangles.push_back(midPointAy);
-		splitTriangles.push_back(midPointAfreq);
-
-		splitTriangles.push_back(midPointBx);
-		splitTriangles.push_back(midPointBy);
-		splitTriangles.push_back(midPointBfreq);
-
-		//2. triangle
-		splitTriangles.push_back(midPointAx);
-		splitTriangles.push_back(midPointAy);
-		splitTriangles.push_back(midPointAfreq);
-
-		splitTriangles.push_back(midPointBx);
-		splitTriangles.push_back(midPointBy);
-		splitTriangles.push_back(midPointBfreq);
-
-		splitTriangles.push_back(midPointCx);
-		splitTriangles.push_back(midPointCy);
-		splitTriangles.push_back(midPointCfreq);
-
-		//3. triangle
-		splitTriangles.push_back(triangles[i + vertexOffset]);
-		splitTriangles.push_back(triangles[i + vertexOffset + yOffset]);
-		splitTriangles.push_back(triangles[i + vertexOffset + freqOffset]);
-
-		splitTriangles.push_back(midPointAx);
-		splitTriangles.push_back(midPointAy);
-		splitTriangles.push_back(midPointAfreq);
-
-		splitTriangles.push_back(midPointCx);
-		splitTriangles.push_back(midPointCy);
-		splitTriangles.push_back(midPointCfreq);
-
-		//4. triangle
-		splitTriangles.push_back(triangles[i + vertexOffset * 2]);
-		splitTriangles.push_back(triangles[i + vertexOffset * 2 + yOffset]);
-		splitTriangles.push_back(triangles[i + vertexOffset * 2 + freqOffset]);
-
-		splitTriangles.push_back(midPointBx);
-		splitTriangles.push_back(midPointBy);
-		splitTriangles.push_back(midPointBfreq);
-
-		splitTriangles.push_back(midPointCx);
-		splitTriangles.push_back(midPointCy);
-		splitTriangles.push_back(midPointCfreq);
-	}
-
-	assert(static_cast<int>(splitTriangles.size()) % 3 == 0);
-
-	return splitTriangles;
 }
 
 //TODO: might want to separate frequencies and vertices
@@ -537,9 +382,6 @@ void ScalpCanvas::paintGL() {
 
 	if (paintingDisabled)
 		return;
-
-	QString test = QString("TEST");
-	QFont labelFont = QFont("Times", 8, QFont::Bold);
 
 #ifndef NDEBUG
 	logToFile("Painting started.");
@@ -634,9 +476,9 @@ void ScalpCanvas::paintGL() {
 
 			//TODO: use positions, triangulatedPositions are inflated, repeated draws
 			if (shouldDrawChannels) {
-				for (int i = 0; i < triangulatedPositions.size(); i++) {
-							posBufferData.push_back(triangulatedPositions[i].x);
-							posBufferData.push_back(triangulatedPositions[i].y);
+				for (int i = 0; i < positions.size(); i++) {
+							posBufferData.push_back(positions[i].x);
+							posBufferData.push_back(positions[i].y);
 				}
 				gl()->glUseProgram(labelProgram->getGLProgram());
 				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -655,10 +497,13 @@ void ScalpCanvas::paintGL() {
 
 		gl()->glFlush();
 
-		/*for (int i = 0; i < positions.size(); i++) {
-			glColor3f(0.6, 0.6, 0.6);
-			renderText(positions[i].x, -1 * positions[i].y - 0.02, labels[i], labelFont);
-		}*/
+		if (shouldDrawLabels) {
+				for (int i = 0; i < positions.size(); i++) {
+						QFont labelFont = QFont("Times", 8, QFont::Bold);
+
+						renderText(positions[i].x, positions[i].y, labels[i], labelFont, QColor(255, 255, 255));
+				}
+		}
 
 		//QPainter part
 		renderGradientText();
@@ -691,18 +536,13 @@ float ScalpCanvas::leftEdgePosition() {
              virtualRatio();
 }
 
-void ScalpCanvas::createContext() {
-
-}
-
-
 void ScalpCanvas::logLastGLMessage() {
 
 }
 
 bool ScalpCanvas::ready() {
 	//TODO: think this through
-		return shouldDrawChannels && triangulatedPositions.size() > 0;
+		return shouldDraw && triangulatedPositions.size() > 0;
 }
 
 void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
@@ -733,6 +573,8 @@ void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& 
 	int realY = height() / 2 + (height() / 2) * y * -1;
 
 	QPainter painter(this);
+	painter.setBackgroundMode(Qt::OpaqueMode);
+	painter.setBackground(QBrush(QColor(0, 0, 0)));
 	painter.setPen(fontColor);
 	painter.setBrush(fontColor);
 	painter.setFont(font);
