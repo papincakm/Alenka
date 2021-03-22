@@ -93,39 +93,40 @@ bool ScalpMap::positionsValid() {
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateLabels() {
-	labels.clear();
-	colors.clear();
-	positions.clear();
+		labels.clear();
+		colors.clear();
+		positions.clear();
 
-	if (!file || file->dataModel->montageTable()->rowCount() <= 0)
-		return;
+		if (!file || file->dataModel->montageTable()->rowCount() <= 0)
+				return;
 
-	const AbstractTrackTable *trackTable =
-		file->dataModel->montageTable()->trackTable(
-			OpenDataFile::infoTable.getSelectedMontage());
+		const AbstractTrackTable *trackTable =
+				file->dataModel->montageTable()->trackTable(
+						OpenDataFile::infoTable.getSelectedMontage());
 
-	if (trackTable->rowCount() <= 0)
-		return;
+		if (trackTable->rowCount() <= 0)
+				return;
 
-	int track = 0;
-	//TODO: what to do whith hidden channels
-	//std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
-	//assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
+		int track = 0;
+		//TODO: what to do whith hidden channels
+		//std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
+		//assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
 
-	for (int i = 0; i < trackTable->rowCount(); ++i) {
-		Track t = trackTable->row(i);
+		for (int i = 0; i < trackTable->rowCount(); ++i) {
+				Track t = trackTable->row(i);
 
-		if (!t.hidden) {
-			//TODO: labels, colors and positions should be in one class and one vector
-			labels.push_back(QString::fromStdString(t.label));
-			colors.push_back(DataModel::array2color<QColor>(t.color));
-			positions.push_back(QVector3D(t.x, t.y, t.z));
-		 
-			++track;
+				if (!t.hidden) {
+						//TODO: labels, colors and positions should be in one class and one vector
+						labels.push_back(QString::fromStdString(t.label));
+						colors.push_back(DataModel::array2color<QColor>(t.color));
+						positions.push_back(QVector3D(t.x, t.y, t.z));
+
+						++track;
+				}
 		}
-	}
 
-	if (!positionsValid()) {
+		if (!positionsValid() || trackTable->rowCount() < 3) {
+			std::cout << "update labels returned" << std::endl;
 			scalpCanvas->forbidDraw("Channel positions are invalid(Two positions can't be the same).");
 			return;
 	}

@@ -218,7 +218,7 @@ private:
   std::vector<ElectrodePositionColored> generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels);
   std::vector<QVector3D> generateScalpTriangleColors(std::vector<ElectrodePosition> channels);
   std::vector<GLfloat> generateScalpTriangleArray();
-  std::vector<GLfloat> ScalpCanvas::generateGradient();
+  std::vector<GLfloat> generateGradient();
 	void renderErrorMsg();
   void renderGradientText();
 };

@@ -257,6 +257,7 @@ void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
 
 //TODO: testing, refactor in future, use less data containers
 std::vector<ElectrodePositionColored> ScalpCanvas::generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels) {
+	std::cout << "delaunator channels: " << channels.size() << std::endl;
 	std::vector<double> coords;
 	std::vector<ElectrodePositionColored> triangles;
 	
