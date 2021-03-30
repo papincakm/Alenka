@@ -457,10 +457,12 @@ void Canvas::updateCursor() {
 }
 
 void Canvas::initializeGL() {
-  logToFile("Initializing OpenGL in Canvas.");
 
-  OPENGL_INTERFACE = make_unique<OpenGLInterface>();
-  OPENGL_INTERFACE->initializeOpenGLInterface();
+	if (!OPENGL_INTERFACE) {
+		logToFile("Initializing OpenGL in Canvas.");
+		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
+		OPENGL_INTERFACE->initializeOpenGLInterface();
+	}
 
   QFile signalVertFile(":/signal.vert");
   signalVertFile.open(QIODevice::ReadOnly);

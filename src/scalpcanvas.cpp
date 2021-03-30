@@ -59,20 +59,7 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
 ScalpCanvas::~ScalpCanvas() {
-  makeCurrent();
-
-  // Release these three objects here explicitly to make sure the right GL
-  // context is bound by makeCurrent().
-
-  gl()->glDeleteBuffers(1, &posBuffer);
-
-  channelProgram.reset();
-  labelProgram.reset();
-
-  logLastGLMessage();
-
-  OPENGL_INTERFACE->checkGLErrors();
-  doneCurrent();
+	//objects are destroyed in cleanup()
 }
 
 void ScalpCanvas::forbidDraw(QString errorString) {
@@ -119,11 +106,9 @@ void bindArray(GLuint array, GLuint buffer) {
 }
 
 void ScalpCanvas::initializeGL() {
-	logToFile("Initializing OpenGL in ScalpCanvas.");
-
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
-	if (!OPENGL_INTERFACE)
-	{
+
+	if (!OPENGL_INTERFACE) {
 		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
 		OPENGL_INTERFACE->initializeOpenGLInterface();
 	}
@@ -198,6 +183,7 @@ void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
 }
 
 void ScalpCanvas::cleanup() {
+	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
 
 	gl()->glDeleteBuffers(1, &posBuffer);
@@ -380,9 +366,6 @@ void ScalpCanvas::renderGradientText() {
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
 	using namespace chrono;
-
-	if (paintingDisabled)
-		return;
 
 #ifndef NDEBUG
 	logToFile("Painting started.");

@@ -145,7 +145,6 @@ class ScalpCanvas : public QOpenGLWidget {
 	
   std::unique_ptr<OpenGLProgram> labelProgram;
   std::unique_ptr<OpenGLProgram> channelProgram;
-  bool paintingDisabled = false;
   std::vector<CanvasTrack> tracks;
   std::vector<QString> labels;
   //TODO: should be pair of floats probably or custom class

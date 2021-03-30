@@ -43,6 +43,7 @@ public:
 private:
 	void updatePositionsProjected();
 	bool positionsValid();
+	bool enabled();
 
 private slots:
 	void updateConnections(int row);

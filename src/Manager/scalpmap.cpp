@@ -36,10 +36,17 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
-		this->file = file;
+	this->file = file;
+
+	if (enabled()) {
 		scalpCanvas->clear();
 		updateLabels();
 		updateSpectrum();
+	}
+}
+
+bool ScalpMap::enabled() {
+	return (file && isVisible());
 }
 
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
@@ -49,7 +56,7 @@ void ScalpMap::updateConnections(int row) {
 		disconnect(e);
 	trackConnections.clear();
 
-	if (file) {
+	if (enabled()) {
 		const AbstractMontageTable *mt = file->dataModel->montageTable();
 
 		if (0 <= row && row < mt->rowCount()) {
