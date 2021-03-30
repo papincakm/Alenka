@@ -44,17 +44,16 @@ public:
 	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }
 	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), frequency(0) { }
 
-	//TODO: change float compare values to smthng more standard
 	bool operator == (const ElectrodePosition& position) const
 	{
-			return ((std::abs(position.x - x) < 0.00001 && std::abs(position.y - y) < 0.00001) ||
-					(std::abs(position.x - y) < 0.00001 && std::abs(position.y - x) < 0.00001));
+			return ((std::abs(position.x - x) < FLT_EPSILON && std::abs(position.y - y) <  FLT_EPSILON) ||
+					(std::abs(position.x - y) <  FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
 	}
 
 	bool operator != (const ElectrodePosition& position) const
 	{
-			return !((std::abs(position.x - x) < 0.00001 && std::abs(position.y - y) < 0.00001) ||
-					(std::abs(position.x - y) < 0.00001 && std::abs(position.y - x) < 0.00001));
+			return !((std::abs(position.x - x) <  FLT_EPSILON && std::abs(position.y - y) <  FLT_EPSILON) ||
+					(std::abs(position.x - y) <  FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
 	}
 
 	GLfloat x = 0;
