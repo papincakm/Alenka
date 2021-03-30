@@ -42,19 +42,6 @@ using namespace std;
 using namespace AlenkaFile;
 using namespace AlenkaSignal;
 
-namespace {
-const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->trackTable(
-      OpenDataFile::infoTable.getSelectedMontage());
-}
-
-const AbstractEventTable *getEventTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->eventTable(
-      OpenDataFile::infoTable.getSelectedMontage());
-}
-
-} // namespace
-
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
@@ -73,23 +60,25 @@ void ScalpCanvas::allowDraw() {
 }
 
 void ScalpCanvas::clear() {
-		positions.clear();
+		originalPositions.clear();
 		triangulatedPositions.clear();
 
 		update();
 }
 
 void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
-	positions.clear();
+	originalPositions.clear();
+	triangulatedPositions.clear();
 	
+	//TODO: what if positions are not always rotated the same way
+	//TODO: make rotation option for user
 	for (auto v : channelPositions) {
 		//TODO: multiply more transparently, use different method, find proper way to do this
-		//std::cout << "POSITION x: " << v.x() << "y: " << v.y() << std::endl;
-		positions.push_back(ElectrodePosition(-1 * v.y(), v.x()));
+		originalPositions.push_back(ElectrodePosition(-1 * v.y(), v.x()));
 	}
 	
 	//TODO: refactor me
-	updatePositionTriangles();
+	triangulatedPositions = generateTriangulatedPositions(originalPositions);
 }
 
 void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
@@ -202,7 +191,7 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
 	//TODO: theres less positions thant channelDataBuffer
 	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
 	//TODO: investigate, positions are sometimes smaller, even thoug scalpmap should take care of this
-	if (static_cast<int>(positions.size()) < static_cast<int>(channelDataBuffer.size()))
+	if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
 		return;
 	
 	minFrequency = min;
@@ -210,10 +199,10 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
 
 	float maxMinusMin = maxFrequency - minFrequency;
 
-	int size = std::min(positions.size(), channelDataBuffer.size());
+	int size = std::min(originalPositions.size(), channelDataBuffer.size());
 
 	for (int i = 0; i < size; i++) {
-		positions[i].frequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
+		originalPositions[i].frequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
 
 		//TODO: use some better method or more formal reperssentation of near zero
 		//TODO: elsewhere too
@@ -222,19 +211,12 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
 
 	//TODO: refactor
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
-		for (auto p : positions) {
-			if (p.x - triangulatedPositions[i].x < 0.00001 && (p.y - triangulatedPositions[i].y < 0.00001)) {
+		for (auto p : originalPositions) {
+			if (p.x - triangulatedPositions[i].x < FLT_EPSILON && (p.y - triangulatedPositions[i].y < FLT_EPSILON)) {
 				triangulatedPositions[i].frequency = p.frequency;
 			}
 		}
 	}
-}
-
-void ScalpCanvas::updatePositionTriangles() {
-	triangulatedPositions = generateScalpTriangleDrawPositions(positions);
-	//triangleColors = generateScalpTriangleColors(triangleVertices);
-
-	//update();
 }
 
 void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
@@ -242,10 +224,9 @@ void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
 }
 
 //TODO: testing, refactor in future, use less data containers
-std::vector<ElectrodePositionColored> ScalpCanvas::generateScalpTriangleDrawPositions(std::vector<ElectrodePosition> channels) {
-	std::cout << "delaunator channels: " << channels.size() << std::endl;
+std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedPositions(const std::vector<ElectrodePosition>& channels) {
 	std::vector<double> coords;
-	std::vector<ElectrodePositionColored> triangles;
+	std::vector<ElectrodePosition> triangles;
 	
 	//TODO: do this is setChannelPositions and skip positions?
 	for (auto ch : channels) {
@@ -256,30 +237,15 @@ std::vector<ElectrodePositionColored> ScalpCanvas::generateScalpTriangleDrawPosi
 	delaunator::Delaunator d(coords);
 	
 	for (std::size_t i = 0; i < d.triangles.size(); i+=3) {
-		triangles.push_back(ElectrodePositionColored(d.coords[2 * d.triangles[i]],
+		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i]],
 											  d.coords[2 * d.triangles[i] + 1]));
-		triangles.push_back(ElectrodePositionColored(d.coords[2 * d.triangles[i + 1]],
+		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 1]],
 											  d.coords[2 * d.triangles[i + 1] + 1]));
-		triangles.push_back(ElectrodePositionColored(d.coords[2 * d.triangles[i + 2]],
+		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 2]],
 											  d.coords[2 * d.triangles[i + 2] + 1]));
 	}
 
 	return triangles;
-}
-
-std::vector<QVector3D> ScalpCanvas::generateScalpTriangleColors(std::vector<ElectrodePosition> pos) {
-	std::vector<QVector3D> colors;
-
-	for (int i = 0; i < pos.size(); i++) {
-		if (i % 3 == 1)
-			colors.push_back(QVector3D(1.0f, 0.0f, 0.0f));
-		if (i % 3 == 2)
-			colors.push_back(QVector3D(0.0f, 1.0f, 0.0f));
-		if (i % 3 == 0)
-			colors.push_back(QVector3D(0.0f, 0.0f, 1.0f));
-	}
-
-	return colors;
 }
 
 std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
@@ -460,9 +426,9 @@ void ScalpCanvas::paintGL() {
 
 			//TODO: use positions, triangulatedPositions are inflated, repeated draws
 			if (shouldDrawChannels) {
-				for (int i = 0; i < positions.size(); i++) {
-							posBufferData.push_back(positions[i].x);
-							posBufferData.push_back(positions[i].y);
+				for (int i = 0; i < originalPositions.size(); i++) {
+							posBufferData.push_back(originalPositions[i].x);
+							posBufferData.push_back(originalPositions[i].y);
 				}
 				gl()->glUseProgram(labelProgram->getGLProgram());
 				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -482,10 +448,10 @@ void ScalpCanvas::paintGL() {
 		gl()->glFlush();
 
 		if (shouldDrawLabels) {
-				for (int i = 0; i < positions.size(); i++) {
+				for (int i = 0; i < originalPositions.size(); i++) {
 						QFont labelFont = QFont("Times", 8, QFont::Bold);
 
-						renderText(positions[i].x, positions[i].y, labels[i], labelFont, QColor(255, 255, 255));
+						renderText(originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
 				}
 		}
 
