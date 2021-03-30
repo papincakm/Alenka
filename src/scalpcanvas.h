@@ -69,14 +69,12 @@ class ScalpCanvas : public QOpenGLWidget {
   std::unique_ptr<OpenGLProgram> channelProgram;
   std::vector<QString> labels;
   //TODO: should be pair of floats probably or custom class
+	//TODO: mby move to scalpmap
   std::vector<ElectrodePosition> originalPositions;
-  GLuint posBuffer;
   //TODO: replace with single struct
   std::vector<ElectrodePosition> triangulatedPositions;
-  std::vector<QVector3D> triangleColors;
-  //TODO: for testing
-  std::vector<float> triangleFrequencies;
-  std::map<QVector2D, GLfloat> posFrequencies;
+	GLuint posBuffer;
+	//TODO: possibly not needed
   std::vector<GLfloat> posBufferData;
 	QAction *setChannelDrawing;
 
@@ -99,7 +97,6 @@ public:
   //TODO: refactor, right now labels and positions are instanced twice, here and in scalpMap
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
-  void updatePositionTriangles();
 	void setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
 	void forbidDraw(QString errorString);
 	void allowDraw();
