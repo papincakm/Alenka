@@ -39,6 +39,7 @@ class OpenGLProgram;
  * events are skipped and handled by the parent.
  */
 
+//TODO: move to some utils class
 class ElectrodePosition {
 public:
 	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }

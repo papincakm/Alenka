@@ -46,7 +46,8 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
 ScalpCanvas::~ScalpCanvas() {
-	//objects are destroyed in cleanup()
+	logToFile("Destructor in ScalpCanvas.");
+	cleanup();
 }
 
 void ScalpCanvas::forbidDraw(QString errorString) {
@@ -129,9 +130,7 @@ void ScalpCanvas::initializeGL() {
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
 	gl()->glGenBuffers(1, &posBuffer);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 }
 
 void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
@@ -176,6 +175,8 @@ void ScalpCanvas::cleanup() {
 	makeCurrent();
 
 	gl()->glDeleteBuffers(1, &posBuffer);
+
+	posBufferData.clear();
 
 	channelProgram.reset();
 
@@ -389,6 +390,7 @@ void ScalpCanvas::paintGL() {
 			*/
 
 			//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
+
 			posBufferData = generateScalpTriangleArray();
 
 			std::vector<GLfloat> gradient = generateGradient();

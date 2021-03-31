@@ -21,7 +21,7 @@ class ScalpMap : public QWidget {
 	Q_OBJECT
 
 	OpenDataFile *file = nullptr;
-	ScalpCanvas *scalpCanvas;
+	ScalpCanvas *scalpCanvas = nullptr;
 	int selectedTrack = -1;
 	//TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 	//which will be referenced in here and trackLabelBar
@@ -44,6 +44,8 @@ private:
 	void updatePositionsProjected();
 	bool positionsValid();
 	bool enabled();
+	void ScalpMap::hideEvent(QHideEvent * event);
+	void ScalpMap::showEvent(QShowEvent * event);
 
 private slots:
 	void updateConnections(int row);

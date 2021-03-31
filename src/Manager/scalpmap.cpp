@@ -24,15 +24,6 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 	connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
 		SLOT(updateConnections(int)));
 
-	auto box = new QVBoxLayout;
-	setLayout(box);
-	box->setContentsMargins(0, 0, 0, 0);
-	box->setSpacing(0);
-
-	scalpCanvas = new ScalpCanvas(this);
-	box->addWidget(scalpCanvas);
-	setMinimumHeight(100);
-	setMinimumWidth(100);
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
@@ -95,6 +86,33 @@ bool ScalpMap::positionsValid() {
 		}
 
 		return true;
+}
+
+void ScalpMap::hideEvent(QHideEvent * event) {
+	if (scalpCanvas) {
+		delete scalpCanvas;
+	}
+
+  QLayout* layout = this->layout();
+	if (layout) {
+		delete layout;
+	}
+}
+
+
+void ScalpMap::showEvent(QShowEvent * event) {
+	auto box = new QVBoxLayout;
+	setLayout(box);
+	box->setContentsMargins(0, 0, 0, 0);
+	box->setSpacing(0);
+
+	scalpCanvas = new ScalpCanvas(this);
+	box->addWidget(scalpCanvas);
+	setMinimumHeight(100);
+	setMinimumWidth(100);
+	
+	//TODO: Rethink this, there are redundant steps
+	updateLabels();
 }
 
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
