@@ -18,39 +18,39 @@ class ScalpCanvas;
 * @brief Implements 2D scalp map.
 */
 class ScalpMap : public QWidget {
-	Q_OBJECT
+  Q_OBJECT
 
-	OpenDataFile *file = nullptr;
-	ScalpCanvas *scalpCanvas = nullptr;
-	int selectedTrack = -1;
-	//TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
-	//which will be referenced in here and trackLabelBar
-	std::vector<QMetaObject::Connection> trackConnections;
-	std::vector<QString> labels;
-	std::vector<QColor> colors;
-	std::vector<QVector3D> positions;
-	std::vector<QVector2D> positionsProjected;
+    OpenDataFile *file = nullptr;
+  ScalpCanvas *scalpCanvas = nullptr;
+  int selectedTrack = -1;
+  //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
+  //which will be referenced in here and trackLabelBar
+  std::vector<QMetaObject::Connection> connections;
+  std::vector<QString> labels;
+  std::vector<QColor> colors;
+  std::vector<QVector3D> positions;
+  std::vector<QVector2D> positionsProjected;
 
 public:
-	explicit ScalpMap(QWidget *parent = nullptr);
+  explicit ScalpMap(QWidget *parent = nullptr);
 
-	/**
-	* @brief Notifies this object that the DataFile changed.
-	* @param file Pointer to the data file. nullptr means file was closed.
-	*/
-	void changeFile(OpenDataFile *file);
+  /**
+  * @brief Notifies this object that the DataFile changed.
+  * @param file Pointer to the data file. nullptr means file was closed.
+  */
+  void changeFile(OpenDataFile *file);
 
 private:
-	void updatePositionsProjected();
-	bool positionsValid();
-	bool enabled();
-	void ScalpMap::hideEvent(QHideEvent * event);
-	void ScalpMap::showEvent(QShowEvent * event);
+  void updatePositionsProjected();
+  bool positionsValid();
+  bool enabled();
+  void ScalpMap::hideEvent(QHideEvent * event);
+  void ScalpMap::showEvent(QShowEvent * event);
 
-private slots:
-	void updateConnections(int row);
-	void updateLabels();
-	void updateSpectrum();
+  private slots:
+  void updateConnections(int row);
+  void updateLabels();
+  void updateSpectrum();
 };
 
 #endif // SCALPMAP_H

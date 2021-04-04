@@ -31,6 +31,7 @@ void InfoTable::setDefaultValues() {
   pixelViewWidth = 0;
   filterCoefficients.clear();
   globalMontageHeader.clear();
+  signalCurPosProcessed.clear();
 }
 
 void InfoTable::emitAllSignals() {

@@ -177,6 +177,7 @@ private:
   void setUniformEventWidth(OpenGLProgram *program, float value);
   void logLastGLMessage();
   void updatePositionIndicator();
+	void storeCurrentPositionSample();
 
 private slots:
   void updateFilter();

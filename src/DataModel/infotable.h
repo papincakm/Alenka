@@ -50,6 +50,7 @@ private:
   int pixelViewWidth;
   std::vector<float> filterCoefficients;
   QString globalMontageHeader;
+  std::vector<float> signalCurPosProcessed;
 
 public:
   InfoTable(QObject *parent = nullptr) : QObject(parent) { setDefaultValues(); }
@@ -100,6 +101,9 @@ public:
   const std::vector<float> &getFilterCoefficients() const {
     return filterCoefficients;
   }
+  const std::vector<float> &getSignalSampleCurPosProcessed() const {
+    return signalCurPosProcessed;
+  }
   QString getGlobalMontageHeader() const { return globalMontageHeader; }
 
 signals:
@@ -124,6 +128,7 @@ signals:
   void pixelViewWidthChanged(int);
   void filterCoefficientsChanged();
   void globalMontageHeaderChanged(QString);
+	void signalCurPosProcessedChanged();
 
 public slots:
   // TODO: Perhaps use macros to lessen the code duplicity for the properties.
@@ -251,11 +256,17 @@ public slots:
       emit filterCoefficientsChanged();
     }
   }
+
   void setGlobalMontageHeader(const QString &value) {
     if (value != globalMontageHeader) {
       globalMontageHeader = value;
       emit globalMontageHeaderChanged(value);
     }
+  }
+
+  void setSignalCurPosProcessed(const std::vector<float> &value) {
+    signalCurPosProcessed = value;
+    emit signalCurPosProcessedChanged();
   }
 };
 

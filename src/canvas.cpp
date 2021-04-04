@@ -686,6 +686,10 @@ void Canvas::paintGL() {
 #ifndef NDEBUG
   logToFile("Painting finished.");
 #endif
+
+  if (ready()) {
+    storeCurrentPositionSample();
+  }
 }
 
 void Canvas::wheelEvent(QWheelEvent *event) {
@@ -1312,6 +1316,39 @@ void Canvas::updatePositionIndicator() {
                                         indicator);
     update();
   }
+}
+
+void Canvas::storeCurrentPositionSample() {
+  int curSamplePos = OpenDataFile::infoTable.getPosition();
+  auto blockFromTo = sampleRangeToBlockRange(curSamplePos, curSamplePos, nSamples);
+
+  set<int> posIndex;
+  posIndex.insert(blockFromTo.first);
+
+  int idd;
+  GPUCacheItem *cacheItem;
+
+  cacheItem = cache->getAny(posIndex, &idd);
+  size_t offset = (curSamplePos - SignalProcessor::blockIndexToSampleRange(idd, nSamples).first) * sizeof(float);
+  if (duplicateSignal)
+    offset *= 2;
+
+  size_t size = sizeof(float);
+  std::vector<float> syncBuffer;
+  syncBuffer.resize(signalProcessor->getTrackCount());
+
+  gl()->glBindBuffer(GL_ARRAY_BUFFER, cacheItem->signalBuffer);
+
+  for (int i = 0; i < signalProcessor->getTrackCount(); i++) {
+    gl()->glGetBufferSubData(GL_ARRAY_BUFFER, offset, size,
+      syncBuffer.data() + i);
+
+    offset += nSamples * sizeof(float);
+    if (duplicateSignal)
+      offset += nSamples * sizeof(float);
+  }
+
+  OpenDataFile::infoTable.setSignalCurPosProcessed(syncBuffer);
 }
 
 void Canvas::updateFilter() {
