@@ -25,6 +25,10 @@ public:
    * @brief Enum defining symbolic constants for modes of time output.
    */
   enum class TimeMode { samples, offset, real, size };
+  /**
+  * @brief Enum defining extrema ranges used by scalpmap.
+  */
+  enum class Extrema { custom, global, local };
 
 private:
   int virtualWidth;
@@ -38,6 +42,7 @@ private:
   AlenkaSignal::WindowFunction filterWindow;
   int selectedMontage;
   InfoTable::TimeMode timeMode;
+  InfoTable::Extrema selectedScalpMapExtrema;
   int selectedType;
   double timeLineInterval;
   std::vector<dpair> frequencyMultipliers;
@@ -104,6 +109,9 @@ public:
   const std::vector<float> &getSignalSampleCurPosProcessed() const {
     return signalCurPosProcessed;
   }
+  const InfoTable::Extrema getScalpMapExtrema() const {
+    return selectedScalpMapExtrema;
+  }
   QString getGlobalMontageHeader() const { return globalMontageHeader; }
 
 signals:
@@ -129,6 +137,9 @@ signals:
   void filterCoefficientsChanged();
   void globalMontageHeaderChanged(QString);
 	void signalCurPosProcessedChanged();
+  void useExtremaCustom();
+  void useExtremaGlobal();
+  void useExtremaLocal();
 
 public slots:
   // TODO: Perhaps use macros to lessen the code duplicity for the properties.
@@ -267,6 +278,21 @@ public slots:
   void setSignalCurPosProcessed(const std::vector<float> &value) {
     signalCurPosProcessed = value;
     emit signalCurPosProcessedChanged();
+  }
+
+  void setExtremaCustom() {
+    selectedScalpMapExtrema = InfoTable::Extrema::custom;
+    emit useExtremaCustom();
+  }
+
+  void setExtremaGlobal() {
+    selectedScalpMapExtrema = InfoTable::Extrema::global;
+    emit useExtremaGlobal();
+  }
+
+  void setExtremaLocal() {
+    selectedScalpMapExtrema = InfoTable::Extrema::local;
+    emit useExtremaLocal();
   }
 };
 

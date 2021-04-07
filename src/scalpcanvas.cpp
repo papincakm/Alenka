@@ -134,40 +134,94 @@ void ScalpCanvas::initializeGL() {
 }
 
 void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
-		if (event->button() == Qt::RightButton)
-		{
-				//TODO: Move this to separate file
-				QMenu menu;
-				QActionGroup displayAg(&menu);
+  if (event->button() == Qt::RightButton)
+  {
+    //TODO: Move this to separate file
+    QMenu* menu = new QMenu(this);
 
-				//draw channels option
-				QAction setChannelDrawing("draw channels", this);
+    //draw channels option
+    QAction setChannelDrawing("Draw Channels", this);
 
-				connect(&setChannelDrawing, &QAction::triggered, [this]() {
-								shouldDrawChannels = !shouldDrawChannels;
-								update();
-				});
+    connect(&setChannelDrawing, &QAction::triggered, [this]() {
+      shouldDrawChannels = !shouldDrawChannels;
+      update();
+    });
 
-				menu.addAction(&setChannelDrawing);
-				menu.actions().back()->setCheckable(true);
-				menu.actions().back()->setChecked(shouldDrawChannels);
+    menu->addAction(&setChannelDrawing);
+    menu->actions().back()->setCheckable(true);
+    menu->actions().back()->setChecked(shouldDrawChannels);
 
-				//draw labels option
-				QAction setLabelDrawing("draw labels", this);
+    //draw labels option
+    QAction setLabelDrawing("Draw Labels", this);
 
-				connect(&setLabelDrawing, &QAction::triggered, [this]() {
-						shouldDrawLabels = !shouldDrawLabels;
-						update();
-				});
+    connect(&setLabelDrawing, &QAction::triggered, [this]() {
+      shouldDrawLabels = !shouldDrawLabels;
+      update();
+    });
 
-				menu.addAction(&setLabelDrawing);
-				menu.actions().back()->setCheckable(true);
-				menu.actions().back()->setChecked(shouldDrawLabels);
+    menu->addAction(&setLabelDrawing);
+    menu->actions().back()->setCheckable(true);
+    menu->actions().back()->setChecked(shouldDrawLabels);
 
-				menu.addSeparator();
-				menu.exec(mapToGlobal(event->pos()));
-		}
-		QOpenGLWidget::mouseReleaseEvent(event);
+    menu->addSeparator();
+
+    //setup extrema
+    QMenu* extremaMenu = menu->addMenu("Extrema");
+    auto* extremaGroup = new QActionGroup(this);
+    extremaGroup->setExclusive(true);
+
+    //set local extrema
+    QAction setExtremaLocal("Local", this);
+
+    connect(&setExtremaLocal, &QAction::triggered, [this]() {
+      OpenDataFile::infoTable.setExtremaLocal();
+    });
+    setExtremaLocal.setCheckable(true);
+
+    extremaMenu->addAction(&setExtremaLocal);
+    extremaGroup->addAction(&setExtremaLocal);
+
+    //set global extrema
+    QAction setExtremaGlobal("Global", this);
+
+    connect(&setExtremaGlobal, &QAction::triggered, [this]() {
+      OpenDataFile::infoTable.setExtremaGlobal();
+    });
+    setExtremaGlobal.setCheckable(true);
+
+    extremaMenu->addAction(&setExtremaGlobal);
+    extremaGroup->addAction(&setExtremaGlobal);
+
+    //set custom extrema
+    QAction setExtremaCustom("Custom", this);
+
+    connect(&setExtremaCustom, &QAction::triggered, [this]() {
+      OpenDataFile::infoTable.setExtremaCustom();
+    });
+    setExtremaCustom.setCheckable(true);
+
+    extremaMenu->addAction(&setExtremaCustom);
+    extremaGroup->addAction(&setExtremaCustom);
+
+    switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
+    case InfoTable::Extrema::custom:
+      setExtremaCustom.setChecked(true);
+      break;
+    case InfoTable::Extrema::global:
+      std::cout << "MENU: GLOBAL SELECTED\n";
+      setExtremaGlobal.setChecked(true);
+      break;
+    case InfoTable::Extrema::local:
+      std::cout << "MENU: LOCAL SELECTED\n";
+      setExtremaLocal.setChecked(true);
+      break;
+    }
+ 
+    menu->addMenu(extremaMenu);
+
+    menu->exec(mapToGlobal(event->pos()));
+  }
+  QOpenGLWidget::mouseReleaseEvent(event);
 }
 
 void ScalpCanvas::cleanup() {
@@ -203,8 +257,8 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
 	int size = std::min(originalPositions.size(), channelDataBuffer.size());
 
 	for (int i = 0; i < size; i++) {
-		originalPositions[i].frequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
-
+    float newFrequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
+		originalPositions[i].frequency = newFrequency < 0 ? 0 : (newFrequency > 1 ? 1 : newFrequency);
 		//TODO: use some better method or more formal reperssentation of near zero
 		//TODO: elsewhere too
 		// near 0 shows up as black, mby move this further in data setup

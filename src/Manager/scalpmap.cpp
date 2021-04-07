@@ -22,17 +22,21 @@ using namespace std;
 
 ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
-    SLOT(updateConnections(int)));
-
+    SLOT(updateTrackTableConnections(int)));
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
 
   if (enabled()) {
-    scalpCanvas->clear();
-    updateLabels();
-    //updateSpectrum();
+    if (!scalpCanvas) {
+      std::cout << "change file SETUPING canvas\n";
+      setupCanvas();
+    }
+    else {
+      scalpCanvas->clear();
+      updateLabels();
+    }
   }
 }
 
@@ -40,38 +44,51 @@ bool ScalpMap::enabled() {
   return (file && isVisible());
 }
 
+void ScalpMap::deleteScalpConnections() {
+  for (auto e : scalpConnections)
+    disconnect(e);
+  scalpConnections.clear();
+}
+
+void ScalpMap::deleteTrackTableConnections() {
+  for (auto e : trackTableConnections)
+    disconnect(e);
+  trackTableConnections.clear();
+}
+
+void ScalpMap::setupScalpConnections() {
+  auto c = connect(&file->infoTable, SIGNAL(signalCurPosProcessedChanged()),
+    this, SLOT(updateSpectrum()));
+  scalpConnections.push_back(c);
+
+  c = connect(&file->infoTable, SIGNAL(useExtremaGlobal()),
+    this, SLOT(updateToExtremaGlobal()));
+  scalpConnections.push_back(c);
+
+  c = connect(&file->infoTable, SIGNAL(useExtremaLocal()),
+    this, SLOT(updateToExtremaLocal()));
+  scalpConnections.push_back(c);
+}
+
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
-void ScalpMap::updateConnections(int row) {
-  for (auto e : connections)
-    disconnect(e);
-  connections.clear();
-
+void ScalpMap::updateTrackTableConnections(int row) {
   if (enabled()) {
+    deleteTrackTableConnections();
+
     const AbstractMontageTable *mt = file->dataModel->montageTable();
 
     if (0 <= row && row < mt->rowCount()) {
       auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
       auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
-      connections.push_back(c);
+      trackTableConnections.push_back(c);
 
       c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
+      trackTableConnections.push_back(c);
 
-      connections.push_back(c);
-      c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this,
-        SLOT(updateLabels()));
-      connections.push_back(c);
-
-      /*c = connect(&file->infoTable, SIGNAL(positionChanged(int, double)), this,
-      SLOT(updateSpectrum()));
-      connections.push_back(c);*/
-
-      c = connect(&file->infoTable, SIGNAL(signalCurPosProcessedChanged()),
-        this, SLOT(updateSpectrum()));
-      connections.push_back(c);
-
-      updateLabels();
+      c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateLabels()));
+      trackTableConnections.push_back(c);
     }
   }
 }
@@ -101,10 +118,12 @@ void ScalpMap::hideEvent(QHideEvent * event) {
   if (layout) {
     delete layout;
   }
+
+  deleteScalpConnections();
 }
 
-
-void ScalpMap::showEvent(QShowEvent * event) {
+void ScalpMap::setupCanvas() {
+  std::cout << "setuping canvas\n";
   auto box = new QVBoxLayout;
   setLayout(box);
   box->setContentsMargins(0, 0, 0, 0);
@@ -115,33 +134,34 @@ void ScalpMap::showEvent(QShowEvent * event) {
   setMinimumHeight(100);
   setMinimumWidth(100);
 
-  //TODO: Rethink this, there are redundant steps
+  setupScalpConnections();
   updateLabels();
+}
+
+void ScalpMap::showEvent(QShowEvent* event) {
+  if (enabled() && !scalpCanvas)
+    setupCanvas();
+}
+
+//TODO: copied from canvas.cpp
+const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
+  return file->dataModel->montageTable()->trackTable(
+    OpenDataFile::infoTable.getSelectedMontage());
 }
 
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateLabels() {
+  if (!enabled() || file->dataModel->montageTable()->rowCount() <= 0)
+    return;
+  
   labels.clear();
   colors.clear();
   positions.clear();
 
-  if (!file || file->dataModel->montageTable()->rowCount() <= 0)
-    return;
+  const AbstractTrackTable *trackTable = getTrackTable(file);
 
-  const AbstractTrackTable *trackTable =
-    file->dataModel->montageTable()->trackTable(
-      OpenDataFile::infoTable.getSelectedMontage());
-
-  if (trackTable->rowCount() <= 0)
-    return;
-
-  int track = 0;
-  //TODO: what to do whith hidden channels
-  //std::cout << "rowCount: " << trackTable->rowCount() << "  channelCount: " << file->file->getChannelCount() << "freqs:\n";
-  //assert(static_cast<int>(trackTable->rowCount()) <= static_cast<int>(file->file->getChannelCount()));
-
-  for (int i = 0; i < trackTable->rowCount(); ++i) {
+  for (int i = 0; i < trackTable->rowCount(); i++) {
     Track t = trackTable->row(i);
 
     if (!t.hidden) {
@@ -149,16 +169,16 @@ void ScalpMap::updateLabels() {
       labels.push_back(QString::fromStdString(t.label));
       colors.push_back(DataModel::array2color<QColor>(t.color));
       positions.push_back(QVector3D(t.x, t.y, t.z));
-
-      ++track;
     }
   }
 
   if (!positionsValid() || trackTable->rowCount() < 3) {
-    std::cout << "update labels returned" << std::endl;
     scalpCanvas->forbidDraw("Channel positions are invalid(Two positions can't be the same).");
     return;
   }
+  
+  if (selectedExtrema == InfoTable::Extrema::global)
+    updateExtremaGlobalValue();
 
   updatePositionsProjected();
 
@@ -166,23 +186,32 @@ void ScalpMap::updateLabels() {
   scalpCanvas->setChannelPositions(positionsProjected);
 
   scalpCanvas->allowDraw();
-
-  //updateSpectrum();
-
-  update();
-  //scalpCanvas->update();
 }
 
-//copied from canvas.cpp
-const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->trackTable(
-    OpenDataFile::infoTable.getSelectedMontage());
+void ScalpMap::setupExtrema() {
+  switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
+  case InfoTable::Extrema::local:
+    selectedExtrema = InfoTable::Extrema::local;
+    break;
+  case InfoTable::Extrema::global:
+    selectedExtrema = InfoTable::Extrema::global;
+    updateExtremaGlobalValue();
+    break;
+  case InfoTable::Extrema::custom:
+    //TODO: do extrema custom
+    //updateToExtremaLocal();
+    selectedExtrema = InfoTable::Extrema::local;
+    break;
+  }
 }
 
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
-  if (!file || !scalpCanvas)
+  if (!enabled() || !scalpCanvas)
     return;
+
+  if (selectedExtrema < InfoTable::Extrema::custom || selectedExtrema > InfoTable::Extrema::local)
+    setupExtrema();
 
   const AbstractTrackTable *trackTable =
     file->dataModel->montageTable()->trackTable(
@@ -195,13 +224,37 @@ void ScalpMap::updateSpectrum() {
 
   std::vector<float> signalSamplePosition = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
 
-  auto min = std::min_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
-  auto max = std::max_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
+  if (selectedExtrema == InfoTable::Extrema::local) {
+    frequencyMin = *std::min_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
+    frequencyMax = *std::max_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
+  }
 
-  scalpCanvas->setPositionFrequencies(signalSamplePosition, *min, *max);
-
-  update();
+  scalpCanvas->setPositionFrequencies(signalSamplePosition, frequencyMin, frequencyMax);
   scalpCanvas->update();
+}
+
+void ScalpMap::updateExtremaGlobalValue() {
+  //get hidden channels vector
+  std::vector<bool> hidden;
+  const AbstractTrackTable *trackTable = getTrackTable(file);
+  for (int i = 0; i < trackTable->rowCount(); i++) {
+    Track t = trackTable->row(i);
+    hidden.push_back(t.hidden);
+  }
+
+  frequencyMin = file->file->getGlobalPhysicalMinimum(hidden);
+  frequencyMax = file->file->getGlobalPhysicalMaximum(hidden);
+}
+
+void ScalpMap::updateToExtremaGlobal() {
+  selectedExtrema = InfoTable::Extrema::global;
+  updateExtremaGlobalValue();
+  updateSpectrum();
+}
+
+void ScalpMap::updateToExtremaLocal() {
+  selectedExtrema = InfoTable::Extrema::local;
+  updateSpectrum();
 }
 
 float degToRad(float n) {
