@@ -129,8 +129,18 @@ void ScalpCanvas::initializeGL() {
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
+  gl()->glUseProgram(channelProgram->getGLProgram());
+
 	gl()->glGenBuffers(1, &posBuffer);
 	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+  colormapTextureBuffer = createTextureBR();
+
+  colormapTextureId = setupColormapTexture(colormapTextureBuffer);
+
+  gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
+  gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
+
+  gl()->glFlush();
 }
 
 void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
@@ -230,6 +240,10 @@ void ScalpCanvas::cleanup() {
 
 	gl()->glDeleteBuffers(1, &posBuffer);
 
+  gl()->glDeleteTextures(1, &colormapTextureId);
+
+  gl()->glBindTexture(GL_TEXTURE_1D, 0);
+
 	posBufferData.clear();
 
 	channelProgram.reset();
@@ -260,14 +274,14 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
     float newFrequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
 		originalPositions[i].frequency = newFrequency < 0 ? 0 : (newFrequency > 1 ? 1 : newFrequency);
 		//TODO: use some better method or more formal reperssentation of near zero
-		//TODO: elsewhere too
+		//TODO: elsewhere toos
 		// near 0 shows up as black, mby move this further in data setup
 	}
 
 	//TODO: refactor
 	for (int i = 0; i < triangulatedPositions.size(); i++) {
 		for (auto p : originalPositions) {
-			if (p.x - triangulatedPositions[i].x < FLT_EPSILON && (p.y - triangulatedPositions[i].y < FLT_EPSILON)) {
+			if (std::fabs(p.x - triangulatedPositions[i].x) < FLT_EPSILON && (std::fabs(p.y - triangulatedPositions[i].y) < FLT_EPSILON)) {
 				triangulatedPositions[i].frequency = p.frequency;
 			}
 		}
@@ -384,6 +398,120 @@ void ScalpCanvas::renderGradientText() {
 	}
 }
 
+std::vector<float> ScalpCanvas::createTextureBR() {
+  int size = 150;
+  std::vector<float> colorTemplate = {
+    0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 1.0f,
+    0.0f, 1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,
+    1.0f, 0.0f, 0.0f
+  };
+  int colorCnt = 5;
+
+  /*std::vector<float> colorTemplate = {
+  0.0f, 0.0f, 0.6f,
+  0.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 1.0f,
+  1.0f, 1.0f, 0.0f,
+  1.0f, 0.0f, 0.0f,
+  0.6f, 0.0f, 0.0f
+  };
+  int colorCnt = 6;*/
+
+  int colorSplit = 29;
+  std::vector<float> colormap;
+
+  int red = 0;
+  int green = 1;
+  int blue = 2;
+  float partCnt = colorSplit + 1;
+  for (int i = 0; i < (colorCnt - 1) * 3; i += 3) {
+    int firstColor = i;
+    int secondColor = i + 3;
+
+    colormap.push_back(colorTemplate[firstColor + red]);
+    colormap.push_back(colorTemplate[firstColor + green]);
+    colormap.push_back(colorTemplate[firstColor + blue]);
+    colormap.push_back(1.0f);
+
+    for (int j = 1; j < partCnt; j++) {
+      float redC = (partCnt - j) / partCnt * colorTemplate[firstColor + red] +  j / partCnt * colorTemplate[secondColor + red];
+      float greenC = (partCnt - j) / partCnt * colorTemplate[firstColor + green] + j / partCnt * colorTemplate[secondColor + green];
+      float blueC = (partCnt - j) / partCnt * colorTemplate[firstColor + blue] + j / partCnt * colorTemplate[secondColor + blue];
+      //std::cout << "red: " << redC << " greenC: " << greenC << " blueC: " << blueC << "\n";
+
+      colormap.push_back(redC);
+      colormap.push_back(greenC);
+      colormap.push_back(blueC);
+      colormap.push_back(1.0f);
+    }
+  }
+
+  float lastColor = (colorCnt - 1) * 3;
+  colormap.push_back(colorTemplate[lastColor + red]);
+  colormap.push_back(colorTemplate[lastColor + green]);
+  colormap.push_back(colorTemplate[lastColor + blue]);
+  colormap.push_back(1.0f);
+
+  //std::cout << "colormapsize: " << colormap.size() / 4 << "\n";
+  //assert(col * (colorCnt - 1) == colormap.size() / 4);
+  /*const float firstT = 0.25f;
+  const float secondT = 0.5f;
+  const float thirdT = 0.75f;
+
+  for (float i = 0; i < 1.0f; i += 1 / (float)size) {
+    float red, blue, green = 0;
+
+    if (i < firstT) {
+      red = 0;
+      green = i * 4;
+      blue = 1;
+    }
+    else if (i < secondT) {
+      red = 0;
+      green = 1;
+      blue = 1 - ((i - firstT) * 4);
+    }
+    else if (i < thirdT) {
+      red = ((i - secondT) * 4);
+      green = 1;
+      blue = 0;
+    }
+    else {
+      red = 1;
+      green = 1 - ((i - thirdT) * 4);
+      blue = 0;
+    }
+
+    colormap.push_back(red);
+    colormap.push_back(green);
+    colormap.push_back(blue);
+    colormap.push_back(1.0f);
+  }*/
+
+  return colormap;
+}
+
+GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
+  GLuint texId;
+  gl()->glGenTextures(1, &texId);
+  gl()->glBindTexture(GL_TEXTURE_1D, texId);
+  //TODO: should this be here? corrupts text
+  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormapTextureBuffer.size() / 4, 0, GL_RGBA, GL_FLOAT, colormapTextureBuffer.data());
+
+  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  GLuint samplerLocation = gl()->glGetUniformLocation(channelProgram->getGLProgram(), "colormap");
+  gl()->glUniform1i(samplerLocation, texId);
+
+  return texId;
+}
+
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
 	using namespace chrono;
@@ -393,55 +521,11 @@ void ScalpCanvas::paintGL() {
 #endif
 	if (ready()) {
 			//setup
-			makeCurrent();
+			//makeCurrent();
 
 			gl()->glUseProgram(channelProgram->getGLProgram());
 
 			posBufferData.clear();
-
-			//Create a 1D image - for this example it's just a red line
-			//test
-			/*const int stripeImageWidth = 32;
-			GLubyte stripeImage[3 * stripeImageWidth];
-			for (int j = 0; j < stripeImageWidth; j++) {
-				stripeImage[3 * j] = j * 255 / 32; // use a gradient instead of a line
-				stripeImage[3 * j + 1] = 255;
-				stripeImage[3 * j + 2] = 255;
-			}
-
-			GLuint texID;
-			gl()->glGenTextures(1, &texID);
-			gl()->glBindTexture(GL_TEXTURE_1D, texID);
-			gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			gl()->glTexImage1D(GL_TEXTURE_1D, 0, 3, stripeImageWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, stripeImage);
-
-			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			gl()->glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			gl()->glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-			gl()->glDisable(GL_TEXTURE_GEN_S);
-			gl()->glDisable(GL_TEXTURE_2D);
-			gl()->glEnable(GL_TEXTURE_1D);
-			gl()->glBindTexture(GL_TEXTURE_1D, texID);
-
-
-			const int grid_height = 100;
-			const int grid_width = 100;
-
-			GLfloat hist2D[grid_width][grid_height];
-
-			for (int y = 0; y < grid_height; y++) {
-				for (int x = 0; x < grid_width; x++) {
-					hist2D[x][y] = x * y;
-				}
-			}
-
-
-
-			gl()->glFlush();
-			*/
 
 			//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
 
@@ -516,7 +600,7 @@ void ScalpCanvas::paintGL() {
 
 		gl()->glFinish();
 
-		doneCurrent();
+		//doneCurrent();
 	}
 
 	if (errorMsg != "")
@@ -578,11 +662,16 @@ void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& 
 	int realX = width() / 2 + (width() / 2) * x;
 	int realY = height() / 2 + (height() / 2) * y * -1;
 
+  //text is corrupted if this is not called
+  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
 	QPainter painter(this);
 	painter.setBackgroundMode(Qt::OpaqueMode);
+  //painter.setRenderHints(QPainter::TextAntialiasing);
 	painter.setBackground(QBrush(QColor(0, 0, 0)));
 	painter.setPen(fontColor);
 	painter.setBrush(fontColor);
 	painter.setFont(font);
 	painter.drawText(realX, realY, str);
+  painter.end();
 }

@@ -23,6 +23,8 @@ using namespace std;
 ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
     SLOT(updateTrackTableConnections(int)));
+  
+  std::cout << "SCALPMAP CONSTRUCTOR CALLED\n";
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
@@ -110,7 +112,9 @@ bool ScalpMap::positionsValid() {
 }
 
 void ScalpMap::hideEvent(QHideEvent * event) {
-  if (scalpCanvas) {
+  std::cout << "hideEvent\n";
+  if (scalpCanvas && scalpCanvas->isVisible()) {
+    //scalpCanvas.reset();
     delete scalpCanvas;
   }
 
@@ -129,7 +133,9 @@ void ScalpMap::setupCanvas() {
   box->setContentsMargins(0, 0, 0, 0);
   box->setSpacing(0);
 
+  //scalpCanvas = make_unique<ScalpCanvas>(this);
   scalpCanvas = new ScalpCanvas(this);
+  //box->addWidget(scalpCanvas.get());
   box->addWidget(scalpCanvas);
   setMinimumHeight(100);
   setMinimumWidth(100);
@@ -139,7 +145,9 @@ void ScalpMap::setupCanvas() {
 }
 
 void ScalpMap::showEvent(QShowEvent* event) {
-  if (enabled() && !scalpCanvas)
+  //udocking calls destructor in scalpCanvas
+  std::cout << "showEvent\n";
+  if (enabled() || (scalpCanvas && scalpCanvas->isVisible()))
     setupCanvas();
 }
 

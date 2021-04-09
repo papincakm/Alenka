@@ -77,6 +77,8 @@ class ScalpCanvas : public QOpenGLWidget {
 	//TODO: possibly not needed
   std::vector<GLfloat> posBufferData;
 	QAction *setChannelDrawing;
+  std::vector<GLfloat> colormapTextureBuffer;
+  GLuint colormapTextureId;
 
   float minFrequency = 0;
   float maxFrequency = 0;
@@ -137,6 +139,8 @@ private:
   std::vector<GLfloat> generateGradient();
 	void renderErrorMsg();
   void renderGradientText();
+  std::vector<float> createTextureBR();
+  GLuint setupColormapTexture(std::vector<float> colormap);
 };
 
 #endif // SCALPCANVAS_H

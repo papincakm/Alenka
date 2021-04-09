@@ -8,6 +8,7 @@
 #include <QString>
 #include <QVector2D>
 #include <QVector3D>
+#include <memory>
 
 
 #include <vector>
@@ -24,6 +25,7 @@ class ScalpMap : public QWidget {
   Q_OBJECT
   OpenDataFile *file = nullptr;
   ScalpCanvas *scalpCanvas = nullptr;
+  //std::unique_ptr<ScalpCanvas> scalpCanvas;
   int selectedTrack = -1;
   InfoTable::Extrema selectedExtrema;
   float frequencyMin = 0.0f;

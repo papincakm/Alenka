@@ -6,6 +6,8 @@
  */
 /// @cond
 
+uniform sampler1D colormap;
+
 #ifndef GLSL_110
 out vec4  outColor;
 #endif
@@ -17,6 +19,8 @@ attribute vec3 oBarCoords;
 in float oFrequency;
 #endif
 
+
+#ifdef GLSL_110
 vec3 getColorGrad(float intensity) {
 		const float firstT = 0.25;
 		const float secondT = 0.5;
@@ -49,22 +53,24 @@ vec3 getColorGrad(float intensity) {
 
 	return vec3(red, green, blue);
 }
+#endif
 
 void main() {
-	vec4 color;
+
 	
-	const float bins = 150.0f;	
-	//float bin = 1 / bins;
+#ifdef GLSL_110
+	const float bins = 70.0f;	
 	for (float i = 0; i < bins; i++) {
 		float f = i / bins;
-		//float diff = oFrequency - f;
 
 		if (f > oFrequency) {
 			color = vec4(getColorGrad(f), 1);
 			break;
 		}
 	}
-
+#else
+	vec4 color = texture(colormap, oFrequency).rgba;
+#endif
 #ifdef GLSL_110
     gl_FragColor = color;
 #else

@@ -678,7 +678,7 @@ void Canvas::paintGL() {
            << " s to redraw\n";
     }
   }
-
+  //gl()->glFlush();
   gl()->glFinish();
 
   checkGLMessages();
