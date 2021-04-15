@@ -374,9 +374,7 @@ std::vector<GLfloat> ScalpCanvas::generateGradient() {
 }
 
 void ScalpCanvas::renderGradientText() {
-
-	QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
-
+  QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
 	
 	float maxMinusMinY = gradientTopY - gradientBotY;
 	float maxMinusMinFreq = maxFrequency - minFrequency;

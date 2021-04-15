@@ -4,6 +4,7 @@
 #include <unsupported/Eigen/FFT>
 
 #include <QWidget>
+#include <QtWidgets>
 #include <QColor>
 #include <QString>
 #include <QVector2D>
@@ -15,6 +16,18 @@
 
 class OpenDataFile;
 class TfVisualizer;
+
+//TODO: copied from filterprocessor, this should be in separate filter function file
+template <class T> T hammingWindow(int n, int M) {
+  const double tmp = 2 * M_PI * n / (M - 1);
+  return static_cast<T>(0.54 - 0.46 * cos(tmp));
+}
+
+template <class T> T blackmanWindow(int n, int M) {
+  const double a = 0.16, a0 = (1 - a) / 2, a1 = 0.5, a2 = a / 2,
+    tmp = 2 * M_PI * n / (M - 1);
+  return static_cast<T>(a0 - a1 * cos(tmp) + a2 * cos(2 * tmp));
+}
 
 /**
 * @brief Implements 2D scalp map.
@@ -32,22 +45,32 @@ public:
 
 private:
 		int channelToDisplay = 0;
-		int secondToDisplay = 2;
-		int frameSize = 512;
+		int secondsToDisplay = 10;
+    int filterWindow = 0;
+		int frameSize = 1024;
 		int hopSize = 500;
+    bool freeze = true;
 
-		std::vector<float> buffer;
 	  TfVisualizer *visualizer;
 		OpenDataFile *file = nullptr;
 		std::vector<QMetaObject::Connection> connections;
 		std::unique_ptr<Eigen::FFT<float>> fft;
-		std::vector<std::vector<QVector3D>> spectrumMatrix;
-
+    QLineEdit* frameLine;
+    QLineEdit* hopLine;
+    QSpinBox* channelSpinBox;
 
 		void updateConnections();
+    bool ready();
+    void applyWindowFunction(std::vector<float>& data);
 
 private slots:
 	void updateSpectrum();
+  void setFrameSize();
+  void setHopSize();
+  void setChannelToDisplay(int ch);
+  void setSecondsToDisplay(int s);
+  void setFreezeSpectrum(bool f);
+  void setFilterWindow(int fw);
 };
 
 #endif // TFANALYSER_H

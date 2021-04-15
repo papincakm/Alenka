@@ -179,10 +179,10 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   scalpMap = new ScalpMap(this);
   scalpMapDockWidget->setWidget(scalpMap);
 
-	/*auto tfAnalyserDockWidget = new QDockWidget("Time-frequency Analysis", this);
+	auto tfAnalyserDockWidget = new QDockWidget("Time-frequency Analysis", this);
 	tfAnalyserDockWidget->setObjectName("Time-frequency Analysis QDockWidget");
-	tfAnalyser = new TfAnalyser(this);
-	tfAnalyserDockWidget->setWidget(tfAnalyser);*/
+  tfAnalyser = new TfAnalyser(this);
+	tfAnalyserDockWidget->setWidget(tfAnalyser);
 
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
   tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
@@ -191,7 +191,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   tabifyDockWidget(montageManagerDockWidget, filterManagerDockWidget);
   tabifyDockWidget(filterManagerDockWidget, videoPlayerDockWidget);
   tabifyDockWidget(videoPlayerDockWidget, scalpMapDockWidget);
-	//tabifyDockWidget(scalpMapDockWidget, tfAnalyserDockWidget);
+	tabifyDockWidget(scalpMapDockWidget, tfAnalyserDockWidget);
 
   // Construct File actions.
   QAction *openFileAction = new QAction("&Open File...", this);
@@ -640,7 +640,7 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   windowMenu->addAction(filterManagerDockWidget->toggleViewAction());
   windowMenu->addAction(videoPlayerDockWidget->toggleViewAction());
   windowMenu->addAction(scalpMapDockWidget->toggleViewAction());
-	//windowMenu->addAction(tfAnalyserDockWidget->toggleViewAction());
+	windowMenu->addAction(tfAnalyserDockWidget->toggleViewAction());
 
   windowMenu->addSeparator();
   windowMenu->addAction(fileToolBar->toggleViewAction());
@@ -1229,7 +1229,7 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   scalpMap->changeFile(openDataFile.get());
   syncDialog->changeFile(openDataFile.get());
   signalViewer->changeFile(openDataFile.get());
-	//tfAnalyser->changeFile(openDataFile.get());
+	tfAnalyser->changeFile(openDataFile.get());
   
   // Update Filter tool bar.
   vector<double> comboNumbers{0, 5, 10};
@@ -1832,8 +1832,8 @@ void SignalFileBrowserWindow::closeFilePropagate() {
   //TODO: find out why is this out of scope here
   if (scalpMap)
 		scalpMap->changeFile(nullptr);
-//	if (tfAnalyser)
-	//	tfAnalyser->changeFile(nullptr);
+	if (tfAnalyser)
+		tfAnalyser->changeFile(nullptr);
 
   syncDialog->changeFile(nullptr);
   signalViewer->changeFile(nullptr);
