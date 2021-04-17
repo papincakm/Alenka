@@ -133,9 +133,8 @@ void ScalpCanvas::initializeGL() {
 
 	gl()->glGenBuffers(1, &posBuffer);
 	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-  colormapTextureBuffer = createTextureBR();
 
-  colormapTextureId = setupColormapTexture(colormapTextureBuffer);
+  colormapTextureId = setupColormapTexture(colormap.get());
 
   gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
   gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
@@ -396,108 +395,13 @@ void ScalpCanvas::renderGradientText() {
 	}
 }
 
-std::vector<float> ScalpCanvas::createTextureBR() {
-  int size = 150;
-  std::vector<float> colorTemplate = {
-    0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 1.0f,
-    0.0f, 1.0f, 0.0f,
-    1.0f, 1.0f, 0.0f,
-    1.0f, 0.0f, 0.0f
-  };
-  int colorCnt = 5;
-
-  /*std::vector<float> colorTemplate = {
-  0.0f, 0.0f, 0.6f,
-  0.0f, 0.0f, 1.0f,
-  0.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 0.0f,
-  1.0f, 0.0f, 0.0f,
-  0.6f, 0.0f, 0.0f
-  };
-  int colorCnt = 6;*/
-
-  int colorSplit = 29;
-  std::vector<float> colormap;
-
-  int red = 0;
-  int green = 1;
-  int blue = 2;
-  float partCnt = colorSplit + 1;
-  for (int i = 0; i < (colorCnt - 1) * 3; i += 3) {
-    int firstColor = i;
-    int secondColor = i + 3;
-
-    colormap.push_back(colorTemplate[firstColor + red]);
-    colormap.push_back(colorTemplate[firstColor + green]);
-    colormap.push_back(colorTemplate[firstColor + blue]);
-    colormap.push_back(1.0f);
-
-    for (int j = 1; j < partCnt; j++) {
-      float redC = (partCnt - j) / partCnt * colorTemplate[firstColor + red] +  j / partCnt * colorTemplate[secondColor + red];
-      float greenC = (partCnt - j) / partCnt * colorTemplate[firstColor + green] + j / partCnt * colorTemplate[secondColor + green];
-      float blueC = (partCnt - j) / partCnt * colorTemplate[firstColor + blue] + j / partCnt * colorTemplate[secondColor + blue];
-      //std::cout << "red: " << redC << " greenC: " << greenC << " blueC: " << blueC << "\n";
-
-      colormap.push_back(redC);
-      colormap.push_back(greenC);
-      colormap.push_back(blueC);
-      colormap.push_back(1.0f);
-    }
-  }
-
-  float lastColor = (colorCnt - 1) * 3;
-  colormap.push_back(colorTemplate[lastColor + red]);
-  colormap.push_back(colorTemplate[lastColor + green]);
-  colormap.push_back(colorTemplate[lastColor + blue]);
-  colormap.push_back(1.0f);
-
-  //std::cout << "colormapsize: " << colormap.size() / 4 << "\n";
-  //assert(col * (colorCnt - 1) == colormap.size() / 4);
-  /*const float firstT = 0.25f;
-  const float secondT = 0.5f;
-  const float thirdT = 0.75f;
-
-  for (float i = 0; i < 1.0f; i += 1 / (float)size) {
-    float red, blue, green = 0;
-
-    if (i < firstT) {
-      red = 0;
-      green = i * 4;
-      blue = 1;
-    }
-    else if (i < secondT) {
-      red = 0;
-      green = 1;
-      blue = 1 - ((i - firstT) * 4);
-    }
-    else if (i < thirdT) {
-      red = ((i - secondT) * 4);
-      green = 1;
-      blue = 0;
-    }
-    else {
-      red = 1;
-      green = 1 - ((i - thirdT) * 4);
-      blue = 0;
-    }
-
-    colormap.push_back(red);
-    colormap.push_back(green);
-    colormap.push_back(blue);
-    colormap.push_back(1.0f);
-  }*/
-
-  return colormap;
-}
-
 GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
   GLuint texId;
   gl()->glGenTextures(1, &texId);
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
   //TODO: should this be here? corrupts text
   //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormapTextureBuffer.size() / 4, 0, GL_RGBA, GL_FLOAT, colormapTextureBuffer.data());
+  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormap.size() / 4, 0, GL_RGBA, GL_FLOAT, colormap.data());
 
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);

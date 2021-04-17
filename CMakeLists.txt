@@ -121,6 +121,8 @@ set(SRC
   src/DataModel/undocommandfactory.h
   src/DataModel/vitnessdatamodel.cpp
   src/DataModel/vitnessdatamodel.h
+  src/GraphicsTools/colormap.cpp
+  src/GraphicsTools/colormap.h
   src/Manager/codeeditdialog.cpp
   src/Manager/codeeditdialog.h
   src/Manager/dummywidget.h

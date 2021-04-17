@@ -3,6 +3,7 @@
 
 #include "SignalProcessor/lrucache.h"
 #include "openglinterface.h"
+#include "GraphicsTools/colormap.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
@@ -77,7 +78,7 @@ class ScalpCanvas : public QOpenGLWidget {
 	//TODO: possibly not needed
   std::vector<GLfloat> posBufferData;
 	QAction *setChannelDrawing;
-  std::vector<GLfloat> colormapTextureBuffer;
+  Colormap colormap;
   GLuint colormapTextureId;
 
   float minFrequency = 0;
@@ -139,7 +140,6 @@ private:
   std::vector<GLfloat> generateGradient();
 	void renderErrorMsg();
   void renderGradientText();
-  std::vector<float> createTextureBR();
   GLuint setupColormapTexture(std::vector<float> colormap);
 };
 

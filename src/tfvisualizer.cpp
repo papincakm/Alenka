@@ -76,62 +76,13 @@ void TfVisualizer::cleanup() {
 		doneCurrent();
 }
 
-std::vector<float> TfVisualizer::createTextureBR() {
-  int size = 150;
-  std::vector<float> colorTemplate = {
-    0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 1.0f,
-    0.0f, 1.0f, 0.0f,
-    1.0f, 1.0f, 0.0f,
-    1.0f, 0.0f, 0.0f
-  };
-  int colorCnt = 5;
-
-  int colorSplit = 29;
-  std::vector<float> colormap;
-
-  int red = 0;
-  int green = 1;
-  int blue = 2;
-  float partCnt = colorSplit + 1;
-  for (int i = 0; i < (colorCnt - 1) * 3; i += 3) {
-    int firstColor = i;
-    int secondColor = i + 3;
-
-    colormap.push_back(colorTemplate[firstColor + red]);
-    colormap.push_back(colorTemplate[firstColor + green]);
-    colormap.push_back(colorTemplate[firstColor + blue]);
-    colormap.push_back(1.0f);
-
-    for (int j = 1; j < partCnt; j++) {
-      float redC = (partCnt - j) / partCnt * colorTemplate[firstColor + red] + j / partCnt * colorTemplate[secondColor + red];
-      float greenC = (partCnt - j) / partCnt * colorTemplate[firstColor + green] + j / partCnt * colorTemplate[secondColor + green];
-      float blueC = (partCnt - j) / partCnt * colorTemplate[firstColor + blue] + j / partCnt * colorTemplate[secondColor + blue];
-      //std::cout << "red: " << redC << " greenC: " << greenC << " blueC: " << blueC << "\n";
-
-      colormap.push_back(redC);
-      colormap.push_back(greenC);
-      colormap.push_back(blueC);
-      colormap.push_back(1.0f);
-    }
-  }
-
-  float lastColor = (colorCnt - 1) * 3;
-  colormap.push_back(colorTemplate[lastColor + red]);
-  colormap.push_back(colorTemplate[lastColor + green]);
-  colormap.push_back(colorTemplate[lastColor + blue]);
-  colormap.push_back(1.0f);
-
-  return colormap;
-}
-
 GLuint TfVisualizer::setupColormapTexture(std::vector<float> colormap) {
   GLuint texId;
   gl()->glGenTextures(1, &texId);
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
   //TODO: should this be here? corrupts text
   //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormapTextureBuffer.size() / 4, 0, GL_RGBA, GL_FLOAT, colormapTextureBuffer.data());
+  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormap.size() / 4, 0, GL_RGBA, GL_FLOAT, colormap.data());
 
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -171,9 +122,7 @@ void TfVisualizer::initializeGL() {
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  colormapTextureBuffer = createTextureBR();
-
-  colormapTextureId = setupColormapTexture(colormapTextureBuffer);
+  colormapTextureId = setupColormapTexture(colormap.get());
 
   gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
   gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
@@ -293,7 +242,7 @@ void TfVisualizer::renderText(float x, float y, const QString& str, const QFont&
 }
 
 //TODO: move to separate draw utils class
-void TfVisualizer::renderVertical(const NumberRangeUiObject& range, QColor color) {
+void TfVisualizer::renderVertical(const GraphicsNumberRange& range, QColor color) {
   QFont gradientNumberFont = QFont(range.font, 13, QFont::Bold);
 
   float maxMinusMinY = range.topY - range.botY;
@@ -316,7 +265,7 @@ void TfVisualizer::renderVertical(const NumberRangeUiObject& range, QColor color
   }
 }
 
-void TfVisualizer::renderHorizontal(const NumberRangeUiObject& range, QColor color) {
+void TfVisualizer::renderHorizontal(const GraphicsNumberRange& range, QColor color) {
   QFont gradientNumberFont = QFont(range.font, 13, QFont::Bold);
 
   float maxMinusMinX = range.topX - range.botX;
@@ -399,13 +348,13 @@ void TfVisualizer::paintGL() {
     gl()->glFlush();
 
     //gradientText
-    NumberRangeUiObject gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
+    GraphicsNumberRange gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
     renderVertical(gradientNumbers, QColor(255, 255, 255));
     //frequency text
-    NumberRangeUiObject frequencyNumbers(0, frameSize, 5, -1, specBotY, specTopX, specTopY);
+    GraphicsNumberRange frequencyNumbers(0, frameSize, 5, -1, specBotY, specTopX, specTopY);
     renderVertical(frequencyNumbers, QColor(255, 255, 255));
     //time text
-    NumberRangeUiObject timeNumbers(0, seconds, 5, specBotX, specBotY - 0.05f, specTopX, specTopY);
+    GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specBotY - 0.05f, specTopX, specTopY);
     renderHorizontal(timeNumbers, QColor(255, 255, 255));
 
     gl()->glFinish();

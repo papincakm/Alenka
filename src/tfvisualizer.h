@@ -2,6 +2,7 @@
 #define TFVISUALIZER_H
 
 #include "openglinterface.h"
+#include "GraphicsTools/colormap.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
@@ -23,9 +24,9 @@ class OpenCLContext;
 class OpenDataFile;
 class OpenGLProgram;
 
-struct UiObject {
-  UiObject() {};
-  UiObject(float bX, float bY, float tX, float tY) : botX(bX), botY(bY), topX(tX), topY(tY) {};
+struct GraphicsRectangle {
+  GraphicsRectangle() {};
+  GraphicsRectangle(float bX, float bY, float tX, float tY) : botX(bX), botY(bY), topX(tX), topY(tY) {};
 
   float botX = 0.0f;
   float botY = 0.0f;
@@ -33,10 +34,10 @@ struct UiObject {
   float topY = 0.0f;
 };
 
-struct NumberRangeUiObject : UiObject {
-  NumberRangeUiObject() {};
-  NumberRangeUiObject(float from, float to, int numCnt, float bX, float bY, float tX, float tY)
-    : UiObject(bX, bY, tX, tY), from(from), to(to), numberCount(numCnt) {};
+struct GraphicsNumberRange : GraphicsRectangle {
+  GraphicsNumberRange() {};
+  GraphicsNumberRange(float from, float to, int numCnt, float bX, float bY, float tX, float tY)
+    : GraphicsRectangle(bX, bY, tX, tY), from(from), to(to), numberCount(numCnt) {};
 
   float from = 0.0f;
   float to = 0.0f;
@@ -73,20 +74,17 @@ private:
   void logLastGLMessage();
   std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
     const std::vector<float> yAxis, const std::vector<float>& values);
-  std::vector<float> createTextureBR();
   GLuint setupColormapTexture(std::vector<float> colormap);
   std::vector<GLfloat> generateGradient();
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
   void renderGradientText();
-  void renderVertical(const NumberRangeUiObject& range, QColor color);
-  void renderHorizontal(const NumberRangeUiObject& range, QColor color);
+  void renderVertical(const GraphicsNumberRange& range, QColor color);
+  void renderHorizontal(const GraphicsNumberRange& range, QColor color);
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);
   std::vector<float> generateAxis(int pointCount);
   /**
-   * @brief Tests whether SignalProcessor is ready to return blocks.
-   *
-   * This method is used to skip some code that would break if no file is
+   * @brief This method is used to skip some code that would break if no file is
    * open and/or the current montage is empty.
    */
   bool ready();
@@ -95,7 +93,7 @@ private:
 	bool paintingDisabled = false;
 	GLuint posBuffer;
 	std::vector<GLfloat> posBufferData;
-  std::vector<GLfloat> colormapTextureBuffer;
+  Colormap colormap;
   GLuint colormapTextureId;
 
   //spectogram
