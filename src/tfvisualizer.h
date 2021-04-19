@@ -3,6 +3,7 @@
 
 #include "openglinterface.h"
 #include "GraphicsTools/colormap.h"
+#include "GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
@@ -77,7 +78,6 @@ private:
   GLuint setupColormapTexture(std::vector<float> colormap);
   std::vector<GLfloat> generateGradient();
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
-  void renderGradientText();
   void renderVertical(const GraphicsNumberRange& range, QColor color);
   void renderHorizontal(const GraphicsNumberRange& range, QColor color);
 

@@ -123,6 +123,8 @@ set(SRC
   src/DataModel/vitnessdatamodel.h
   src/GraphicsTools/colormap.cpp
   src/GraphicsTools/colormap.h
+  src/GraphicsTools/graphicsrectangle.cpp
+  src/GraphicsTools/graphicsrectangle.h
   src/Manager/codeeditdialog.cpp
   src/Manager/codeeditdialog.h
   src/Manager/dummywidget.h

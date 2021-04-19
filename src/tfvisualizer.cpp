@@ -237,7 +237,7 @@ void TfVisualizer::renderText(float x, float y, const QString& str, const QFont&
   painter.setPen(fontColor);
   painter.setBrush(fontColor);
   painter.setFont(font);
-  painter.drawText(realX, realY, str);
+  painter.drawText(x, y, str);
   painter.end();
 }
 
@@ -288,29 +288,6 @@ void TfVisualizer::renderHorizontal(const GraphicsNumberRange& range, QColor col
   }
 }
 
-void TfVisualizer::renderGradientText() {
-  QFont gradientNumberFont = QFont("Arial", 13, QFont::Bold);
-
-  float maxMinusMinY = specTopY - specBotY;
-  float maxMinusMinFreq = maxGradVal - minGradVal;
-
-  float binY = maxMinusMinY / 4;
-  float binFreq = maxMinusMinFreq / 4;
-
-  float freqToDisplay = minGradVal;
-  float yPos = specBotY;
-
-  for (int i = 0; i < 5; i += 1) {
-    //TODO: tie this to font height somehow
-    if (i == 4)
-      yPos -= 0.065;
-
-    renderText(0.7f, yPos, QString::number(freqToDisplay, 'g', 3), gradientNumberFont, QColor(255, 255, 255));
-    freqToDisplay += binFreq;
-    yPos += binY;
-  }
-}
-
 void TfVisualizer::paintGL() {
   using namespace chrono;
 
@@ -319,8 +296,21 @@ void TfVisualizer::paintGL() {
 
 #ifndef NDEBUG
   logToFile("Painting started.");
+  GLfloat red = palette().color(QPalette::Window).redF();
+  GLfloat green = palette().color(QPalette::Window).greenF();
+  GLfloat blue = palette().color(QPalette::Window).blueF();
+
+  gl()->glClearColor(red, green, blue, 1.0f);
+
+  auto specWindow = graphics::Rectangle(specBotX, specTopX + 0.006f, specBotY - 0.005f, specTopY + 0.005, this);
+  specWindow.render();
+
+  auto gradWindow = graphics::Rectangle(gradientX, gradientX + 0.05f + 0.006f, specBotY - 0.005f, specTopY + 0.005, this);
+  gradWindow.render();
+
 #endif
   if (ready()) {
+
     gl()->glUseProgram(channelProgram->getGLProgram());
 
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -348,14 +338,34 @@ void TfVisualizer::paintGL() {
     gl()->glFlush();
 
     //gradientText
-    GraphicsNumberRange gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
-    renderVertical(gradientNumbers, QColor(255, 255, 255));
+    //GraphicsNumberRange gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
+    //renderVertical(gradientNumbers, QColor(255, 255, 255));
     //frequency text
-    GraphicsNumberRange frequencyNumbers(0, frameSize, 5, -1, specBotY, specTopX, specTopY);
-    renderVertical(frequencyNumbers, QColor(255, 255, 255));
+    //GraphicsNumberRange frequencyNumbers(0, frameSize, 5, -1, specBotY, specTopX, specTopY);
+    //renderVertical(frequencyNumbers, QColor(255, 255, 255));
     //time text
-    GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specBotY - 0.05f, specTopX, specTopY);
-    renderHorizontal(timeNumbers, QColor(255, 255, 255));
+    /*GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specBotY - 0.05f, specTopX, specTopY);
+    renderHorizontal(timeNumbers, QColor(255, 255, 255));*/
+    //GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specTopY, specTopX, specBotY - 0.05f);
+    //renderVertical(timeNumbers, QColor(255, 255, 255));
+    //renderText(50, 100, "HAHAHAHAHAHAHAH", QFont("Arial", 13, QFont::Bold), QColor(1, 0, 0));
+    auto gradientNumbers = 
+      graphics::NumberRange(0.75f, 0.9f, -0.7f, 0.8f, this, 5, minGradVal, maxGradVal, QColor(0, 0, 0), graphics::Vertical);
+
+    gradientNumbers.render();
+
+    auto frameNumbers =
+      graphics::NumberRange(-1, specTopX, specBotY, specTopY, this, 5, 0, frameSize, QColor(0, 0, 0), graphics::Vertical);
+
+    frameNumbers.render();
+
+    auto timeNumbers = 
+      graphics::NumberRange(specBotX, specTopX, specBotY - 0.20f, specBotY - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Horizontal);
+
+    timeNumbers.render();
+
+    //auto rec = graphics::RectangleText(-0.9f, -0.9f, -0.7f, -0.7f, this, "Arial", QColor(1, 0, 0), "HAHAHAAHAHAH");
+    //rec.render();
 
     gl()->glFinish();
   }
