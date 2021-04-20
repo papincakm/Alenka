@@ -34,6 +34,7 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   frameLine->setValidator(new QIntValidator(frameLine));
   connect(frameLine, SIGNAL(editingFinished()), this,
     SLOT(setFrameSize()));
+  frameLine->insert(QString::number(frameSize));
 
   menuBox->addWidget(frameLine);
 
@@ -47,6 +48,7 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   hopLine->setValidator(new QIntValidator(hopLine));
   connect(hopLine, SIGNAL(editingFinished()), this,
     SLOT(setHopSize()));
+  hopLine->insert(QString::number(hopSize));
 
   menuBox->addWidget(hopLine);
 
@@ -91,6 +93,8 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   windowCombo->addItem("Blackman");
   connect(windowCombo, SIGNAL(currentIndexChanged(int)), this,
     SLOT(setFilterWindow(int)));
+  windowCombo->setCurrentIndex(filterWindow);
+
   menuBox->addWidget(windowCombo);
 
   //freeze select
@@ -214,7 +218,7 @@ void TfAnalyser::updateSpectrum() {
     while ((tempFrameSize  & (tempFrameSize - 1)) != 0) {
       input.push_back(0.0f);
       tempFrameSize++;
-      std::cout << "not power of 2\n";
+      //std::cout << "not power of 2\n";
     }
 
     std::vector<std::complex<float>> spectrum;
@@ -232,7 +236,7 @@ void TfAnalyser::updateSpectrum() {
       }
       else {
         values.push_back(0);
-        std::cout << "NOT FINITE\n";
+       // std::cout << "NOT FINITE\n";
       }
 
     }

@@ -153,18 +153,18 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
   for (int i = 0; i < values.size(); i++) {
     values[i] = (values[i] - minVal) * newRange / oldRange + newMin;
   }
-  std::cout << "CONVERTED VALUES: " << values[0] << "\n";
+  //std::cout << "CONVERTED VALUES: " << values[0] << "\n";
 }
 
 void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float yCount) {
   posBufferData.clear();
-  std::cout << "setting data to draw\n";
+  //std::cout << "setting data to draw\n";
   minGradVal = *std::min_element(values.begin(), values.end());
   maxGradVal = *std::max_element(values.begin(), values.end());
 
-  std::cout << "VALUES BEFORE: " << values[0] << "\n";
+  //std::cout << "VALUES BEFORE: " << values[0] << "\n";
   convertToRange(values, 0.0f, 1.0f);
-  std::cout << "VALUES AFTER: " << values[0] << "\n";
+ // std::cout << "VALUES AFTER: " << values[0] << "\n";
 
   std::vector <float> xAxis = generateAxis(xCount);
   convertToRange(xAxis, specBotX, specTopX);

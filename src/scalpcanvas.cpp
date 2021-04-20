@@ -202,26 +202,26 @@ void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
     extremaGroup->addAction(&setExtremaGlobal);
 
     //set custom extrema
-    QAction setExtremaCustom("Custom", this);
+    /*QAction setExtremaCustom("Custom", this);
 
     connect(&setExtremaCustom, &QAction::triggered, [this]() {
       OpenDataFile::infoTable.setExtremaCustom();
     });
-    setExtremaCustom.setCheckable(true);
+    setExtremaCustom.setCheckable(true);*/
 
-    extremaMenu->addAction(&setExtremaCustom);
-    extremaGroup->addAction(&setExtremaCustom);
+    //extremaMenu->addAction(&setExtremaCustom);
+    //extremaGroup->addAction(&setExtremaCustom);
 
     switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
-    case InfoTable::Extrema::custom:
+    /*case InfoTable::Extrema::custom:
       setExtremaCustom.setChecked(true);
-      break;
+      break;*/
     case InfoTable::Extrema::global:
-      std::cout << "MENU: GLOBAL SELECTED\n";
+     // std::cout << "MENU: GLOBAL SELECTED\n";
       setExtremaGlobal.setChecked(true);
       break;
     case InfoTable::Extrema::local:
-      std::cout << "MENU: LOCAL SELECTED\n";
+     // std::cout << "MENU: LOCAL SELECTED\n";
       setExtremaLocal.setChecked(true);
       break;
     }

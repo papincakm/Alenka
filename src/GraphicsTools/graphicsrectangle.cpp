@@ -33,7 +33,7 @@ void RectangleText::render() {
   qreal width = abs(realTopx - realBotx);
 
   int fontSize = std::max(8, static_cast<int>(height / 5.0f));
-  std::cout << "text rendering text on y: " << realBoty << " boty is " << boty << " fontsize is : " << fontSize << "\n";
+  //std::cout << "text rendering text on y: " << realBoty << " boty is " << boty << " fontsize is : " << fontSize << "\n";
   //text is corrupted if this is not called
   //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
   QPainter painter(widget);
@@ -67,7 +67,7 @@ void NumberRange::render() {
       //if (i == (clusterCount - 1))
         //xpos -= 0.065f;
 
-      std::cout << "rendering text on y: " << ypos << "\n";
+     // std::cout << "rendering text on y: " << ypos << "\n";
       auto text = RectangleText(botx, topx, ypos, ypos + biny / 2.0f, widget, "Arial", textColor, QString::number(numToDisplay, 'f', 1));
       text.render();
 
@@ -95,7 +95,7 @@ void NumberRange::render() {
       //if (i == (clusterCount - 1))
       //xpos -= 0.065f;
 
-      std::cout << "rendering text on x: " << xpos << "\n";
+      //std::cout << "rendering text on x: " << xpos << "\n";
       auto text = RectangleText(xpos, xpos + binx, boty, topy, widget, "Arial", textColor, QString::number(numToDisplay, 'f', 1));
       text.render();
 

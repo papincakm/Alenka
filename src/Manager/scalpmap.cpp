@@ -24,7 +24,7 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
   connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
     SLOT(updateTrackTableConnections(int)));
   
-  std::cout << "SCALPMAP CONSTRUCTOR CALLED\n";
+  //std::cout << "SCALPMAP CONSTRUCTOR CALLED\n";
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
@@ -32,7 +32,7 @@ void ScalpMap::changeFile(OpenDataFile *file) {
 
   if (enabled()) {
     if (!scalpCanvas) {
-      std::cout << "change file SETUPING canvas\n";
+      //std::cout << "change file SETUPING canvas\n";
       setupCanvas();
     }
     else {
@@ -112,7 +112,7 @@ bool ScalpMap::positionsValid() {
 }
 
 void ScalpMap::hideEvent(QHideEvent * event) {
-  std::cout << "hideEvent\n";
+  //std::cout << "hideEvent\n";
   if (scalpCanvas && scalpCanvas->isVisible()) {
     //scalpCanvas.reset();
     delete scalpCanvas;
@@ -127,7 +127,7 @@ void ScalpMap::hideEvent(QHideEvent * event) {
 }
 
 void ScalpMap::setupCanvas() {
-  std::cout << "setuping canvas\n";
+  //std::cout << "setuping canvas\n";
   auto box = new QVBoxLayout;
   setLayout(box);
   box->setContentsMargins(0, 0, 0, 0);
@@ -146,7 +146,7 @@ void ScalpMap::setupCanvas() {
 
 void ScalpMap::showEvent(QShowEvent* event) {
   //udocking calls destructor in scalpCanvas
-  std::cout << "showEvent\n";
+  //std::cout << "showEvent\n";
   if (enabled() || (scalpCanvas && scalpCanvas->isVisible()))
     setupCanvas();
 }

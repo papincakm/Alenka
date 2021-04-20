@@ -46,9 +46,9 @@ public:
 private:
 		int channelToDisplay = 0;
 		int secondsToDisplay = 10;
-    int filterWindow = 0;
-		int frameSize = 1024;
-		int hopSize = 500;
+    int filterWindow = 1;
+		int frameSize = 128;
+		int hopSize = 16;
     bool freeze = true;
 
 	  TfVisualizer *visualizer;
