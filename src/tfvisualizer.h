@@ -93,7 +93,7 @@ private:
 	bool paintingDisabled = false;
 	GLuint posBuffer;
 	std::vector<GLfloat> posBufferData;
-  Colormap colormap;
+  graphics::Colormap colormap;
   GLuint colormapTextureId;
 
   //spectogram

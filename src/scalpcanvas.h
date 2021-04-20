@@ -11,6 +11,11 @@
 #include <CL/cl_gl.h>
 #endif
 
+#ifdef __GNUC__
+#include "float.h"
+#endif
+
+
 #include <QOpenGLWidget>
 #include <QPainter>
 #include <QString>
@@ -78,7 +83,7 @@ class ScalpCanvas : public QOpenGLWidget {
 	//TODO: possibly not needed
   std::vector<GLfloat> posBufferData;
 	QAction *setChannelDrawing;
-  Colormap colormap;
+  graphics::Colormap colormap;
   GLuint colormapTextureId;
 
   float minFrequency = 0;
@@ -135,7 +140,7 @@ private:
 
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 
-	std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedPositions(const std::vector<ElectrodePosition>& channels);
+	std::vector<ElectrodePosition> generateTriangulatedPositions(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray();
   std::vector<GLfloat> generateGradient();
 	void renderErrorMsg();

@@ -175,8 +175,6 @@ void TfAnalyser::updateSpectrum() {
 
   assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
 
-  const float fs = file->file->getSamplingFrequency() / 2;
-
   const int samplesToUse =
     secondsToDisplay * static_cast<int>(file->file->getSamplingFrequency());
 
@@ -231,7 +229,7 @@ void TfAnalyser::updateSpectrum() {
     for (int i = 0; i < freqBins; i++) {
 
       float val = std::abs(spectrum[i]);
-      if (isfinite(val)) {
+      if (std::isfinite(val)) {
         values.push_back(val);
       }
       else {

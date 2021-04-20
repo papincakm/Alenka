@@ -3,7 +3,9 @@
 
 #include <vector>
 
-enum ColorPallete{ Jet, Rainbow };
+namespace graphics{
+
+enum ColorPallete { Jet, Rainbow };
 
 class Colormap {
 
@@ -27,5 +29,6 @@ private:
   std::vector<float> getRainbowPallete();
 };
 
+}
 
 #endif // COLORMAP_H

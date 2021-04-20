@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace graphics;
+
 std::vector<float> Colormap::getRainbowPallete() {
   return
   {

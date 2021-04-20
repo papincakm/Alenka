@@ -58,8 +58,8 @@ private:
   void updateExtremaGlobalValue();
   bool positionsValid();
   bool enabled();
-  void ScalpMap::hideEvent(QHideEvent * event);
-  void ScalpMap::showEvent(QShowEvent * event);
+  void hideEvent(QHideEvent * event);
+  void showEvent(QShowEvent * event);
 
 private slots:
   void updateTrackTableConnections(int row);
