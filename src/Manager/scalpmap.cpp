@@ -218,7 +218,8 @@ void ScalpMap::updateSpectrum() {
   if (!enabled() || !scalpCanvas)
     return;
 
-  if (selectedExtrema < InfoTable::Extrema::custom || selectedExtrema > InfoTable::Extrema::local)
+  //TODO: rethink this, extreme is not selected sometimes on first app run
+  //if (selectedExtrema < InfoTable::Extrema::custom || selectedExtrema > InfoTable::Extrema::local)
     setupExtrema();
 
   const AbstractTrackTable *trackTable =

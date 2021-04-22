@@ -19,6 +19,7 @@ void InfoTable::setDefaultValues() {
   notchOn = false;
   filterWindow = AlenkaSignal::WindowFunction::None;
   selectedMontage = 1;
+  selectedScalpMapExtrema = Extrema::local;
   timeMode = InfoTable::TimeMode::offset;
   selectedType = 0;
   timeLineInterval = 1;
