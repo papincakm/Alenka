@@ -2,6 +2,7 @@
 #define COLORMAP_H
 
 #include <vector>
+#include <algorithm>
 
 namespace graphics{
 

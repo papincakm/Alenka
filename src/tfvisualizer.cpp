@@ -25,6 +25,9 @@
 
 #include <detailedexception.h>
 
+//TODO: delete later
+#include <memory>
+
 #ifndef __APPLE__
 #if defined WIN_BUILD
 #include <windows.h>
@@ -302,15 +305,73 @@ void TfVisualizer::paintGL() {
 
   gl()->glClearColor(red, green, blue, 1.0f);
 
-  auto specWindow = graphics::Rectangle(specBotX, specTopX + 0.006f, specBotY - 0.005f, specTopY + 0.005, this);
+  auto specWindow = graphics::Rectangle(specBotX, specTopX, specBotY, specTopY, this);
   specWindow.render();
 
-  auto gradWindow = graphics::Rectangle(gradientX, gradientX + 0.05f + 0.006f, specBotY - 0.005f, specTopY + 0.005, this);
+  float gradTopx = gradientX + 0.05f + 0.003f;
+  float gradBoty = specBotY - 0.003f;
+  float gradTopy = specTopY + 0.003f;
+
+  /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
+  gradWindow.render();*/
+  std::cout << "gradWindow\n";
+  auto gradWindow = graphics::Rectangle(gradientX, gradientX + 0.05f, specBotY, specTopY, this);
   gradWindow.render();
+
+  auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
+    graphics::LineChain(gradientX - 0.02f, gradientX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical));
+
+  gradAxisLines->render();
+
+  auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+    graphics::NumberRange(gradientX - 0.15f, gradientX - 0.05f, specBotY + 0.025f, specTopY + 0.025f, this, 5, minGradVal, maxGradVal,
+      QColor(0, 0, 0), graphics::Orientation::Vertical)
+  );
+  gradAxisNumbers->render();
+
+  auto frameAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
+    graphics::LineChain(specBotX - 0.02f, specBotX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical));
+
+  frameAxisLines->render();
+
+  auto frameAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+    graphics::NumberRange(specBotX - 0.15f, specBotX - 0.05f, specBotY + 0.025f, specTopY + 0.025f, this, 5, 0, frameSize,
+      QColor(0, 0, 0), graphics::Orientation::Vertical)
+  );
+  frameAxisNumbers->render();
+
+  auto timeAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
+    graphics::LineChain(specBotX, specTopX, specBotY - 0.02f, specBotY, this, 5, 
+      graphics::Orientation::Horizontal, graphics::Orientation::Vertical));
+
+  timeAxisLines->render();
+
+  auto timeAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+    graphics::NumberRange(specBotX + 0.025f, specTopX + 0.025f, specBotY - 0.15f, specBotY - 0.05f, this, 5, 0, seconds,
+      QColor(0, 0, 0), graphics::Orientation::Horizontal, graphics::Orientation::Horizontal)
+  );
+  timeAxisNumbers->render();
+
+  //float dif = 0.002f;
+  /*float dif = 0;
+  std::cout << "lines\n";
+  auto gradLine = graphics::Line(gradientX - 0.02f, gradientX, specBotY - dif, specTopY + dif, this, graphics::Alignment::Top, graphics::Orientation::Horizontal);
+  gradLine.render();
+  gradLine = graphics::Line(gradientX - 0.02f, gradientX, specBotY - dif, specTopY + dif, this, graphics::Alignment::Bot, graphics::Orientation::Horizontal);
+  gradLine.render();
+
+  gradLine = graphics::Line(gradientX - 0.04f, gradientX - 0.02f, specBotY - dif, specTopY + dif, this, graphics::Alignment::Top, graphics::Orientation::Horizontal);
+  gradLine.render();*/
+  /*std::cout << "LINE--------------------\n";
+  std::shared_ptr<graphics::Rectangle> line = std::make_shared<graphics::Line>(
+    graphics::Line(gradientX - 0.02f, gradientX, specTopY - 0.05f, specTopY, this, graphics::Alignment::Top, graphics::Orientation::Vertical));
+  line->render();
+  std::cout << "\n";*/
 
 #endif
   if (ready()) {
-
+    QPainter painter(this);
+    painter.beginNativePainting();
     gl()->glUseProgram(channelProgram->getGLProgram());
 
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -337,6 +398,9 @@ void TfVisualizer::paintGL() {
 
     gl()->glFlush();
 
+    gl()->glFinish();
+
+    painter.endNativePainting();
     //gradientText
     //GraphicsNumberRange gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
     //renderVertical(gradientNumbers, QColor(255, 255, 255));
@@ -349,7 +413,7 @@ void TfVisualizer::paintGL() {
     //GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specTopY, specTopX, specBotY - 0.05f);
     //renderVertical(timeNumbers, QColor(255, 255, 255));
     //renderText(50, 100, "HAHAHAHAHAHAHAH", QFont("Arial", 13, QFont::Bold), QColor(1, 0, 0));
-    auto gradientNumbers = 
+    /*auto gradientNumbers = 
       graphics::NumberRange(0.75f, 0.9f, -0.7f, 0.8f, this, 5, minGradVal, maxGradVal, QColor(0, 0, 0), graphics::Vertical);
 
     gradientNumbers.render();
@@ -362,12 +426,10 @@ void TfVisualizer::paintGL() {
     auto timeNumbers = 
       graphics::NumberRange(specBotX, specTopX, specBotY - 0.20f, specBotY - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Horizontal);
 
-    timeNumbers.render();
+    timeNumbers.render();*/
 
     //auto rec = graphics::RectangleText(-0.9f, -0.9f, -0.7f, -0.7f, this, "Arial", QColor(1, 0, 0), "HAHAHAAHAHAH");
     //rec.render();
-
-    gl()->glFinish();
   }
 }
 
@@ -438,3 +500,24 @@ std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<fl
 
   return triangles;
 }
+
+/*void TfVisualizer::mousePressEvent(QMouseEvent * event) {
+if (event->button() == Qt::LeftButton) {
+    gradClicked = true;
+    //std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+  }
+}
+
+void TfVisualizer::mouseMoveEvent(QMouseEvent * event) {
+  if (gradClicked) {
+    std::cout << "grad moved\n";
+  }
+}
+
+void TfVisualizer::mouseReleaseEvent(QMouseEvent * event) {
+  if (gradClicked) {
+    gradClicked = false;
+    std::cout << "grad released\n";
+  }
+
+}*/

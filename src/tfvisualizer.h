@@ -69,6 +69,9 @@ protected:
   void initializeGL() override;
 	void paintGL() override;
   void resizeGL(int w, int h) override;
+  /*void mousePressEvent(QMouseEvent * event) override;
+  void mouseMoveEvent(QMouseEvent * event) override;
+  void mouseReleaseEvent(QMouseEvent * event) override;*/
 
 private:
   void createContext();
@@ -107,6 +110,7 @@ private:
   float minGradVal = 0.0f;
   int seconds = 0;
   int frameSize = 0;
+  bool gradClicked = false;
 };
 
 #endif // TFVISUALIZER_H
