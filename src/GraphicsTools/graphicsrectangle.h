@@ -166,5 +166,20 @@ protected:
   void createObject(int position, float botx, float topx, float boty, float topy, Orientation objectOrientation,
     Alignment alignment);
 };
+
+class Gradient : public Rectangle {
+public:
+  Gradient(float botx, float topx, float boty, float topy, QWidget* widget,
+    Orientation orientation = Vertical, Alignment alignment = None) :
+    Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {}
+
+  bool contains(const QPoint& p);
+
+protected:
+  float saturation;
+
+  void changeSaturation(int y);
+};
+
 }
 #endif // GRAPHICSRECTANGLE_H

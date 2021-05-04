@@ -190,3 +190,11 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
       QString::number(from + position * length / (clusterCount - 1), 'f', 1), objectOrientation, alignment)
     ));
 }
+
+bool Gradient::contains(const QPoint& p) {
+  if (p.x() > realBotx && p.x() < realTopx && p.y() < realBoty && p.y() > realTopy)
+    return true;
+  std::cout << "gradient doesnt contain the point " << p.x() << " " << p.y() << " \n";
+  std::cout << "gradient vals x " << realBotx << " " << realTopx << " y " << realBoty << " " << realTopy << "\n";
+  return false;
+}

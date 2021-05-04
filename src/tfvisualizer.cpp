@@ -54,6 +54,7 @@ const AbstractEventTable *getEventTable(OpenDataFile *file) {
 } // namespace
 
 TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
+  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));
 }
 
 TfVisualizer::~TfVisualizer() {
@@ -312,6 +313,9 @@ void TfVisualizer::paintGL() {
   float gradBoty = specBotY - 0.003f;
   float gradTopy = specTopY + 0.003f;
 
+  gradient.reset();
+  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));
+
   /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
   gradWindow.render();*/
   std::cout << "gradWindow\n";
@@ -501,16 +505,18 @@ std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<fl
   return triangles;
 }
 
-/*void TfVisualizer::mousePressEvent(QMouseEvent * event) {
-if (event->button() == Qt::LeftButton) {
+void TfVisualizer::mousePressEvent(QMouseEvent * event) {
+if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
     gradClicked = true;
-    //std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+    std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+    //std::cout << "clicked global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
   }
 }
 
 void TfVisualizer::mouseMoveEvent(QMouseEvent * event) {
   if (gradClicked) {
-    std::cout << "grad moved\n";
+    std::cout << "moved x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+    //std::cout << "moved global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
   }
 }
 
@@ -520,4 +526,4 @@ void TfVisualizer::mouseReleaseEvent(QMouseEvent * event) {
     std::cout << "grad released\n";
   }
 
-}*/
+}
