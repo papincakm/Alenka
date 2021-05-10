@@ -92,10 +92,10 @@ private:
    */
   bool ready();
 
-	std::unique_ptr<OpenGLProgram> channelProgram;
-	bool paintingDisabled = false;
-	GLuint posBuffer;
-	std::vector<GLfloat> posBufferData;
+  std::unique_ptr<OpenGLProgram> channelProgram;
+  bool paintingDisabled = false;
+  GLuint posBuffer;
+  std::vector<GLfloat> posBufferData;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
 

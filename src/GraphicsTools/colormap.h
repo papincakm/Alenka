@@ -4,9 +4,8 @@
 #include <vector>
 #include <algorithm>
 
-namespace graphics{
-
-enum ColorPallete { Jet, Rainbow };
+namespace graphics {
+enum ColorPallete{ Jet, Rainbow };
 
 class Colormap {
 

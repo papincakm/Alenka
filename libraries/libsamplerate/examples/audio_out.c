@@ -33,6 +33,11 @@
 #define MAKE_MAGIC(a,b,c,d,e,f,g,h)		\
 			((a) + ((b) << 1) + ((c) << 2) + ((d) << 3) + ((e) << 4) + ((f) << 5) + ((g) << 6) + ((h) << 7))
 
+typedef	struct AUDIO_OUT_s
+{	int magic ;
+} AUDIO_OUT ;
+
+
 /*------------------------------------------------------------------------------
 **	Linux (ALSA and OSS) functions for playing a sound.
 */
@@ -818,7 +823,8 @@ win32_audio_out_callback (HWAVEOUT hwave, UINT msg, DWORD data, DWORD param1, DW
 		return 0 ;
 
 	/* Do the actual audio. */
-	frame_count = win32_out->bufferlen / win32_out->channels ;
+	sample_count = win32_out->bufferlen ;
+	frame_count = sample_count / win32_out->channels ;
 
 	read_count = win32_out->callback (win32_out->callback_data, win32_out->float_buffer, frame_count) ;
 

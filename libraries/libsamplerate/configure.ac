@@ -53,12 +53,11 @@ AC_PROG_LN_S
 #  6. If any interfaces have been removed since the last public release, then set age
 #     to 0.
 
-CLEAN_VERSION=`echo $PACKAGE_VERSION | $SED "s/p.*//"`
-VERSION_MINOR=`echo $CLEAN_VERSION | $SED "s/.*\.//"`
+SHARED_VERSION_INFO="1:8:1"
 
-SHARED_VERSION_INFO="1:$VERSION_MINOR:0"
 
-#------------------------------------------------------------------------------------
+
+
 
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
@@ -101,9 +100,6 @@ AC_ARG_ENABLE(fftw,
 AC_ARG_ENABLE(cpu-clip,
 		AC_HELP_STRING([--disable-cpu-clip], [disable tricky cpu specific clipper]),
 		ac_arg_cpu_clip="N", ac_arg_cpu_clip="Y")
-
-AC_ARG_ENABLE(alsa,
-                AC_HELP_STRING([--disable-alsa], [disable ALSA support in the varispeed-play example program]))
 
 #====================================================================================
 # Check types and their sizes.
@@ -198,10 +194,6 @@ if test x$enable_alsa != xno ; then
 	if test x$ac_cv_header_alsa_asoundlib_h = xyes ; then
 		ALSA_LIBS="-lasound"
 		enable_alsa=yes
-        elif test x$enable_alsa = xyes ; then
-                AC_MSG_ERROR(["ALSA headers not found"])
-        else
-                enable_alsa=no
 		fi
 	fi
 
@@ -337,7 +329,7 @@ AC_MSG_RESULT([
 ])
 
 if test x$ac_cv_c_compiler_gnu = xyes ; then
-	echo "  Tools :"
+	echo -e "  Tools :\n"
 	echo "    Compiler is GCC : ............. ${ac_cv_c_compiler_gnu}"
 	echo "    GCC major version : ........... ${GCC_MAJOR_VERSION}"
 	fi
@@ -348,7 +340,7 @@ AC_MSG_RESULT([
     Have FFTW : ................... ${ac_cv_fftw3}])
 
 AC_MSG_RESULT([    Have libsndfile : ............. ${ac_cv_sndfile}])
-AC_MSG_RESULT([    Have ALSA : ................... ${enable_alsa}
+AC_MSG_RESULT([    Have ALSA : ................... ${ac_cv_header_alsa_asoundlib_h}
 ])
 
 AC_MSG_RESULT([  Installation directories :
@@ -360,7 +352,7 @@ AC_MSG_RESULT([  Installation directories :
 
 if test x$prefix != "x/usr" ; then
 	echo "Compiling some other packages against ${PACKAGE} may require "
-	echo "the addition of \"${prefix}/lib/pkgconfig\" to the "
-	echo "PKG_CONFIG_PATH environment variable.\n"
+	echo -e "the addition of \"${prefix}/lib/pkgconfig\" to the "
+	echo -e "PKG_CONFIG_PATH environment variable.\n"
 	fi
 
