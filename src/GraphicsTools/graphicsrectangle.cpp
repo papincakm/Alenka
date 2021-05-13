@@ -191,10 +191,22 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
     ));
 }
 
+void Gradient::changeSaturation(Colormap& colormap, float y) {
+  std::cout << "realTopy" << realTopy << " realBoty: " << realBoty << " realHeight: " << realHeight << "\n"; 
+  float centerY = realTopy + realHeight / 2;
+  //TODO: mby make a single class/method to keep number in range
+  if (centerY > y) {
+    saturation = std::min(std::fabs(centerY - y) / realHeight + saturation, 1.0f);
+  } else {
+    saturation = std::max(saturation - std::fabs(centerY - y) / realHeight, 0.0f); 
+  }
+  std::cout << "centerY: " << centerY << " y: " << y << "saturation: " << saturation << "\n";
+}
+
 bool Gradient::contains(const QPoint& p) {
   if (p.x() > realBotx && p.x() < realTopx && p.y() < realBoty && p.y() > realTopy)
     return true;
-  std::cout << "gradient doesnt contain the point " << p.x() << " " << p.y() << " \n";
-  std::cout << "gradient vals x " << realBotx << " " << realTopx << " y " << realBoty << " " << realTopy << "\n";
+  //std::cout << "gradient doesnt contain the point " << p.x() << " " << p.y() << " \n";
+  //std::cout << "gradient vals x " << realBotx << " " << realTopx << " y " << realBoty << " " << realTopy << "\n";
   return false;
 }

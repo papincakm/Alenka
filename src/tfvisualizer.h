@@ -2,7 +2,6 @@
 #define TFVISUALIZER_H
 
 #include "openglinterface.h"
-#include "GraphicsTools/colormap.h"
 #include "GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__
@@ -92,10 +91,10 @@ private:
    */
   bool ready();
 
-	std::unique_ptr<OpenGLProgram> channelProgram;
-	bool paintingDisabled = false;
-	GLuint posBuffer;
-	std::vector<GLfloat> posBufferData;
+  std::unique_ptr<OpenGLProgram> channelProgram;
+  bool paintingDisabled = false;
+  GLuint posBuffer;
+  std::vector<GLfloat> posBufferData;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
 

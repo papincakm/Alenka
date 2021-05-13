@@ -15,7 +15,6 @@
 #include "float.h"
 #endif
 
-
 #include <QOpenGLWidget>
 #include <QPainter>
 #include <QString>
