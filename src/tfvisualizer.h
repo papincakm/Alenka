@@ -2,7 +2,6 @@
 #define TFVISUALIZER_H
 
 #include "openglinterface.h"
-#include "GraphicsTools/colormap.h"
 #include "GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__

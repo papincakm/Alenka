@@ -323,7 +323,8 @@ void TfVisualizer::paintGL() {
   gradWindow.render();
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
-    graphics::LineChain(gradientX - 0.02f, gradientX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical));
+    graphics::LineChain(gradientX - 0.02f, gradientX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical)
+  );
 
   gradAxisLines->render();
 
@@ -505,25 +506,26 @@ std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<fl
   return triangles;
 }
 
-void TfVisualizer::mousePressEvent(QMouseEvent * event) {
+void TfVisualizer::mousePressEvent(QMouseEvent* event) {
 if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
     gradClicked = true;
-    std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+    //std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
     //std::cout << "clicked global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
   }
 }
 
-void TfVisualizer::mouseMoveEvent(QMouseEvent * event) {
+void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
   if (gradClicked) {
-    std::cout << "moved x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
+    gradient->changeSaturation(colormap, event->globalPos().y());
+    //std::cout << "moved x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
     //std::cout << "moved global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
   }
 }
 
-void TfVisualizer::mouseReleaseEvent(QMouseEvent * event) {
+void TfVisualizer::mouseReleaseEvent(QMouseEvent* event) {
   if (gradClicked) {
     gradClicked = false;
-    std::cout << "grad released\n";
+    //std::cout << "grad released\n";
   }
 
 }

@@ -1,10 +1,13 @@
 #ifndef GRAPHICSRECTANGLE_H
 #define GRAPHICSRECTANGLE_H
 
+#include "colormap.h"
+
 #include <QPainter>
 #include <QWidget>
 #include <QString>
 #include <memory>
+#include <cmath>
 
 //TODO: delete later
 #include <iostream>
@@ -137,10 +140,11 @@ protected:
     Alignment alignment);
 };
 
+//TODO: rethink, right now whole t is copied to make
 template <class T>
 class RectangleChainFactory {
 public:
-  std::shared_ptr<T> make(T& rc) {
+  std::shared_ptr<T> make(T rc) {
     rc.constructObjects();
     return std::make_shared<T>(rc);
   };
@@ -173,12 +177,13 @@ public:
     Orientation orientation = Vertical, Alignment alignment = None) :
     Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {}
 
+  //TODO: mby move this to colormap
+  void changeSaturation(Colormap& colormap, float y);
   bool contains(const QPoint& p);
 
 protected:
   float saturation;
 
-  void changeSaturation(int y);
 };
 
 }

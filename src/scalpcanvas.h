@@ -11,6 +11,7 @@
 #include <CL/cl_gl.h>
 #endif
 
+#ifdef __GNUC__
 #include "float.h"
 #endif
 
