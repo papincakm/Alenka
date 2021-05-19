@@ -6,11 +6,11 @@ using namespace graphics;
 
 //source: https://www.cs.rit.edu/~ncs/color/t_convert.html
 
-/*void rgbToHsv(float r, float g, float b, float& h, float& s, float& v) {
+void rgbToHsv(float r, float g, float b, float& h, float& s, float& v) {
   float min, max, delta;
 
-  min = std::min(r, g, b);
-  max = std::max(r, g, b);
+  min = std::min({ r, g, b });
+  max = std::max({ r, g, b });
   v = max;				// v
 
   delta = max - min;
@@ -36,7 +36,7 @@ using namespace graphics;
     h += 360;
 }
 
-void hsvToRgb(float& r, float& g, float& b, float h, float s, float v)
+void hsvToRgb(float h, float s, float v, float& r, float& g, float& b)
 {
   int i;
   float f, p, q, t;
@@ -48,7 +48,7 @@ void hsvToRgb(float& r, float& g, float& b, float h, float s, float v)
   }
 
   h /= 60;			// sector 0 to 5
-  i = floor(h);
+  i = std::floor(h);
   f = h - i;			// factorial part of h
   p = v * (1 - s);
   q = v * (1 - s * f);
@@ -87,7 +87,7 @@ void hsvToRgb(float& r, float& g, float& b, float h, float s, float v)
     break;
   }
 
-}*/
+}
 
 
 std::vector<float> Colormap::getRainbowPallete() {
@@ -113,13 +113,23 @@ std::vector<float> Colormap::getJetPallete() {
   };
 }
 
+//TODO: opengl prints flipped colormap
+std::vector<float> Colormap::getCoolWarmSmoothPallete() {
+  return
+  {
+    59.0f / 255.0f, 76.0f / 255.0f, 192.0f / 255.0f,
+    221.0f / 255.0f, 221.0f / 255.0f, 221.0f / 255.0f,
+    180.0f / 255.0f, 4.0f / 255.0f, 38.0f / 255.0f
+  };
+}
+
 Colormap::Colormap() {
-  colormapTextureBuffer = createTextureBR();
+  createTextureBR();
 }
 
 Colormap::Colormap(ColorPallete colpal) {
   currentPallete = colpal;
-  colormapTextureBuffer = createTextureBR();
+  createTextureBR();
 }
 
 const std::vector<float>& Colormap::get() {
@@ -130,7 +140,30 @@ void Colormap::changeColorPallete(ColorPallete colorPallete) {
   currentPallete = colorPallete;
 
   colormapTextureBuffer.clear();
-  colormapTextureBuffer = createTextureBR();
+  createTextureBR();
+}
+
+float truncate(float value)
+{
+  if (value < 0) return 0.0f;
+  if (value > 1.0f) return 1.0f;
+
+  return value;
+}
+
+void Colormap::change(float contrast, float brightness) {
+  std::cout << "changeSat\n";
+
+  center = brightness;
+  createTextureBR();
+
+  /*for (int i = 0; i < colormapTextureBuffer.size(); i += 4) {
+    colormapTextureBuffer[i] = truncate(defaultColormapTextureBuffer[i] * contrast);
+    colormapTextureBuffer[i + 1] = truncate(defaultColormapTextureBuffer[i + 1] * contrast);
+    colormapTextureBuffer[i + 2] = truncate(defaultColormapTextureBuffer[i + 2] * contrast);
+  }*/ 
+
+  std::cout << "changeSatEND factor is\n";
 }
 
 void Colormap::setPartitionCount(int count) {
@@ -140,58 +173,77 @@ void Colormap::setPartitionCount(int count) {
 std::vector<float> Colormap::getColorTemplate(ColorPallete colpal) {
   switch (colpal) {
   case Jet:
+    return getJetPallete();
     break;
-    //return getJetPallete();
   case Rainbow:
     return getRainbowPallete();
+    break;
+  case CoolWarmSmooth:
+    return getCoolWarmSmoothPallete();
   }
 }
 
-std::vector<float> Colormap::createTextureBR() {
+void Colormap::createTextureBR() {
   std::vector<float> colorTemplate = getColorTemplate(currentPallete);
 
-  for (auto c : colorTemplate) {
-    std::cout << c << " ";
-  }
-  std::cout << "\n";
-
   int colorCnt = colorTemplate.size() / 3.0f;
+  int interpolationRegions = colorCnt - 1;
 
-  std::vector<float> colormap;
+  std::vector<int> colorPosition(colorCnt);
+  colorPosition[0] = 0;
+  for (int i = 1; i < colorCnt; i++) {
+    colorPosition[i] = i * partitionCount / (interpolationRegions) - 1;
+  }
+
+  //movable center
+  for (int i = 1; i < colorCnt - 1; i++) {
+    colorPosition[i] += center;
+  }
 
   int red = 0;
   int green = 1;
   int blue = 2;
-  float partPerColorCnt = partitionCount / colorCnt;
-  for (int i = 0; i < (colorCnt - 1) * 3; i += 3) {
-    int firstColor = i;
-    int secondColor = i + 3;
 
-    colormap.push_back(colorTemplate[firstColor + red]);
-    colormap.push_back(colorTemplate[firstColor + green]);
-    colormap.push_back(colorTemplate[firstColor + blue]);
-    colormap.push_back(1.0f);
-
-    for (int j = 1; j < partPerColorCnt; j++) {
-      float redC = (partPerColorCnt - j) / partPerColorCnt * colorTemplate[firstColor + red] + j /
-                   partPerColorCnt * colorTemplate[secondColor + red];
-      float greenC = (partPerColorCnt - j) / partPerColorCnt * colorTemplate[firstColor + green] + j /
-                     partPerColorCnt * colorTemplate[secondColor + green];
-      float blueC = (partPerColorCnt - j) / partPerColorCnt * colorTemplate[firstColor + blue] + j / 
-                    partPerColorCnt * colorTemplate[secondColor + blue];
-
-      colormap.push_back(redC);
-      colormap.push_back(greenC);
-      colormap.push_back(blueC);
-      colormap.push_back(1.0f);
-    }
+  //TODO: what to with remainders
+  /*for (int i = 0; i < colorCnt / 2; i++) {
+    partPerColorCnt[i] = partitionCount / colorCnt - (center / colorCnt / 2);
   }
 
-  float lastColor = (colorCnt - 1) * 3;
-  colormap.push_back(colorTemplate[lastColor + red]);
-  colormap.push_back(colorTemplate[lastColor + green]);
-  colormap.push_back(colorTemplate[lastColor + blue]);
-  colormap.push_back(1.0f);
+  for (int i = colorCnt / 2; i < colorCnt; i++) {
+    partPerColorCnt[i] = partitionCount / colorCnt + (center / colorCnt / 2);
+  }*/
 
-  return colormap;
+  std::cout << "colorPos: ";
+  for (auto a : colorPosition) {
+    std::cout << a << " ";
+  }
+  std::cout << "\n";
+
+  //TODO: is rgba required or is rgb sufficient? 
+  std::vector<float> colormap(partitionCount * 4, 0);
+
+  //interpolate with next color
+  for (int i = 0; i < interpolationRegions; i++) {
+    int firstColor = i * 3;
+    int secondColor = firstColor + 3;
+
+    float parts = colorPosition[i + 1] - colorPosition[i];
+    for (int j = 0; j <= parts; j++) {
+      float redC = (parts - j) / parts * colorTemplate[firstColor + red] + j /
+        parts * colorTemplate[secondColor + red];
+      float greenC = (parts - j) / parts * colorTemplate[firstColor + green] + j /
+        parts * colorTemplate[secondColor + green];
+      float blueC = (parts - j) / parts * colorTemplate[firstColor + blue] + j /
+        parts * colorTemplate[secondColor + blue];
+
+      int pos = colorPosition[i] * 4 + j * 4;
+      colormap[pos + red] = redC;
+      colormap[pos + green] = greenC;
+      colormap[pos + blue] = blueC;
+      colormap[pos + 3] = 1.0f;
+    }
+  }
+  
+  colormapTextureBuffer = colormap;
+  defaultColormapTextureBuffer = std::move(colormap);
 }

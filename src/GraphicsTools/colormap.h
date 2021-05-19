@@ -6,12 +6,14 @@
 
 namespace graphics{
 
-enum ColorPallete { Jet, Rainbow };
+enum ColorPallete { Jet, Rainbow, CoolWarmSmooth };
 
 class Colormap {
 
   int partitionCount = 150;
-  ColorPallete currentPallete = Rainbow;
+  int center = 0.0f;
+  ColorPallete currentPallete = CoolWarmSmooth;
+  std::vector<float> defaultColormapTextureBuffer;
   std::vector<float> colormapTextureBuffer;
 
 public:
@@ -19,15 +21,17 @@ public:
   Colormap(ColorPallete colpal);
   void setPartitionCount(int count);
   void changeColorPallete(ColorPallete colorPallete);
+  void change(float contrast, float brightness);
   const std::vector<float>& get();
 
 private:
-  std::vector<float> createTextureBR();
+  void createTextureBR();
   std::vector<float> getColorTemplate(ColorPallete colpal);
 
   //color palletes
   std::vector<float> getJetPallete();
   std::vector<float> getRainbowPallete();
+  std::vector<float> getCoolWarmSmoothPallete();
 };
 
 }

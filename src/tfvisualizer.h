@@ -64,6 +64,7 @@ public:
     void setFrameSize(int fs);
 
 protected:
+  void deleteColormapTexture();
 	void cleanup();
   void initializeGL() override;
 	void paintGL() override;
@@ -79,9 +80,6 @@ private:
     const std::vector<float> yAxis, const std::vector<float>& values);
   GLuint setupColormapTexture(std::vector<float> colormap);
   std::vector<GLfloat> generateGradient();
-  void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
-  void renderVertical(const GraphicsNumberRange& range, QColor color);
-  void renderHorizontal(const GraphicsNumberRange& range, QColor color);
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);
   std::vector<float> generateAxis(int pointCount);

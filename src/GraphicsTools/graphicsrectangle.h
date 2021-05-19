@@ -44,6 +44,7 @@ public:
   };
 
   virtual void render();
+  void update();
 
 protected:
   float botx = 0.0f;
@@ -171,19 +172,26 @@ protected:
     Alignment alignment);
 };
 
+//TODO: should inherit from class above rectangle, only needs coordinates not rendering, this is rendered later with opengl
 class Gradient : public Rectangle {
 public:
   Gradient(float botx, float topx, float boty, float topy, QWidget* widget,
-    Orientation orientation = Vertical, Alignment alignment = None) :
-    Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {}
+    Orientation orientation = Vertical, Alignment alignment = None);
 
   //TODO: mby move this to colormap
-  void changeSaturation(Colormap& colormap, float y);
+  void change(Colormap& colormap, const QPoint& newPoint);
   bool contains(const QPoint& p);
+  void clicked(const QPoint& p);
+  void released();
 
-protected:
-  float saturation;
+  bool isClicked = false;
 
+private:
+  float changeRange = 1.0f;
+  float contrast = 1.0f;
+  float brightness = 0.0f;
+  QPoint lastChangePoint;
+  
 };
 
 }

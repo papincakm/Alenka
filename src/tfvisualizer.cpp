@@ -54,6 +54,7 @@ const AbstractEventTable *getEventTable(OpenDataFile *file) {
 } // namespace
 
 TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
+  //TODO: initiate all rectangles here and update later in paint
   gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));
 }
 
@@ -63,14 +64,18 @@ TfVisualizer::~TfVisualizer() {
 	// context is bound by makeCurrent().
 }
 
+void TfVisualizer::deleteColormapTexture() {
+  gl()->glDeleteTextures(1, &colormapTextureId);
+
+  gl()->glBindTexture(GL_TEXTURE_1D, 0);
+}
+
 void TfVisualizer::cleanup() {
 		makeCurrent();
 
 		gl()->glDeleteBuffers(1, &posBuffer);
 
-    gl()->glDeleteTextures(1, &colormapTextureId);
-
-    gl()->glBindTexture(GL_TEXTURE_1D, 0);
+    deleteColormapTexture();
 
 		channelProgram.reset();
 
@@ -137,7 +142,7 @@ void TfVisualizer::initializeGL() {
 }
 
 void TfVisualizer::resizeGL(int /*w*/, int /*h*/) {
-  // checkGLMessages();
+  gradient->update();
 }
 
 //TODO: copy this to util class, and use it in scalpcanvas
@@ -179,8 +184,8 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   posBufferData = generateTriangulatedGrid(xAxis, yAxis, values);
 
   //gradient
-  auto gradient = generateGradient();
-  posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
+  auto gradientBody = generateGradient();
+  posBufferData.insert(std::end(posBufferData), std::begin(gradientBody), std::end(gradientBody));
 }
 
 void TfVisualizer::setSeconds(int secs) {
@@ -226,72 +231,6 @@ std::vector<GLfloat> TfVisualizer::generateGradient() {
   return triangles;
 }
 
-//TODO: copied from scalpcanvas
-void TfVisualizer::renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
-  int realX = width() / 2 + (width() / 2) * x;
-  int realY = height() / 2 + (height() / 2) * y * -1;
-
-  //text is corrupted if this is not called
-  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-  QPainter painter(this);
-  painter.setBackgroundMode(Qt::OpaqueMode);
-  //painter.setRenderHints(QPainter::TextAntialiasing);
-  painter.setBackground(QBrush(QColor(0, 0, 0)));
-  painter.setPen(fontColor);
-  painter.setBrush(fontColor);
-  painter.setFont(font);
-  painter.drawText(x, y, str);
-  painter.end();
-}
-
-//TODO: move to separate draw utils class
-void TfVisualizer::renderVertical(const GraphicsNumberRange& range, QColor color) {
-  QFont gradientNumberFont = QFont(range.font, 13, QFont::Bold);
-
-  float maxMinusMinY = range.topY - range.botY;
-  float maxMinusMinNum = range.to - range.from;
-
-  float binY = maxMinusMinY / (range.numberCount - 1);
-  float binNum = maxMinusMinNum / (range.numberCount - 1);
-
-  float numToDisplay = range.from;
-  float yPos = range.botY;
-
-  for (int i = 0; i < range.numberCount; i++) {
-    //TODO: tie this to font height somehow
-    if (i == (range.numberCount - 1))
-      yPos -= 0.065f;
-
-    renderText(range.botX, yPos, QString::number(numToDisplay, 'f', 3), gradientNumberFont, color);
-    numToDisplay += binNum;
-    yPos += binY;
-  }
-}
-
-void TfVisualizer::renderHorizontal(const GraphicsNumberRange& range, QColor color) {
-  QFont gradientNumberFont = QFont(range.font, 13, QFont::Bold);
-
-  float maxMinusMinX = range.topX - range.botX;
-  float maxMinusMinNum = range.to - range.from;
-
-  float binX = maxMinusMinX / (range.numberCount - 1);
-  float binNum = maxMinusMinNum / (range.numberCount - 1);
-
-  float numToDisplay = range.from;
-  float xPos = range.botX;
-
-  for (int i = 0; i < range.numberCount; i++) {
-    //TODO: tie this to font height somehow
-    if (i == (range.numberCount - 1))
-      xPos -= 0.065f;
-
-    renderText(xPos, range.botY, QString::number(numToDisplay, 'f', 1), gradientNumberFont, color);
-    numToDisplay += binNum;
-    xPos += binX;
-  }
-}
-
 void TfVisualizer::paintGL() {
   using namespace chrono;
 
@@ -313,8 +252,8 @@ void TfVisualizer::paintGL() {
   float gradBoty = specBotY - 0.003f;
   float gradTopy = specTopY + 0.003f;
 
-  gradient.reset();
-  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));
+  /*gradient.reset();
+  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));*/
 
   /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
   gradWindow.render();*/
@@ -357,24 +296,9 @@ void TfVisualizer::paintGL() {
   );
   timeAxisNumbers->render();
 
-  //float dif = 0.002f;
-  /*float dif = 0;
-  std::cout << "lines\n";
-  auto gradLine = graphics::Line(gradientX - 0.02f, gradientX, specBotY - dif, specTopY + dif, this, graphics::Alignment::Top, graphics::Orientation::Horizontal);
-  gradLine.render();
-  gradLine = graphics::Line(gradientX - 0.02f, gradientX, specBotY - dif, specTopY + dif, this, graphics::Alignment::Bot, graphics::Orientation::Horizontal);
-  gradLine.render();
-
-  gradLine = graphics::Line(gradientX - 0.04f, gradientX - 0.02f, specBotY - dif, specTopY + dif, this, graphics::Alignment::Top, graphics::Orientation::Horizontal);
-  gradLine.render();*/
-  /*std::cout << "LINE--------------------\n";
-  std::shared_ptr<graphics::Rectangle> line = std::make_shared<graphics::Line>(
-    graphics::Line(gradientX - 0.02f, gradientX, specTopY - 0.05f, specTopY, this, graphics::Alignment::Top, graphics::Orientation::Vertical));
-  line->render();
-  std::cout << "\n";*/
-
 #endif
   if (ready()) {
+    std::cout << "tf painting\n";
     QPainter painter(this);
     painter.beginNativePainting();
     gl()->glUseProgram(channelProgram->getGLProgram());
@@ -406,35 +330,6 @@ void TfVisualizer::paintGL() {
     gl()->glFinish();
 
     painter.endNativePainting();
-    //gradientText
-    //GraphicsNumberRange gradientNumbers(minGradVal, maxGradVal, 5, 0.7f, specBotY, specTopX, specTopY);
-    //renderVertical(gradientNumbers, QColor(255, 255, 255));
-    //frequency text
-    //GraphicsNumberRange frequencyNumbers(0, frameSize, 5, -1, specBotY, specTopX, specTopY);
-    //renderVertical(frequencyNumbers, QColor(255, 255, 255));
-    //time text
-    /*GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specBotY - 0.05f, specTopX, specTopY);
-    renderHorizontal(timeNumbers, QColor(255, 255, 255));*/
-    //GraphicsNumberRange timeNumbers(0, seconds, 5, specBotX, specTopY, specTopX, specBotY - 0.05f);
-    //renderVertical(timeNumbers, QColor(255, 255, 255));
-    //renderText(50, 100, "HAHAHAHAHAHAHAH", QFont("Arial", 13, QFont::Bold), QColor(1, 0, 0));
-    /*auto gradientNumbers = 
-      graphics::NumberRange(0.75f, 0.9f, -0.7f, 0.8f, this, 5, minGradVal, maxGradVal, QColor(0, 0, 0), graphics::Vertical);
-
-    gradientNumbers.render();
-
-    auto frameNumbers =
-      graphics::NumberRange(-1, specTopX, specBotY, specTopY, this, 5, 0, frameSize, QColor(0, 0, 0), graphics::Vertical);
-
-    frameNumbers.render();
-
-    auto timeNumbers = 
-      graphics::NumberRange(specBotX, specTopX, specBotY - 0.20f, specBotY - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Horizontal);
-
-    timeNumbers.render();*/
-
-    //auto rec = graphics::RectangleText(-0.9f, -0.9f, -0.7f, -0.7f, this, "Arial", QColor(1, 0, 0), "HAHAHAAHAHAH");
-    //rec.render();
   }
 }
 
@@ -507,25 +402,23 @@ std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<fl
 }
 
 void TfVisualizer::mousePressEvent(QMouseEvent* event) {
-if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
-    gradClicked = true;
-    //std::cout << "clicked x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
-    //std::cout << "clicked global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
+  if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
+    gradient->clicked(event->pos());
   }
 }
 
 void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
-  if (gradClicked) {
-    gradient->changeSaturation(colormap, event->globalPos().y());
-    //std::cout << "moved x: " << event->pos().x() << " y: " << event->pos().y() << "\n";
-    //std::cout << "moved global x: " << event->globalPos().x() << " y: " << event->globalPos().y() << "\n";
+  if (gradient->isClicked) {
+    gradient->change(colormap, event->globalPos());
+    makeCurrent();
+    gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 4, GL_RGBA, GL_FLOAT, colormap.get().data());
+    doneCurrent();
+    update();
   }
 }
 
 void TfVisualizer::mouseReleaseEvent(QMouseEvent* event) {
-  if (gradClicked) {
-    gradClicked = false;
-    //std::cout << "grad released\n";
+  if (gradient->isClicked) {
+    gradient->released();
   }
-
 }

@@ -52,6 +52,11 @@ void Rectangle::render() {
     renderFull();
   }
 }
+
+void Rectangle::update() {
+  calculateWidgetProportions();
+}
+
 //TODO: use drawlines ?
 void Line::renderTop() {
   //std::cout << " line renderTop\n";
@@ -191,16 +196,35 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
     ));
 }
 
-void Gradient::changeSaturation(Colormap& colormap, float y) {
-  std::cout << "realTopy" << realTopy << " realBoty: " << realBoty << " realHeight: " << realHeight << "\n"; 
-  float centerY = realTopy + realHeight / 2;
+Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget,
+  Orientation orientation, Alignment alignment) :
+  Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {
+
+  changeRange = std::min(realHeight, 300.0f);
+}
+
+void Gradient::change(Colormap& colormap, const QPoint& newPoint) {
+  //std::cout << "realTopy" << realTopy << " realBoty: " << realBoty << " realHeight: " << realHeight << "\n"; 
   //TODO: mby make a single class/method to keep number in range
-  if (centerY > y) {
-    saturation = std::min(std::fabs(centerY - y) / realHeight + saturation, 1.0f);
+  if (newPoint.x() > lastChangePoint.x()) {
+    contrast = std::max(contrast - std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange, 1.0);
   } else {
-    saturation = std::max(saturation - std::fabs(centerY - y) / realHeight, 0.0f); 
+    contrast = std::min(contrast + std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange, 100.0);
   }
-  std::cout << "centerY: " << centerY << " y: " << y << "saturation: " << saturation << "\n";
+
+  //TODO: set limits globaly, join colormap and this
+  if (newPoint.y() > lastChangePoint.y()) {
+    brightness = std::max(brightness - std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, -74.0);
+  }
+  else {
+    brightness = std::min(brightness + std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, 73.0);
+  }
+
+  lastChangePoint = newPoint;
+
+  colormap.change(contrast, brightness);
+
+  std::cout << "clickedPointY: " << lastChangePoint.y() << " y: " << newPoint.y() << " contrast: " << contrast << " brightness: " << brightness << "\n";
 }
 
 bool Gradient::contains(const QPoint& p) {
@@ -209,4 +233,13 @@ bool Gradient::contains(const QPoint& p) {
   //std::cout << "gradient doesnt contain the point " << p.x() << " " << p.y() << " \n";
   //std::cout << "gradient vals x " << realBotx << " " << realTopx << " y " << realBoty << " " << realTopy << "\n";
   return false;
+}
+
+void Gradient::clicked(const QPoint& p) {
+  isClicked = true;
+  lastChangePoint = p;
+}
+
+void Gradient::released() {
+  isClicked = false;
 }
