@@ -89,6 +89,71 @@ void hsvToRgb(float h, float s, float v, float& r, float& g, float& b)
 
 }
 
+QMenu* Colormap::getColormapMenu(QWidget* widget) {
+  QMenu* menu = new QMenu("Colormap", widget);
+
+  //setup pallete
+  menu->addMenu(getPalleteMenu(widget));
+
+  return menu;
+}
+
+QMenu* Colormap::getPalleteMenu(QWidget* widget) {
+  QMenu* menu = new QMenu("Color Pallete", widget);
+  auto* palleteGroup = new QActionGroup(widget);
+  palleteGroup->setExclusive(true);
+
+  //TODO: lots of copied code, mby find how to do list of qactions
+  //set color jet
+  QAction* setColorJet = new QAction("Jet", widget);
+
+  widget->connect(setColorJet, &QAction::triggered, [this, widget]() {
+    this->changeColorPallete(ColorPallete::Jet);
+    widget->update();
+  });
+  setColorJet->setCheckable(true);
+
+  menu->addAction(setColorJet);
+  palleteGroup->addAction(setColorJet);
+
+  //set color rainbow
+  QAction* setColorRainbow = new QAction("Rainbow", widget);
+
+  widget->connect(setColorRainbow, &QAction::triggered, [this, widget]() {
+    this->changeColorPallete(ColorPallete::Rainbow);
+    widget->update();
+  });
+  setColorRainbow->setCheckable(true);
+
+  menu->addAction(setColorRainbow);
+  palleteGroup->addAction(setColorRainbow);
+
+  //set color cool warm smooth
+  QAction* setColorCoolWarmSmooth = new QAction("Coolwarm", widget);
+
+  widget->connect(setColorCoolWarmSmooth, &QAction::triggered, [this, widget]() {
+    this->changeColorPallete(ColorPallete::CoolWarmSmooth);
+    widget->update();
+  });
+  setColorCoolWarmSmooth->setCheckable(true);
+
+  menu->addAction(setColorCoolWarmSmooth);
+  palleteGroup->addAction(setColorCoolWarmSmooth);
+
+  switch (currentPallete) {
+  case ColorPallete::Jet:
+    setColorJet->setChecked(true);
+    break;
+  case ColorPallete::Rainbow:
+    setColorRainbow->setChecked(true);
+    break;
+  case ColorPallete::CoolWarmSmooth:
+    setColorCoolWarmSmooth->setChecked(true);
+    break;
+  }
+
+  return menu;
+}
 
 std::vector<float> Colormap::getRainbowPallete() {
   return
@@ -141,12 +206,14 @@ void Colormap::changeColorPallete(ColorPallete colorPallete) {
 
   colormapTextureBuffer.clear();
   createTextureBR();
+  changed = true;
 }
 
-float truncate(float value)
+template <typename T>
+T truncate(T value, T min, T max)
 {
-  if (value < 0) return 0.0f;
-  if (value > 1.0f) return 1.0f;
+  if (value < min) return min;
+  if (value > max) return max;
 
   return value;
 }
@@ -157,13 +224,15 @@ void Colormap::change(float contrast, float brightness) {
   center = brightness;
   createTextureBR();
 
-  /*for (int i = 0; i < colormapTextureBuffer.size(); i += 4) {
-    colormapTextureBuffer[i] = truncate(defaultColormapTextureBuffer[i] * contrast);
-    colormapTextureBuffer[i + 1] = truncate(defaultColormapTextureBuffer[i + 1] * contrast);
-    colormapTextureBuffer[i + 2] = truncate(defaultColormapTextureBuffer[i + 2] * contrast);
-  }*/ 
+  for (int i = 0; i < colormapTextureBuffer.size(); i += 4) {
+    colormapTextureBuffer[i] = truncate<float>(defaultColormapTextureBuffer[i] * contrast, 0, 1.0f);
+    colormapTextureBuffer[i + 1] = truncate<float>(defaultColormapTextureBuffer[i + 1] * contrast, 0, 1.0f);
+    colormapTextureBuffer[i + 2] = truncate<float>(defaultColormapTextureBuffer[i + 2] * contrast, 0, 1.0f);
+  }
 
   std::cout << "changeSatEND factor is\n";
+
+  changed = true;
 }
 
 void Colormap::setPartitionCount(int count) {
@@ -197,21 +266,12 @@ void Colormap::createTextureBR() {
 
   //movable center
   for (int i = 1; i < colorCnt - 1; i++) {
-    colorPosition[i] += center;
+    colorPosition[i] = truncate<float>(colorPosition[i] + center, 1, partitionCount - 1);
   }
 
   int red = 0;
   int green = 1;
   int blue = 2;
-
-  //TODO: what to with remainders
-  /*for (int i = 0; i < colorCnt / 2; i++) {
-    partPerColorCnt[i] = partitionCount / colorCnt - (center / colorCnt / 2);
-  }
-
-  for (int i = colorCnt / 2; i < colorCnt; i++) {
-    partPerColorCnt[i] = partitionCount / colorCnt + (center / colorCnt / 2);
-  }*/
 
   std::cout << "colorPos: ";
   for (auto a : colorPosition) {

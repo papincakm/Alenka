@@ -142,93 +142,100 @@ void ScalpCanvas::initializeGL() {
   gl()->glFlush();
 }
 
+void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
+  QMenu* menu = new QMenu(this);
+
+  //draw channels option
+  QAction setChannelDrawing("Draw Channels", this);
+
+  connect(&setChannelDrawing, &QAction::triggered, [this]() {
+    shouldDrawChannels = !shouldDrawChannels;
+    update();
+  });
+
+  menu->addAction(&setChannelDrawing);
+  menu->actions().back()->setCheckable(true);
+  menu->actions().back()->setChecked(shouldDrawChannels);
+
+  //draw labels option
+  QAction setLabelDrawing("Draw Labels", this);
+
+  connect(&setLabelDrawing, &QAction::triggered, [this]() {
+    shouldDrawLabels = !shouldDrawLabels;
+    update();
+  });
+
+  menu->addAction(&setLabelDrawing);
+  menu->actions().back()->setCheckable(true);
+  menu->actions().back()->setChecked(shouldDrawLabels);
+
+  menu->addSeparator();
+
+  menu->addMenu(colormap.getColormapMenu(this));
+
+  menu->addSeparator();
+
+  //setup extrema
+  QMenu* extremaMenu = menu->addMenu("Extrema");
+  auto* extremaGroup = new QActionGroup(this);
+  extremaGroup->setExclusive(true);
+
+  //set local extrema
+  QAction setExtremaLocal("Local", this);
+
+  connect(&setExtremaLocal, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setExtremaLocal();
+  });
+  setExtremaLocal.setCheckable(true);
+
+  extremaMenu->addAction(&setExtremaLocal);
+  extremaGroup->addAction(&setExtremaLocal);
+
+  //set global extrema
+  QAction setExtremaGlobal("Global", this);
+
+  connect(&setExtremaGlobal, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setExtremaGlobal();
+  });
+  setExtremaGlobal.setCheckable(true);
+
+  extremaMenu->addAction(&setExtremaGlobal);
+  extremaGroup->addAction(&setExtremaGlobal);
+
+  //set custom extrema
+  /*QAction setExtremaCustom("Custom", this);
+
+  connect(&setExtremaCustom, &QAction::triggered, [this]() {
+  OpenDataFile::infoTable.setExtremaCustom();
+  });
+  setExtremaCustom.setCheckable(true);*/
+
+  //extremaMenu->addAction(&setExtremaCustom);
+  //extremaGroup->addAction(&setExtremaCustom);
+
+  switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
+    /*case InfoTable::Extrema::custom:
+    setExtremaCustom.setChecked(true);
+    break;*/
+  case InfoTable::Extrema::global:
+    // std::cout << "MENU: GLOBAL SELECTED\n";
+    setExtremaGlobal.setChecked(true);
+    break;
+  case InfoTable::Extrema::local:
+    // std::cout << "MENU: LOCAL SELECTED\n";
+    setExtremaLocal.setChecked(true);
+    break;
+  }
+
+  menu->addMenu(extremaMenu);
+
+  menu->exec(mapToGlobal(pos));
+}
+
 void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
   if (event->button() == Qt::RightButton)
   {
-    //TODO: Move this to separate file
-    QMenu* menu = new QMenu(this);
-
-    //draw channels option
-    QAction setChannelDrawing("Draw Channels", this);
-
-    connect(&setChannelDrawing, &QAction::triggered, [this]() {
-      shouldDrawChannels = !shouldDrawChannels;
-      update();
-    });
-
-    menu->addAction(&setChannelDrawing);
-    menu->actions().back()->setCheckable(true);
-    menu->actions().back()->setChecked(shouldDrawChannels);
-
-    //draw labels option
-    QAction setLabelDrawing("Draw Labels", this);
-
-    connect(&setLabelDrawing, &QAction::triggered, [this]() {
-      shouldDrawLabels = !shouldDrawLabels;
-      update();
-    });
-
-    menu->addAction(&setLabelDrawing);
-    menu->actions().back()->setCheckable(true);
-    menu->actions().back()->setChecked(shouldDrawLabels);
-
-    menu->addSeparator();
-
-    //setup extrema
-    QMenu* extremaMenu = menu->addMenu("Extrema");
-    auto* extremaGroup = new QActionGroup(this);
-    extremaGroup->setExclusive(true);
-
-    //set local extrema
-    QAction setExtremaLocal("Local", this);
-
-    connect(&setExtremaLocal, &QAction::triggered, [this]() {
-      OpenDataFile::infoTable.setExtremaLocal();
-    });
-    setExtremaLocal.setCheckable(true);
-
-    extremaMenu->addAction(&setExtremaLocal);
-    extremaGroup->addAction(&setExtremaLocal);
-
-    //set global extrema
-    QAction setExtremaGlobal("Global", this);
-
-    connect(&setExtremaGlobal, &QAction::triggered, [this]() {
-      OpenDataFile::infoTable.setExtremaGlobal();
-    });
-    setExtremaGlobal.setCheckable(true);
-
-    extremaMenu->addAction(&setExtremaGlobal);
-    extremaGroup->addAction(&setExtremaGlobal);
-
-    //set custom extrema
-    /*QAction setExtremaCustom("Custom", this);
-
-    connect(&setExtremaCustom, &QAction::triggered, [this]() {
-      OpenDataFile::infoTable.setExtremaCustom();
-    });
-    setExtremaCustom.setCheckable(true);*/
-
-    //extremaMenu->addAction(&setExtremaCustom);
-    //extremaGroup->addAction(&setExtremaCustom);
-
-    switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
-    /*case InfoTable::Extrema::custom:
-      setExtremaCustom.setChecked(true);
-      break;*/
-    case InfoTable::Extrema::global:
-     // std::cout << "MENU: GLOBAL SELECTED\n";
-      setExtremaGlobal.setChecked(true);
-      break;
-    case InfoTable::Extrema::local:
-     // std::cout << "MENU: LOCAL SELECTED\n";
-      setExtremaLocal.setChecked(true);
-      break;
-    }
- 
-    menu->addMenu(extremaMenu);
-
-    menu->exec(mapToGlobal(event->pos()));
+    renderPopupMenu(event->pos());
   }
   QOpenGLWidget::mouseReleaseEvent(event);
 }
@@ -414,6 +421,11 @@ GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
   return texId;
 }
 
+void ScalpCanvas::updateColormapTexture() {
+  gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 4, GL_RGBA, GL_FLOAT, colormap.get().data());
+  colormap.changed = false;
+}
+
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
 	using namespace chrono;
@@ -422,87 +434,89 @@ void ScalpCanvas::paintGL() {
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
-			//setup
-			//makeCurrent();
+    //setup
+    if (colormap.changed) {
+      updateColormapTexture();
+    }
 
-			gl()->glUseProgram(channelProgram->getGLProgram());
+    gl()->glUseProgram(channelProgram->getGLProgram());
 
-			posBufferData.clear();
+    posBufferData.clear();
 
-			//posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
+    //posBufferData = splitTriangles(splitTriangles(generateScalpTriangleArray()));
 
-			posBufferData = generateScalpTriangleArray();
+    posBufferData = generateScalpTriangleArray();
 
-			std::vector<GLfloat> gradient = generateGradient();
+    std::vector<GLfloat> gradient = generateGradient();
 
-			posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
+    posBufferData.insert(std::end(posBufferData), std::begin(gradient), std::end(gradient));
 
-			gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-			gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
 
-			// 1st attribute buffer : vertices
-			//current position
-			gl()->glEnableVertexAttribArray(0);
-			gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
+    // 1st attribute buffer : vertices
+    //current position
+    gl()->glEnableVertexAttribArray(0);
+    gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
 
-			gl()->glEnableVertexAttribArray(1);
-			gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
+    gl()->glEnableVertexAttribArray(1);
+    gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
 
-			gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
+    gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
 
-			for (int i = 0; i < 2; i++) {
-					gl()->glDisableVertexAttribArray(i);
-			}
+    for (int i = 0; i < 2; i++) {
+      gl()->glDisableVertexAttribArray(i);
+    }
 
-			gl()->glFlush();
+    gl()->glFlush();
 
-			// draw channels TODO: refactor - dont use points, add to main channel
-			// TODO!!!:draw once and set it to be top of screen so it cant be drawn over
-			//
-			//
-			//POINTS
+    // draw channels TODO: refactor - dont use points, add to main channel
+    // TODO!!!:draw once and set it to be top of screen so it cant be drawn over
+    //
+    //
+    //POINTS
 
-			posBufferData.clear();
+    posBufferData.clear();
 
-			//TODO: use positions, triangulatedPositions are inflated, repeated draws
-			if (shouldDrawChannels) {
-				for (int i = 0; i < originalPositions.size(); i++) {
-							posBufferData.push_back(originalPositions[i].x);
-							posBufferData.push_back(originalPositions[i].y);
-				}
-				gl()->glUseProgram(labelProgram->getGLProgram());
-				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+    //TODO: use positions, triangulatedPositions are inflated, repeated draws
+    if (shouldDrawChannels) {
+      for (int i = 0; i < originalPositions.size(); i++) {
+        posBufferData.push_back(originalPositions[i].x);
+        posBufferData.push_back(originalPositions[i].y);
+      }
+      gl()->glUseProgram(labelProgram->getGLProgram());
+      gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-				gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
+      gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
 
-				gl()->glEnableVertexAttribArray(0);
-				gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-				gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-				gl()->glDrawArrays(GL_POINTS, 0, posBufferData.size());
-				gl()->glDisableVertexAttribArray(0);
-	  }
+      gl()->glEnableVertexAttribArray(0);
+      gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+      gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      gl()->glDrawArrays(GL_POINTS, 0, posBufferData.size());
+      gl()->glDisableVertexAttribArray(0);
+    }
 
-		//important for QPainter to work
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //important for QPainter to work
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		gl()->glFlush();
+    gl()->glFlush();
 
-		if (shouldDrawLabels) {
-				for (int i = 0; i < originalPositions.size(); i++) {
-						QFont labelFont = QFont("Times", 8, QFont::Bold);
+    if (shouldDrawLabels) {
+      for (int i = 0; i < originalPositions.size(); i++) {
+        QFont labelFont = QFont("Times", 8, QFont::Bold);
 
-						renderText(originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
-				}
-		}
+        renderText(originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
+      }
+    }
 
-		//QPainter part
-		renderGradientText();
+    //QPainter part
+    renderGradientText();
 
-		gl()->glFinish();
+    gl()->glFinish();
 
-		//doneCurrent();
+    //doneCurrent();
 	}
 
 	if (errorMsg != "")

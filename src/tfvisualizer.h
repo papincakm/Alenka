@@ -62,6 +62,7 @@ public:
     void setDataToDraw(std::vector<float> values, float xCount, float yCount);
     void setSeconds(int secs);
     void setFrameSize(int fs);
+    void updateColormapTexture();
 
 protected:
   void deleteColormapTexture();
@@ -80,6 +81,7 @@ private:
     const std::vector<float> yAxis, const std::vector<float>& values);
   GLuint setupColormapTexture(std::vector<float> colormap);
   std::vector<GLfloat> generateGradient();
+  void renderPopupMenu(const QPoint& pos);
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);
   std::vector<float> generateAxis(int pointCount);

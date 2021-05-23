@@ -104,6 +104,11 @@ GLuint TfVisualizer::setupColormapTexture(std::vector<float> colormap) {
   return texId;
 }
 
+void TfVisualizer::updateColormapTexture() {
+  gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 4, GL_RGBA, GL_FLOAT, colormap.get().data());
+  colormap.changed = false;
+}
+
 
 void TfVisualizer::initializeGL() {
 	logToFile("Initializing OpenGL in TfVisualizer.");
@@ -298,6 +303,10 @@ void TfVisualizer::paintGL() {
 
 #endif
   if (ready()) {
+    if (colormap.changed) {
+      updateColormapTexture();
+    }
+
     std::cout << "tf painting\n";
     QPainter painter(this);
     painter.beginNativePainting();
@@ -401,6 +410,12 @@ std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<fl
   return triangles;
 }
 
+void TfVisualizer::renderPopupMenu(const QPoint& pos) {
+  auto menu = colormap.getColormapMenu(this);
+
+  menu->exec(mapToGlobal(pos));
+}
+
 void TfVisualizer::mousePressEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
     gradient->clicked(event->pos());
@@ -410,9 +425,6 @@ void TfVisualizer::mousePressEvent(QMouseEvent* event) {
 void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
   if (gradient->isClicked) {
     gradient->change(colormap, event->globalPos());
-    makeCurrent();
-    gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 4, GL_RGBA, GL_FLOAT, colormap.get().data());
-    doneCurrent();
     update();
   }
 }
@@ -420,5 +432,8 @@ void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
 void TfVisualizer::mouseReleaseEvent(QMouseEvent* event) {
   if (gradient->isClicked) {
     gradient->released();
+  } else if (event->button() == Qt::RightButton)
+  {
+    renderPopupMenu(event->pos());
   }
 }

@@ -207,17 +207,17 @@ void Gradient::change(Colormap& colormap, const QPoint& newPoint) {
   //std::cout << "realTopy" << realTopy << " realBoty: " << realBoty << " realHeight: " << realHeight << "\n"; 
   //TODO: mby make a single class/method to keep number in range
   if (newPoint.x() > lastChangePoint.x()) {
-    contrast = std::max(contrast - std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange, 1.0);
+    contrast = std::max(contrast - std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange / 10.0f, 1.0);
   } else {
-    contrast = std::min(contrast + std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange, 100.0);
+    contrast = std::min(contrast + std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange / 10.0f, 100.0);
   }
 
   //TODO: set limits globaly, join colormap and this
   if (newPoint.y() > lastChangePoint.y()) {
-    brightness = std::max(brightness - std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, -74.0);
+    brightness = std::max(brightness - std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, -149.0);
   }
   else {
-    brightness = std::min(brightness + std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, 73.0);
+    brightness = std::min(brightness + std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, 149.0);
   }
 
   lastChangePoint = newPoint;

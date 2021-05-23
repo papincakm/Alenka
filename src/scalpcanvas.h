@@ -26,7 +26,6 @@
 #include <tuple>
 #include <vector>
 #include <QVector3D>
-#include <QMenu>
 
 namespace AlenkaSignal {
 class OpenCLContext;
@@ -144,7 +143,9 @@ private:
   std::vector<GLfloat> generateGradient();
 	void renderErrorMsg();
   void renderGradientText();
+  void renderPopupMenu(const QPoint& pos);
   GLuint setupColormapTexture(std::vector<float> colormap);
+  void updateColormapTexture();
 };
 
 #endif // SCALPCANVAS_H
