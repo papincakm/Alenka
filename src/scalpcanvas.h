@@ -77,6 +77,7 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<ElectrodePosition> originalPositions;
   //TODO: replace with single struct
   std::vector<ElectrodePosition> triangulatedPositions;
+  std::vector<GLfloat> splitTriangulatedPositions;
 	GLuint posBuffer;
 	//TODO: possibly not needed
   std::vector<GLfloat> posBufferData;
@@ -141,6 +142,8 @@ private:
 	std::vector<ElectrodePosition> generateTriangulatedPositions(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray();
   std::vector<GLfloat> generateGradient();
+  std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
+  void calculateFrequencies(std::vector<GLfloat>& points);
 	void renderErrorMsg();
   void renderGradientText();
   void renderPopupMenu(const QPoint& pos);

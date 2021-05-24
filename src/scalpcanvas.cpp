@@ -80,6 +80,8 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
 	
 	//TODO: refactor me
 	triangulatedPositions = generateTriangulatedPositions(originalPositions);
+
+
 }
 
 void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
@@ -262,6 +264,91 @@ void ScalpCanvas::cleanup() {
 	doneCurrent();
 }
 
+//TODO: refactor with triangle class and operations!!
+//TODO: consider using geometry shader
+std::vector<GLfloat> ScalpCanvas::splitTriangles(const std::vector<GLfloat>& triangles) {
+  assert(static_cast<int>(triangles.size()) % 3 == 0);
+
+  std::vector<GLfloat> splitTriangles;
+
+  for (int i = 0; i < triangles.size(); i += 9) {
+    const int vertexOffset = 3;
+    const int yOffset = 1;
+    const int freqOffset = 2;
+
+    //1. vertex, 2. vertex
+    float midPointAx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset];
+    float midPointAy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset + yOffset];
+    float midPointAfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset + freqOffset];
+
+    //1. vertex, 3. vertex
+    float midPointBx = 0.5f * triangles[i] + 0.5f * triangles[i + vertexOffset * 2];
+    float midPointBy = 0.5f * triangles[i + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
+    float midPointBfreq = 0.5f * triangles[i + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
+
+    //2. vertex, 3. vertex
+    float midPointCx = 0.5f * triangles[i + vertexOffset] + 0.5f * triangles[i + vertexOffset * 2];
+    float midPointCy = 0.5f * triangles[i + vertexOffset + yOffset] + 0.5f * triangles[i + vertexOffset * 2 + yOffset];
+    float midPointCfreq = 0.5f * triangles[i + vertexOffset + freqOffset] + 0.5f * triangles[i + vertexOffset * 2 + freqOffset];
+
+    //1. triangle
+    splitTriangles.push_back(triangles[i]);
+    splitTriangles.push_back(triangles[i + yOffset]);
+    splitTriangles.push_back(triangles[i + freqOffset]);
+
+    splitTriangles.push_back(midPointAx);
+    splitTriangles.push_back(midPointAy);
+    splitTriangles.push_back(midPointAfreq);
+
+    splitTriangles.push_back(midPointBx);
+    splitTriangles.push_back(midPointBy);
+    splitTriangles.push_back(midPointBfreq);
+
+    //2. triangle
+    splitTriangles.push_back(midPointAx);
+    splitTriangles.push_back(midPointAy);
+    splitTriangles.push_back(midPointAfreq);
+
+    splitTriangles.push_back(midPointBx);
+    splitTriangles.push_back(midPointBy);
+    splitTriangles.push_back(midPointBfreq);
+
+    splitTriangles.push_back(midPointCx);
+    splitTriangles.push_back(midPointCy);
+    splitTriangles.push_back(midPointCfreq);
+
+    //3. triangle
+    splitTriangles.push_back(triangles[i + vertexOffset]);
+    splitTriangles.push_back(triangles[i + vertexOffset + yOffset]);
+    splitTriangles.push_back(triangles[i + vertexOffset + freqOffset]);
+
+    splitTriangles.push_back(midPointAx);
+    splitTriangles.push_back(midPointAy);
+    splitTriangles.push_back(midPointAfreq);
+
+    splitTriangles.push_back(midPointCx);
+    splitTriangles.push_back(midPointCy);
+    splitTriangles.push_back(midPointCfreq);
+
+    //4. triangle
+    splitTriangles.push_back(triangles[i + vertexOffset * 2]);
+    splitTriangles.push_back(triangles[i + vertexOffset * 2 + yOffset]);
+    splitTriangles.push_back(triangles[i + vertexOffset * 2 + freqOffset]);
+
+    splitTriangles.push_back(midPointBx);
+    splitTriangles.push_back(midPointBy);
+    splitTriangles.push_back(midPointBfreq);
+
+    splitTriangles.push_back(midPointCx);
+    splitTriangles.push_back(midPointCy);
+    splitTriangles.push_back(midPointCfreq);
+  }
+
+  assert(static_cast<int>(splitTriangles.size()) % 3 == 0);
+
+  return splitTriangles;
+}
+
 void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
 	//TODO: theres less positions thant channelDataBuffer
 	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
@@ -323,6 +410,45 @@ std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedPositions(const 
 	return triangles;
 }
 
+void ScalpCanvas::calculateFrequencies(std::vector<GLfloat>& points) {
+  for (int i = 0; i < points.size(); i += 3) {
+    std::vector<std::pair<float, int>> distances;
+    float sumDistance = 0;
+    bool samePoint = false;
+
+    for (int j = 0; j < originalPositions.size(); j++) {
+      float distance = std::sqrt((points[i] - originalPositions[j].x) * (points[i] - originalPositions[j].x) +
+        (points[i + 1] - originalPositions[j].y) * (points[i + 1] - originalPositions[j].y));
+      if (distance == 0) {
+        distance = 0.00001f;
+      }
+      distances.push_back(std::make_pair(1.0f / (distance * distance), j));
+      //sumDistance += distances[j];
+    }
+
+    std::sort(distances.begin(), distances.end());
+
+
+    float newFrequency = 0;
+
+    int usedPos = 3;
+
+    for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
+      sumDistance += distances[j].first;
+    }
+
+    for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
+      newFrequency += distances[j].first / sumDistance * originalPositions[distances[j].second].frequency;
+    }
+
+    /*for (int j = 0; j < originalPositions.size(); j++) {
+      newFrequency += distances[j] / sumDistance * originalPositions[j].frequency;
+    }*/
+
+    points[i + 2] = newFrequency;
+  }
+}
+
 std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	std::vector<GLfloat> triangles;
 
@@ -341,7 +467,12 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 			//std::cout << "ZERO freq: " << triangulatedPositions[i].frequency << "\n";
 	}
 
-	return triangles;
+  auto ss = splitTriangles(triangles);
+  //ss = splitTriangles(ss);
+  auto finalTriangles = splitTriangles(ss);
+  calculateFrequencies(finalTriangles);
+
+	return finalTriangles;
 }
 
 //TODO: might want to separate frequencies and vertices
