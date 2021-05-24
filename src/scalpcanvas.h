@@ -66,6 +66,17 @@ public:
 	GLfloat frequency = 0;
 };
 
+/**
+* @brief Distance coefficients of nearest points in tessalated triangle mesh.
+*/
+class PointCoefficient {
+public:
+  float coefficient;
+  int toPoint;
+
+  PointCoefficient(float coefficient, int toPoint) : coefficient(coefficient), toPoint(toPoint) {};
+};
+
 class ScalpCanvas : public QOpenGLWidget {
   Q_OBJECT
 	
@@ -78,9 +89,10 @@ class ScalpCanvas : public QOpenGLWidget {
   //TODO: replace with single struct
   std::vector<ElectrodePosition> triangulatedPositions;
   std::vector<GLfloat> splitTriangulatedPositions;
+  std::vector<std::vector<PointCoefficient>> pointCoefficients;
 	GLuint posBuffer;
 	//TODO: possibly not needed
-  std::vector<GLfloat> posBufferData;
+  std::vector<GLfloat> scalpMesh;
 	QAction *setChannelDrawing;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
@@ -144,11 +156,14 @@ private:
   std::vector<GLfloat> generateGradient();
   std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
   void calculateFrequencies(std::vector<GLfloat>& points);
+  void calculateDistanceCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();
   void renderGradientText();
   void renderPopupMenu(const QPoint& pos);
   GLuint setupColormapTexture(std::vector<float> colormap);
   void updateColormapTexture();
+  void setupScalpMesh();
+
 };
 
 #endif // SCALPCANVAS_H
