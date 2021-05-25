@@ -55,7 +55,12 @@ const AbstractEventTable *getEventTable(OpenDataFile *file) {
 
 TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
   //TODO: initiate all rectangles here and update later in paint
-  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));
+  specMesh = graphics::SquareMesh(-0.8f, 0.7f, -0.7f, 0.8f);
+  
+  gradient = std::make_unique<graphics::Gradient>(
+    graphics::Gradient(gradientX, gradientX + 0.05f, specMesh.getYbot(), specMesh.getYtop(), this));
+
+
 }
 
 TfVisualizer::~TfVisualizer() {
@@ -171,26 +176,43 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
 }
 
 void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float yCount) {
-  posBufferData.clear();
   //std::cout << "setting data to draw\n";
   minGradVal = *std::min_element(values.begin(), values.end());
   maxGradVal = *std::max_element(values.begin(), values.end());
 
-  //std::cout << "VALUES BEFORE: " << values[0] << "\n";
   convertToRange(values, 0.0f, 1.0f);
- // std::cout << "VALUES AFTER: " << values[0] << "\n";
 
-  std::vector <float> xAxis = generateAxis(xCount);
-  convertToRange(xAxis, specBotX, specTopX);
+  //TODO: refactor this
+  if (specMesh.rows != yCount || specMesh.columns != xCount) {
+    specMesh.rows = yCount;
+    specMesh.columns = xCount;
 
-  std::vector<float> yAxis = generateAxis(yCount);
-  convertToRange(yAxis, specBotY, specTopY);
+    std::vector <float> xAxis = generateAxis(xCount);
+    convertToRange(xAxis, specMesh.getXleft(), specMesh.getXright());
 
-  posBufferData = generateTriangulatedGrid(xAxis, yAxis, values);
+    std::vector<float> yAxis = generateAxis(yCount);
+    convertToRange(yAxis, specMesh.getYbot(), specMesh.getYtop());
 
-  //gradient
-  auto gradientBody = generateGradient();
-  posBufferData.insert(std::end(posBufferData), std::begin(gradientBody), std::end(gradientBody));
+    posBufferData.clear();
+    posBufferData = generateTriangulatedGrid(xAxis, yAxis, values);
+
+    //gradient
+    auto gradientBody = generateGradient();
+    posBufferData.insert(std::end(posBufferData), std::begin(gradientBody), std::end(gradientBody));
+  }
+  else {
+    //update values in posBuffer
+    for (int i = 0; i < xCount - 1; i++) {
+      for (int j = 0; j < yCount - 1; j++) {
+        int valueIt = i * yCount + j;
+        int valuePos = 2;
+        for (int k = 0; k < 6; k++) {
+          posBufferData[i * (yCount - 1) * 18 + j * 18 + valuePos] = values[valueIt];
+          valuePos += 3;
+        }
+      }
+    }
+  }
 }
 
 void TfVisualizer::setSeconds(int secs) {
@@ -209,28 +231,28 @@ std::vector<GLfloat> TfVisualizer::generateGradient() {
 
   //1. triangle
   triangles.push_back(gradientX);
-  triangles.push_back(specBotY);
+  triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
 
   triangles.push_back(gradientX + gradientWidth);
-  triangles.push_back(specBotY);
+  triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
 
   triangles.push_back(gradientX);
-  triangles.push_back(specTopY);
+  triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
 
   //2. triangle
   triangles.push_back(gradientX + gradientWidth);
-  triangles.push_back(specBotY);
+  triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
 
   triangles.push_back(gradientX + gradientWidth);
-  triangles.push_back(specTopY);
+  triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
 
   triangles.push_back(gradientX);
-  triangles.push_back(specTopY);
+  triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
 
   return triangles;
@@ -250,12 +272,8 @@ void TfVisualizer::paintGL() {
 
   gl()->glClearColor(red, green, blue, 1.0f);
 
-  auto specWindow = graphics::Rectangle(specBotX, specTopX, specBotY, specTopY, this);
+  auto specWindow = graphics::Rectangle(specMesh, this);
   specWindow.render();
-
-  float gradTopx = gradientX + 0.05f + 0.003f;
-  float gradBoty = specBotY - 0.003f;
-  float gradTopy = specTopY + 0.003f;
 
   /*gradient.reset();
   gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));*/
@@ -263,41 +281,47 @@ void TfVisualizer::paintGL() {
   /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
   gradWindow.render();*/
   std::cout << "gradWindow\n";
-  auto gradWindow = graphics::Rectangle(gradientX, gradientX + 0.05f, specBotY, specTopY, this);
+  auto gradWindow = graphics::Rectangle((graphics::Object) *gradient, this);
   gradWindow.render();
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
-    graphics::LineChain(gradientX - 0.02f, gradientX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical)
+    graphics::LineChain(gradientX - 0.02f, gradientX, specMesh.getYbot(), specMesh.getYtop(), this, 5,
+    graphics::Orientation::Vertical)
   );
 
   gradAxisLines->render();
 
   auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(gradientX - 0.15f, gradientX - 0.05f, specBotY + 0.025f, specTopY + 0.025f, this, 5, minGradVal, maxGradVal,
-      QColor(0, 0, 0), graphics::Orientation::Vertical)
+    graphics::NumberRange(gradientX - 0.15f, gradientX - 0.05f, specMesh.getYbot() + 0.025f,
+    specMesh.getYtop() + 0.025f, this, 5, minGradVal, maxGradVal, QColor(0, 0, 0),
+    graphics::Orientation::Vertical)
   );
   gradAxisNumbers->render();
 
   auto frameAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
-    graphics::LineChain(specBotX - 0.02f, specBotX, specBotY, specTopY, this, 5, graphics::Orientation::Vertical));
+    graphics::LineChain(specMesh.getXleft() - 0.02f, specMesh.getXleft(), specMesh.getYbot(),
+    specMesh.getYtop(), this, 5, graphics::Orientation::Vertical)
+  );
 
   frameAxisLines->render();
 
   auto frameAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(specBotX - 0.15f, specBotX - 0.05f, specBotY + 0.025f, specTopY + 0.025f, this, 5, 0, frameSize,
-      QColor(0, 0, 0), graphics::Orientation::Vertical)
+    graphics::NumberRange(specMesh.getXleft() - 0.15f, specMesh.getXleft() - 0.05f, specMesh.getYbot() + 0.025f,
+    specMesh.getYtop() + 0.025f, this, 5, 0, frameSize, QColor(0, 0, 0), graphics::Orientation::Vertical)
   );
   frameAxisNumbers->render();
 
   auto timeAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
-    graphics::LineChain(specBotX, specTopX, specBotY - 0.02f, specBotY, this, 5, 
-      graphics::Orientation::Horizontal, graphics::Orientation::Vertical));
+    graphics::LineChain(specMesh.getXleft(), specMesh.getXright(), specMesh.getYbot() - 0.02f,
+    specMesh.getYbot(), this, 5, graphics::Orientation::Horizontal, graphics::Orientation::Vertical)
+  );
 
   timeAxisLines->render();
 
   auto timeAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(specBotX + 0.025f, specTopX + 0.025f, specBotY - 0.15f, specBotY - 0.05f, this, 5, 0, seconds,
-      QColor(0, 0, 0), graphics::Orientation::Horizontal, graphics::Orientation::Horizontal)
+    graphics::NumberRange(specMesh.getXleft() + 0.025f, specMesh.getXright() + 0.025f, specMesh.getYbot() - 0.15f,
+    specMesh.getYbot() - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Orientation::Horizontal,
+    graphics::Orientation::Horizontal)
   );
   timeAxisNumbers->render();
 

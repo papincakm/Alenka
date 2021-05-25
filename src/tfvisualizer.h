@@ -99,10 +99,8 @@ private:
   GLuint colormapTextureId;
 
   //spectogram
-  const float specBotX = -0.8f;
-  const float specTopX = 0.7;
-  const float specBotY = -0.7f;
-  const float specTopY = 0.8f;
+  graphics::SquareMesh specMesh;
+  //graphics::SquareMesh gradientMesh;
   //TODO: move this to separate class
   const float gradientX = 0.9f;
   float maxGradVal = 0.0f;

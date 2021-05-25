@@ -273,8 +273,7 @@ void convertToRange(std::vector<float>& values, float newMin, float newMax) {
 }
 
 void ScalpCanvas::setupScalpMesh() {
-  //scalpMesh = generateScalpTriangleArray();
-  float specBotX = -0.8f;
+  /*float specBotX = -0.8f;
   float specTopX = 0.7f;
   float specBotY = -0.7f;
   float specTopY = 0.8f;
@@ -289,8 +288,8 @@ void ScalpCanvas::setupScalpMesh() {
   int valCnt = xLen * yLen;
   std::vector<float> values(valCnt, 0);
 
-  scalpMesh = generateTriangulatedGrid(xAxis, yAxis, values);
-
+  scalpMesh = generateTriangulatedGrid(xAxis, yAxis, values);*/
+  scalpMesh = generateScalpTriangleArray();
   calculateDistanceCoefficients(scalpMesh);
   calculateFrequencies(scalpMesh);
 
@@ -394,7 +393,7 @@ void ScalpCanvas::calculateDistanceCoefficients(const std::vector<GLfloat>& poin
 
     float newFrequency = 0;
 
-    int usedPos = 5;
+    int usedPos = 3;
 
     for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
       sumDistance += distances[j].first;

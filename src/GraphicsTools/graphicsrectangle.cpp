@@ -21,19 +21,19 @@ void Rectangle::renderFull() {
   //painter.setWindow(QRect(-1, -1, 1, 1));
   //painter.drawLine(realBotx - 0.6f, realBoty, realBotx - 0.6f, realTopy);
   //painter.drawLine(realTopx + 1.5f, realBoty, realTopx + 1.5f, realTopy);
-  painter.drawRect(QRectF(realBotx, realTopy, realWidth, realHeight));
+  painter.drawRect(QRectF(xleftReal, ytopReal, realWidth, realHeight));
 }
 
 void Rectangle::calculateWidgetProportions() {
   //TODO: using brute correction to match opengl drawing
-  realBotx = widget->width() / 2.0f + (widget->width() / 2.0f) * botx - 0.5f;
-  realTopx = widget->width() / 2.0f + (widget->width() / 2.0f) * topx + 0.5f;
-  realBoty = widget->height() / 2.0f + (widget->height() / 2.0f) * boty * -1 + 0.5f;
-  realTopy = widget->height() / 2.0f + (widget->height() / 2.0f) * topy * -1 - 0.5f;
+  xleftReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xleft - 0.5f;
+  xrightReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xright + 0.5f;
+  ybotReal = widget->height() / 2.0f + (widget->height() / 2.0f) * ybot * -1 + 0.5f;
+  ytopReal = widget->height() / 2.0f + (widget->height() / 2.0f) * ytop * -1 - 0.5f;
 
   //1.0f is correction to match opengl
-  realHeight = abs(realTopy - realBoty);// +1.0f;
-  realWidth = abs(realTopx - realBotx);// +1.0f;
+  realHeight = abs(ytopReal - ybotReal);// +1.0f;
+  realWidth = abs(xrightReal - xleftReal);// +1.0f;
 }
 
 void Rectangle::render() {
@@ -63,11 +63,11 @@ void Line::renderTop() {
   QPainter painter(widget);
 
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(realTopx, realTopy, realTopx, realBoty));
+    painter.drawLine(QLineF(xrightReal, ytopReal, xrightReal, ybotReal));
   }
   else {
     //painter.drawLine(realBotx, realTopy, realTopx, realTopy);
-    painter.drawLine(QLineF(realBotx, realTopy, realTopx, realTopy));
+    painter.drawLine(QLineF(xleftReal, ytopReal, xrightReal, ytopReal));
   }
 }
 
@@ -76,10 +76,10 @@ void Line::renderBot() {
   QPainter painter(widget);
 
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(realBotx, realTopy, realBotx, realBoty));
+    painter.drawLine(QLineF(xleftReal, ytopReal, xleftReal, ybotReal));
   }
   else {
-    painter.drawLine(QLineF(realBotx, realBoty, realTopx, realBoty));
+    painter.drawLine(QLineF(xleftReal, ybotReal, xrightReal, ybotReal));
   }
 }
 
@@ -87,10 +87,10 @@ void Line::renderCenter() {
   QPainter painter(widget);
 
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(realBotx + (realTopx - realBotx) / 2.0f, realBoty, ((realTopx - realBotx) / 2.0f), realTopy));
+    painter.drawLine(QLineF(xleftReal + (xrightReal - xleftReal) / 2.0f, ybotReal, ((xrightReal - xleftReal) / 2.0f), ytopReal));
   }
   else {
-    painter.drawLine(QLineF(realBotx, realBoty + (realTopy - realBoty) / 2.0f, realTopx, realBoty + (realTopy - realBoty) / 2.0f));
+    painter.drawLine(QLineF(xleftReal, ybotReal + (ytopReal - ybotReal) / 2.0f, xrightReal, ybotReal + (ytopReal - ybotReal) / 2.0f));
   }
 }
 
@@ -112,25 +112,25 @@ void RectangleText::drawText(float x, float y) {
 
 //same as renderTop rn
 void RectangleText::renderFull() {
-  drawText(realBotx, realTopy);
+  drawText(xleftReal, ytopReal);
 }
 
 void RectangleText::renderTop() {
   if (orientation == Orientation::Vertical) {
-    drawText(realBotx, realTopy);
+    drawText(xleftReal, ytopReal);
   }
   else {
-    drawText(realTopx, realTopy);
+    drawText(xrightReal, ytopReal);
   }
 
 }
 
 void RectangleText::renderBot() {
   if (orientation == Orientation::Vertical) {
-    drawText(realBotx, realBoty);
+    drawText(xleftReal, ybotReal);
   }
   else {
-    drawText(realBotx, realTopy);
+    drawText(xleftReal, ytopReal);
   }
 
 }
@@ -152,34 +152,34 @@ void RectangleChain::render() {
 }
 
 void RectangleChain::constructVertical() {
-  float height = std::fabs(topy - boty);
+  float height = std::fabs(ytop - ybot);
   
   //std::cout << "topx: " << topx <<  " topy: " << topy  << " height is: " << height << "\n";
   float biny = height / static_cast<float>(clusterCount - 1);
-  float ypos = boty;
+  float ypos = ybot;
 
-  createObject(0, botx, topx, boty, boty + biny, childOrientation, Bot);
+  createObject(0, xleft, xright, ybot, ybot + biny, childOrientation, Bot);
   for (int i = 0; i < clusterCount - 2; i++) {
     ypos += biny;
-    createObject(i + 1, botx, topx, ypos, ypos + biny, childOrientation, Bot);
+    createObject(i + 1, xleft, xright, ypos, ypos + biny, childOrientation, Bot);
   }
-  createObject(clusterCount - 1, botx, topx, ypos, ypos + biny, childOrientation, Top);
+  createObject(clusterCount - 1, xleft, xright, ypos, ypos + biny, childOrientation, Top);
 }
 
 void RectangleChain::constructHorizontal() {
   //std::cout << "constructHorizontal\n";
-  float width = std::fabs(topx - botx);
+  float width = std::fabs(xright - xleft);
 
   //std::cout << "topx: " << topx <<  " topy: " << topy  << " height is: " << height << "\n";
   float binx = width / static_cast<float>(clusterCount - 1);
-  float xpos = botx;
+  float xpos = xleft;
 
-  createObject(0, botx, botx + binx, boty, topy, childOrientation, Bot);
+  createObject(0, xleft, xleft + binx, ybot, ytop, childOrientation, Bot);
   for (int i = 0; i < clusterCount - 2; i++) {
     xpos += binx;
-    createObject(i + 1, xpos, xpos + binx, boty, topy, childOrientation, Bot);
+    createObject(i + 1, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
   }
-  createObject(clusterCount - 1, xpos, xpos + binx, boty, topy, childOrientation, Top);
+  createObject(clusterCount - 1, xpos, xpos + binx, ybot, ytop, childOrientation, Top);
 }
 
 void LineChain::createObject(int position, float botx, float topx, float boty, float topy,
@@ -228,7 +228,7 @@ void Gradient::change(Colormap& colormap, const QPoint& newPoint) {
 }
 
 bool Gradient::contains(const QPoint& p) {
-  if (p.x() > realBotx && p.x() < realTopx && p.y() < realBoty && p.y() > realTopy)
+  if (p.x() > xleftReal && p.x() < xrightReal && p.y() < ybotReal && p.y() > ytopReal)
     return true;
   //std::cout << "gradient doesnt contain the point " << p.x() << " " << p.y() << " \n";
   //std::cout << "gradient vals x " << realBotx << " " << realTopx << " y " << realBoty << " " << realTopy << "\n";
