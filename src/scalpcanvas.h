@@ -164,6 +164,9 @@ private:
   void updateColormapTexture();
   void setupScalpMesh();
 
+  std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
+    const std::vector<float> yAxis, const std::vector<float>& values);
+
 };
 
 #endif // SCALPCANVAS_H

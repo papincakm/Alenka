@@ -243,8 +243,54 @@ void ScalpCanvas::cleanup() {
 	doneCurrent();
 }
 
+std::vector<float> generateAxis(int pointCount) {
+  std::vector<float> axis;
+  float pc = pointCount;
+  for (int i = 0; i < pointCount; i++) {
+    axis.push_back(i / pc);
+  }
+  return axis;
+}
+
+//TODO: copy this to util class, and use it in scalpcanvas
+//converts array to range while keeping the same ratio between elements
+void convertToRange(std::vector<float>& values, float newMin, float newMax) {
+  float minVal = FLT_MAX;
+  float maxVal = FLT_MIN;
+
+  for (int i = 0; i < values.size(); i++) {
+    minVal = std::min(minVal, values[i]);
+    maxVal = std::max(maxVal, values[i]);
+  }
+
+  float newRange = newMax - newMin;
+  float oldRange = maxVal - minVal;
+
+  for (int i = 0; i < values.size(); i++) {
+    values[i] = (values[i] - minVal) * newRange / oldRange + newMin;
+  }
+  //std::cout << "CONVERTED VALUES: " << values[0] << "\n";
+}
+
 void ScalpCanvas::setupScalpMesh() {
-  scalpMesh = generateScalpTriangleArray();
+  //scalpMesh = generateScalpTriangleArray();
+  float specBotX = -0.8f;
+  float specTopX = 0.7f;
+  float specBotY = -0.7f;
+  float specTopY = 0.8f;
+  int xLen = 100;
+  int yLen = 100;
+
+  std::vector<float> xAxis = generateAxis(xLen);
+  convertToRange(xAxis, specBotX, specTopX);
+
+  std::vector<float> yAxis = generateAxis(yLen);
+  convertToRange(yAxis, specBotY, specTopY);
+  int valCnt = xLen * yLen;
+  std::vector<float> values(valCnt, 0);
+
+  scalpMesh = generateTriangulatedGrid(xAxis, yAxis, values);
+
   calculateDistanceCoefficients(scalpMesh);
   calculateFrequencies(scalpMesh);
 
@@ -267,9 +313,7 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
   //TODO: refactor me
   triangulatedPositions = generateTriangulatedPositions(originalPositions);
 
-  if (scalpMesh.empty()) {
-    setupScalpMesh();
-  }
+  setupScalpMesh();
 }
 
 void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
@@ -350,7 +394,7 @@ void ScalpCanvas::calculateDistanceCoefficients(const std::vector<GLfloat>& poin
 
     float newFrequency = 0;
 
-    int usedPos = 3;
+    int usedPos = 5;
 
     for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
       sumDistance += distances[j].first;
@@ -716,4 +760,45 @@ std::vector<GLfloat> ScalpCanvas::splitTriangles(const std::vector<GLfloat>& tri
   assert(static_cast<int>(splitTriangles.size()) % 3 == 0);
 
   return splitTriangles;
+}
+
+std::vector<GLfloat> ScalpCanvas::generateTriangulatedGrid(const std::vector<float> xAxis,
+  const std::vector<float> yAxis, const std::vector<float>& values) {
+
+  std::vector<GLfloat> triangles;
+
+  for (int i = 0; i < xAxis.size() - 1; i++) {
+    for (int j = 0; j < yAxis.size() - 1; j++) {
+      int valueIt = i * yAxis.size() + j;
+      //create rectangle from 2 triangles
+      //first triangle
+      triangles.push_back(xAxis[i]);
+      triangles.push_back(yAxis[j]);
+      //std::cout << "i: " << i << " j: " << j << " valueit: " << valueIt << " value size" << values.size() << "\n";
+      triangles.push_back(values[valueIt]);
+
+      triangles.push_back(xAxis[i + 1]);
+      triangles.push_back(yAxis[j]);
+      triangles.push_back(values[valueIt]);
+
+      triangles.push_back(xAxis[i + 1]);
+      triangles.push_back(yAxis[j + 1]);
+      triangles.push_back(values[valueIt]);
+
+      //second triangle
+      triangles.push_back(xAxis[i]);
+      triangles.push_back(yAxis[j]);
+      triangles.push_back(values[valueIt]);
+
+      triangles.push_back(xAxis[i]);
+      triangles.push_back(yAxis[j + 1]);
+      triangles.push_back(values[valueIt]);
+
+      triangles.push_back(xAxis[i + 1]);
+      triangles.push_back(yAxis[j + 1]);
+      triangles.push_back(values[valueIt]);
+    }
+  }
+
+  return triangles;
 }
