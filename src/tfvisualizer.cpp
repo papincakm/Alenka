@@ -59,8 +59,6 @@ TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
   
   gradient = std::make_unique<graphics::Gradient>(
     graphics::Gradient(gradientX, gradientX + 0.05f, specMesh.getYbot(), specMesh.getYtop(), this));
-
-
 }
 
 TfVisualizer::~TfVisualizer() {
@@ -78,7 +76,11 @@ void TfVisualizer::deleteColormapTexture() {
 void TfVisualizer::cleanup() {
 		makeCurrent();
 
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 		gl()->glDeleteBuffers(1, &posBuffer);
+
+    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    gl()->glDeleteBuffers(1, &indexBuffer);
 
     deleteColormapTexture();
 
@@ -176,6 +178,10 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
 }
 
 void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float yCount) {
+  //drawing points as squares in grid
+  int xVertices = xCount + 1;
+  int yVertices = yCount + 1;
+
   //std::cout << "setting data to draw\n";
   minGradVal = *std::min_element(values.begin(), values.end());
   maxGradVal = *std::max_element(values.begin(), values.end());
@@ -183,31 +189,32 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   convertToRange(values, 0.0f, 1.0f);
 
   //TODO: refactor this
-  if (specMesh.rows != yCount || specMesh.columns != xCount) {
-    specMesh.rows = yCount;
-    specMesh.columns = xCount;
+  if (specMesh.rows != yVertices || specMesh.columns != xVertices) {
+    paintVertices.clear();
+    paintIndices.clear();
 
-    std::vector <float> xAxis = generateAxis(xCount);
+    specMesh.rows = yVertices;
+    specMesh.columns = xVertices;
+
+    std::vector <float> xAxis = generateAxis(xVertices);
     convertToRange(xAxis, specMesh.getXleft(), specMesh.getXright());
 
-    std::vector<float> yAxis = generateAxis(yCount);
+    std::vector<float> yAxis = generateAxis(yVertices);
     convertToRange(yAxis, specMesh.getYbot(), specMesh.getYtop());
 
-    posBufferData.clear();
-    posBufferData = generateTriangulatedGrid(xAxis, yAxis, values);
+    generateTriangulatedGrid(paintVertices, paintIndices, xAxis, yAxis, values);
 
     //gradient
-    auto gradientBody = generateGradient();
-    posBufferData.insert(std::end(posBufferData), std::begin(gradientBody), std::end(gradientBody));
+    generateGradient(paintVertices, paintIndices);
   }
   else {
     //update values in posBuffer
-    for (int i = 0; i < xCount - 1; i++) {
-      for (int j = 0; j < yCount - 1; j++) {
+    for (int i = 0; i < xCount; i++) {
+      for (int j = 0; j < yCount; j++) {
         int valueIt = i * yCount + j;
         int valuePos = 2;
-        for (int k = 0; k < 6; k++) {
-          posBufferData[i * (yCount - 1) * 18 + j * 18 + valuePos] = values[valueIt];
+        for (int k = 0; k < 4; k++) {
+          paintVertices[i * yCount * 12 + j * 12 + valuePos] = values[valueIt];
           valuePos += 3;
         }
       }
@@ -224,38 +231,41 @@ void TfVisualizer::setFrameSize(int fs) {
 }
 
 //TODO: copied from scalpcanvas, move this to separate class
-std::vector<GLfloat> TfVisualizer::generateGradient() {
-  std::vector<GLfloat> triangles;
-
+void TfVisualizer::generateGradient(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices) {
   float gradientWidth = 0.05f;
+  GLuint firstVertex = triangles.size() / 3;
 
-  //1. triangle
+  //1. triangle, left bot vertex
   triangles.push_back(gradientX);
   triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
+  //TODO: refactor this
+  indices.push_back(firstVertex);
 
+  //right bot vertex
   triangles.push_back(gradientX + gradientWidth);
   triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
+  indices.push_back(firstVertex + 1);
 
+  //left top vertex
   triangles.push_back(gradientX);
   triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
+  indices.push_back(firstVertex + 2);
 
   //2. triangle
-  triangles.push_back(gradientX + gradientWidth);
-  triangles.push_back(specMesh.getYbot());
-  triangles.push_back(0.01f);
+  //right bot vertex
+  indices.push_back(firstVertex + 1);
 
+  //right top vertex
   triangles.push_back(gradientX + gradientWidth);
   triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
+  indices.push_back(firstVertex + 3);
 
-  triangles.push_back(gradientX);
-  triangles.push_back(specMesh.getYtop());
-  triangles.push_back(1);
-
-  return triangles;
+  // left top vertex
+  indices.push_back(firstVertex + 2);
 }
 
 void TfVisualizer::paintGL() {
@@ -280,7 +290,7 @@ void TfVisualizer::paintGL() {
 
   /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
   gradWindow.render();*/
-  std::cout << "gradWindow\n";
+  //std::cout << "gradWindow\n";
   auto gradWindow = graphics::Rectangle((graphics::Object) *gradient, this);
   gradWindow.render();
 
@@ -331,15 +341,18 @@ void TfVisualizer::paintGL() {
       updateColormapTexture();
     }
 
-    std::cout << "tf painting\n";
+    //std::cout << "tf painting\n";
     QPainter painter(this);
     painter.beginNativePainting();
     gl()->glUseProgram(channelProgram->getGLProgram());
 
+    gl()->glGenBuffers(1, &indexBuffer);
+
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
     //TODO: static or dynamic draw?
-    gl()->glBufferData(GL_ARRAY_BUFFER, posBufferData.size() * sizeof(GLfloat), &posBufferData[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ARRAY_BUFFER, paintVertices.size() * sizeof(GLfloat), &paintVertices[0], GL_STATIC_DRAW);
 
     // 1st attribute buffer : vertices
     //current position
@@ -349,7 +362,9 @@ void TfVisualizer::paintGL() {
     gl()->glEnableVertexAttribArray(1);
     gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
-    gl()->glDrawArrays(GL_TRIANGLES, 0, posBufferData.size());
+    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, paintIndices.size() * sizeof(GLuint), &paintIndices[0], GL_STATIC_DRAW);
+
+    gl()->glDrawElements(GL_TRIANGLES, paintIndices.size(), GL_UNSIGNED_INT, nullptr);
 
     for (int i = 0; i < 2; i++) {
       gl()->glDisableVertexAttribArray(i);
@@ -357,6 +372,7 @@ void TfVisualizer::paintGL() {
 
     //important for QPainter to work
     gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     gl()->glFlush();
 
@@ -368,7 +384,7 @@ void TfVisualizer::paintGL() {
 
 
 bool TfVisualizer::ready() {
-  return posBufferData.size();
+  return paintVertices.size();
 }
 
 
@@ -386,52 +402,55 @@ void TfVisualizer::logLastGLMessage() {
 
 std::vector<float> TfVisualizer::generateAxis(int pointCount) {
   std::vector<float> axis;
+  //generating axis on grid so + 1 line at the end
   float pc = pointCount;
-  for (int i = 0; i < pointCount; i++) {
+  for (int i = 0; i < pc; i++) {
     axis.push_back(i / pc);
   }
   return axis;
 }
 
-std::vector<GLfloat> TfVisualizer::generateTriangulatedGrid(const std::vector<float> xAxis,
-  const std::vector<float> yAxis, const std::vector<float>& values) {
-  
-  std::vector<GLfloat> triangles;
+void TfVisualizer::generateTriangulatedGrid(std::vector<GLfloat>& triangles,
+  std::vector<GLuint>& indices, const std::vector<float> xAxis, const std::vector<float> yAxis,
+  const std::vector<float>& values) {
 
   for (int i = 0; i < xAxis.size() - 1; i++) {
     for (int j = 0; j < yAxis.size() - 1; j++) {
-      int valueIt = i * yAxis.size() + j;
+      int valueIt = i * (yAxis.size() - 1) + j;
+      GLuint squarePos = i * (yAxis.size() - 1) * 4 + j* 4;
       //create rectangle from 2 triangles
-      //first triangle
+      //first triangle, left bot vertex
       triangles.push_back(xAxis[i]);
       triangles.push_back(yAxis[j]);
       //std::cout << "i: " << i << " j: " << j << " valueit: " << valueIt << " value size" << values.size() << "\n";
       triangles.push_back(values[valueIt]);
+      indices.push_back(squarePos);
 
+      //right bot vertex
       triangles.push_back(xAxis[i + 1]);
       triangles.push_back(yAxis[j]);
       triangles.push_back(values[valueIt]);
+      indices.push_back(squarePos + 1);
 
+      //right top vertex
       triangles.push_back(xAxis[i + 1]);
       triangles.push_back(yAxis[j + 1]);
       triangles.push_back(values[valueIt]);
+      indices.push_back(squarePos + 2);
 
-      //second triangle
-      triangles.push_back(xAxis[i]);
-      triangles.push_back(yAxis[j]);
-      triangles.push_back(values[valueIt]);
+      //second triangle, left bot vertex
+      indices.push_back(squarePos);
 
+      //left top vertex
       triangles.push_back(xAxis[i]);
       triangles.push_back(yAxis[j + 1]);
       triangles.push_back(values[valueIt]);
+      indices.push_back(squarePos + 3);
 
-      triangles.push_back(xAxis[i + 1]);
-      triangles.push_back(yAxis[j + 1]);
-      triangles.push_back(values[valueIt]);
+      //right top vertex
+      indices.push_back(squarePos + 2);
     }
   }
-
-  return triangles;
 }
 
 void TfVisualizer::renderPopupMenu(const QPoint& pos) {

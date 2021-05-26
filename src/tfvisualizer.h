@@ -77,10 +77,10 @@ protected:
 private:
   void createContext();
   void logLastGLMessage();
-  std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
-    const std::vector<float> yAxis, const std::vector<float>& values);
+  void generateTriangulatedGrid(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices,
+    const std::vector<float> xAxis, const std::vector<float> yAxis, const std::vector<float>& values);
   GLuint setupColormapTexture(std::vector<float> colormap);
-  std::vector<GLfloat> generateGradient();
+  void generateGradient(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices);
   void renderPopupMenu(const QPoint& pos);
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);
@@ -94,7 +94,9 @@ private:
   std::unique_ptr<OpenGLProgram> channelProgram;
   bool paintingDisabled = false;
   GLuint posBuffer;
-  std::vector<GLfloat> posBufferData;
+  GLuint indexBuffer;
+  std::vector<GLfloat> paintVertices;
+  std::vector<GLuint> paintIndices;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
 
