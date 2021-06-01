@@ -4,6 +4,9 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "../tfvisualizer.h"
+#include "../myapplication.h"
+#include "../options.h"
+
 #include <elidedlabel.h>
 #include <helplink.h>
 #include <QVBoxLayout>
@@ -173,6 +176,12 @@ void TfAnalyser::updateSpectrum() {
   if (!ready())
     return;
 
+  //fft processor
+  if (!fftProcessor) {
+    programOption("parProc", parallelQueues);
+    fftProcessor = std::make_unique<AlenkaSignal::FftProcessor>(globalContext.get(), parallelQueues);
+  }
+
   assert(channelToDisplay < static_cast<int>(file->file->getChannelCount()));
 
   const int samplesToUse =
@@ -202,8 +211,10 @@ void TfAnalyser::updateSpectrum() {
   }
 
   int freqBins = frameSize / 2 + 1;
-  std::vector<float> values;
+  std::vector<float> fftValues;
+  int tempFrameSize;
 
+  std::vector<std::complex<float>> spectrumOld;
   for (int f = 0; f < frameCount; f++) {
     auto begin = signal.begin() + f * hopSize;
     std::vector<float> input(begin, begin + frameSize);
@@ -212,37 +223,72 @@ void TfAnalyser::updateSpectrum() {
 
     //is power of 2
     //TODO: is this correct?
-    int tempFrameSize = frameSize;
+    tempFrameSize = frameSize;
     while ((tempFrameSize  & (tempFrameSize - 1)) != 0) {
       input.push_back(0.0f);
       tempFrameSize++;
       //std::cout << "not power of 2\n";
     }
 
-    std::vector<std::complex<float>> spectrum;
+
+    fftValues.insert(fftValues.end(), input.begin(), input.end());
+    //if (f == 0) {
+      /*std::cout << "oldFFT size:" << spectrum.size() << "\n";
+      int c = 0;
+      for (auto s : spectrum) {
+        if (c >= 65)
+          break;
+        std::cout << s << " ";
+        c++;
+      }
+      std::cout << "\n";*/
+    //}
+    /*std::vector<std::complex<float>> spectrum;
     fft->fwd(spectrum, input);
-    
-    assert(static_cast<int>(input.size()) == tempFrameSize);
-    assert(static_cast<int>(spectrum.size()) == tempFrameSize);
+    spectrumOld.insert(spectrumOld.end(), spectrum.begin(), spectrum.end());*/
+  }
 
-    //std::cout << "fillin frame\n";
-    for (int i = 0; i < freqBins; i++) {
+  //std::vector<std::complex<float>> spectrum;
+  std::vector<std::complex<float>> spectrum;
+  //TODO: do everything in one clfft batch
+  spectrum = fftProcessor->process(fftValues, globalContext.get(), frameCount, tempFrameSize);
 
-      float val = std::abs(spectrum[i]);
-      if (std::isfinite(val)) {
-        values.push_back(val);
-      }
-      else {
-        values.push_back(0);
-       // std::cout << "NOT FINITE\n";
-      }
+  /*for (int i = 0; i < spectrumOld.size(); i++) {
+    std::cout << "\nold: " << std::abs(spectrumOld[i]) << " new:" << std::abs(spectrum[i]) << "\n";
+    if (i % 65 == 0)
+      std::cout << "\nNEXT\n";
+    if (std::abs(std::abs(spectrumOld[i]) - std::abs(spectrum[i])) > 0.1f) {
+      assert(1 == 2);
+    }
+  }*/
 
+  /*std::cout << "spectrum, frameCount: " << frameCount << "\n";
+  int c = 0;
+  for (auto i : spectrum) {
+    std::cout << i << " ";
+    c++;
+    if (c % 65 == 0)
+      std::cout << "\nNEXT " << c / 65 << "\n";
+  }*/
+
+  std::vector<float> processedValues;
+
+  for (int f = 0; f < spectrum.size(); f++) {
+    //assert(static_cast<int>(input.size()) == tempFrameSize);
+    //assert(static_cast<int>(spectrum.size()) == tempFrameSize);
+
+    float val = std::abs(spectrum[f]);
+    if (std::isfinite(val)) {
+      processedValues.push_back(val);
+    }
+    else {
+      processedValues.push_back(0);
     }
   }
 
   visualizer->setSeconds(secondsToDisplay);
   visualizer->setFrameSize(frameSize);
-  visualizer->setDataToDraw(values, frameCount, freqBins);
+  visualizer->setDataToDraw(processedValues, frameCount, freqBins);
   visualizer->update();
 }
 

@@ -59,6 +59,7 @@ set(SRC_SD
 
 set(SRC
   include/AlenkaSignal/cluster.h
+  include/AlenkaSignal/fftprocessor.h
   include/AlenkaSignal/filter.h
   include/AlenkaSignal/filterprocessor.h
   include/AlenkaSignal/montage.h
@@ -67,6 +68,7 @@ set(SRC
   include/AlenkaSignal/openclprogram.h
   include/AlenkaSignal/spikedet.h
   src/cluster.cpp
+  src/fftprocessor.cpp
   src/filter.cpp
   src/filterprocessor.cpp
   src/filtfilt.h

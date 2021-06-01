@@ -1,6 +1,8 @@
 #ifndef TFANALYSER_H
 #define TFANALYSER_H
 
+#include "../../Alenka-Signal/include/AlenkaSignal/fftprocessor.h"
+
 #include <unsupported/Eigen/FFT>
 
 #include <QWidget>
@@ -29,6 +31,10 @@ template <class T> T blackmanWindow(int n, int M) {
   return static_cast<T>(a0 - a1 * cos(tmp) + a2 * cos(2 * tmp));
 }
 
+namespace AlenkaSignal {
+  class FftProcessor;
+} // namespace AlenkaSignal
+
 /**
 * @brief Implements 2D scalp map.
 */
@@ -44,24 +50,26 @@ public:
 	void changeFile(OpenDataFile *file);
 
 private:
-		int channelToDisplay = 0;
-		int secondsToDisplay = 10;
-    int filterWindow = 1;
-		int frameSize = 128;
-		int hopSize = 16;
-    bool freeze = true;
+  int parallelQueues = 0;
+  int channelToDisplay = 0;
+  int secondsToDisplay = 10;
+  int filterWindow = 1;
+  int frameSize = 128;
+  int hopSize = 16;
+  bool freeze = true;
 
-	  TfVisualizer *visualizer;
-		OpenDataFile *file = nullptr;
-		std::vector<QMetaObject::Connection> connections;
-		std::unique_ptr<Eigen::FFT<float>> fft;
-    QLineEdit* frameLine;
-    QLineEdit* hopLine;
-    QSpinBox* channelSpinBox;
+  std::unique_ptr<AlenkaSignal::FftProcessor> fftProcessor;
+  TfVisualizer *visualizer;
+  OpenDataFile *file = nullptr;
+  std::vector<QMetaObject::Connection> connections;
+  std::unique_ptr<Eigen::FFT<float>> fft;
+  QLineEdit* frameLine;
+  QLineEdit* hopLine;
+  QSpinBox* channelSpinBox;
 
-		void updateConnections();
-    bool ready();
-    void applyWindowFunction(std::vector<float>& data);
+  void updateConnections();
+  bool ready();
+  void applyWindowFunction(std::vector<float>& data);
 
 private slots:
 	void updateSpectrum();
