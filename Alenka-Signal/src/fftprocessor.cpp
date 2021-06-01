@@ -20,52 +20,63 @@
 #include <iostream>
 
 #include <detailedexception.h>
-
 using namespace std;
 
+//TODO:: duplicate from filterprocessor
 namespace {
 
-// Defines const char* KERNELS_SOURCE.
+  // Defines const char* KERNELS_SOURCE.
 #include "kernels.cl"
 
-string clfftErrorCodeToString(clfftStatus code) {
+  template <class T> T hammingWindow(int n, int M) {
+    const double tmp = 2 * M_PI * n / (M - 1);
+    return static_cast<T>(0.54 - 0.46 * cos(tmp));
+  }
+
+  template <class T> T blackmanWindow(int n, int M) {
+    const double a = 0.16, a0 = (1 - a) / 2, a1 = 0.5, a2 = a / 2,
+      tmp = 2 * M_PI * n / (M - 1);
+    return static_cast<T>(a0 - a1 * cos(tmp) + a2 * cos(2 * tmp));
+  }
+
+  string clfftErrorCodeToString(clfftStatus code) {
 #define CASE(a_)                                                               \
   case a_:                                                                     \
     return #a_
 
-  switch (code) {
-    CASE(CLFFT_BUGCHECK);
-    CASE(CLFFT_NOTIMPLEMENTED);
-    CASE(CLFFT_TRANSPOSED_NOTIMPLEMENTED);
-    CASE(CLFFT_FILE_NOT_FOUND);
-    CASE(CLFFT_FILE_CREATE_FAILURE);
-    CASE(CLFFT_VERSION_MISMATCH);
-    CASE(CLFFT_INVALID_PLAN);
-    CASE(CLFFT_DEVICE_NO_DOUBLE);
-    CASE(CLFFT_DEVICE_MISMATCH);
-    CASE(CLFFT_ENDSTATUS);
-  default:
-    return AlenkaSignal::OpenCLContext::clErrorCodeToString(code);
-  }
+    switch (code) {
+      CASE(CLFFT_BUGCHECK);
+      CASE(CLFFT_NOTIMPLEMENTED);
+      CASE(CLFFT_TRANSPOSED_NOTIMPLEMENTED);
+      CASE(CLFFT_FILE_NOT_FOUND);
+      CASE(CLFFT_FILE_CREATE_FAILURE);
+      CASE(CLFFT_VERSION_MISMATCH);
+      CASE(CLFFT_INVALID_PLAN);
+      CASE(CLFFT_DEVICE_NO_DOUBLE);
+      CASE(CLFFT_DEVICE_MISMATCH);
+      CASE(CLFFT_ENDSTATUS);
+    default:
+      return AlenkaSignal::OpenCLContext::clErrorCodeToString(code);
+    }
 
 #undef CASE
-}
+  }
 
-void CFCEC(clfftStatus val, const string &message, const char *file, int line) {
-  std::stringstream ss;
+  void CFCEC(clfftStatus val, const string &message, const char *file, int line) {
+    std::stringstream ss;
 
-  ss << "Unexpected error code: " << clfftErrorCodeToString(val);
-  ss << ", required CLFFT_SUCCESS. ";
+    ss << "Unexpected error code: " << clfftErrorCodeToString(val);
+    ss << ", required CLFFT_SUCCESS. ";
 
-  ss << message << " " << file << ":" << line;
+    ss << message << " " << file << ":" << line;
 
-  throwDetailed(std::runtime_error(ss.str()));
-}
+    throwDetailed(std::runtime_error(ss.str()));
+  }
 
-/**
- * @brief Simplified error code test for clFFT functions
- * @param val_ The error code.
- */
+  /**
+  * @brief Simplified error code test for clFFT functions
+  * @param val_ The error code.
+  */
 #define checkClfftErrorCode(val_, message_)                                    \
   if ((val_) != CLFFT_SUCCESS) {                                               \
     std::stringstream ss;                                                      \
@@ -81,38 +92,6 @@ FftProcessor::FftProcessor( OpenCLContext *context, int parallelQueues)
   cl_int err;
   queue = clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err);
   checkClErrorCode(err, "clCreateCommandQueue");
-
-  //setup command queues
-  //TODO: should queues be shared with the ones in signalproc? 
-  /*for (unsigned int i = 0; i < parallelQueues; ++i) {
-    commandQueues.push_back(clCreateCommandQueue(context->getCLContext(), context->getCLDevice(), 0, &err));
-    checkClErrorCode(err, "clCreateCommandQueue()");
-  }*/
-
-  /*cl_int err;
-  clfftStatus errFFT;
-
-  clfftPrecision precision = CLFFT_SINGLE;
-
-  if (is_same<double, T>::value) {
-    precision = CLFFT_DOUBLE;
-  }
-
-  // Construct the fft plans.
-  size_t size = 128;
-
-  errFFT = clfftCreateDefaultPlan(&fftPlan, context->getCLContext(),
-                                  CLFFT_1D, &size);
-  checkClfftErrorCode(errFFT, "clfftCreateDefaultPlan()");
-  errFFT = clfftSetPlanPrecision(fftPlan, precision);
-  checkClfftErrorCode(errFFT, "clfftSetPlanPrecision()");
-  errFFT =
-      clfftSetLayout(fftPlan, CLFFT_REAL, CLFFT_COMPLEX_INTERLEAVED);
-  checkClfftErrorCode(errFFT, "clfftSetLayout()");
-  errFFT = clfftSetResultLocation(fftPlan, CLFFT_INPLACE);
-  checkClfftErrorCode(errFFT, "clfftSetResultLocation()");
-  errFFT = clfftSetPlanBatchSize(fftPlan, 1);
-  checkClfftErrorCode(errFFT, "clfftSetPlanBatchSize()");*/
 }
 
 FftProcessor::~FftProcessor() {

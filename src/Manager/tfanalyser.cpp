@@ -219,6 +219,7 @@ void TfAnalyser::updateSpectrum() {
     auto begin = signal.begin() + f * hopSize;
     std::vector<float> input(begin, begin + frameSize);
 
+    //TODO: mby do this in fftprocessor
     applyWindowFunction(input);
 
     //is power of 2
@@ -227,50 +228,15 @@ void TfAnalyser::updateSpectrum() {
     while ((tempFrameSize  & (tempFrameSize - 1)) != 0) {
       input.push_back(0.0f);
       tempFrameSize++;
-      //std::cout << "not power of 2\n";
     }
 
-
     fftValues.insert(fftValues.end(), input.begin(), input.end());
-    //if (f == 0) {
-      /*std::cout << "oldFFT size:" << spectrum.size() << "\n";
-      int c = 0;
-      for (auto s : spectrum) {
-        if (c >= 65)
-          break;
-        std::cout << s << " ";
-        c++;
-      }
-      std::cout << "\n";*/
-    //}
-    /*std::vector<std::complex<float>> spectrum;
-    fft->fwd(spectrum, input);
-    spectrumOld.insert(spectrumOld.end(), spectrum.begin(), spectrum.end());*/
   }
 
   //std::vector<std::complex<float>> spectrum;
   std::vector<std::complex<float>> spectrum;
   //TODO: do everything in one clfft batch
   spectrum = fftProcessor->process(fftValues, globalContext.get(), frameCount, tempFrameSize);
-
-  /*for (int i = 0; i < spectrumOld.size(); i++) {
-    std::cout << "\nold: " << std::abs(spectrumOld[i]) << " new:" << std::abs(spectrum[i]) << "\n";
-    if (i % 65 == 0)
-      std::cout << "\nNEXT\n";
-    if (std::abs(std::abs(spectrumOld[i]) - std::abs(spectrum[i])) > 0.1f) {
-      assert(1 == 2);
-    }
-  }*/
-
-  /*std::cout << "spectrum, frameCount: " << frameCount << "\n";
-  int c = 0;
-  for (auto i : spectrum) {
-    std::cout << i << " ";
-    c++;
-    if (c % 65 == 0)
-      std::cout << "\nNEXT " << c / 65 << "\n";
-  }*/
-
   std::vector<float> processedValues;
 
   for (int f = 0; f < spectrum.size(); f++) {
