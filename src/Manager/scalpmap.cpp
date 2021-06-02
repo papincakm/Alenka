@@ -215,12 +215,13 @@ void ScalpMap::setupExtrema() {
 
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
+  std::cout << "updateSpectrum\n";
   if (!enabled() || !scalpCanvas)
     return;
 
   //TODO: rethink this, extreme is not selected sometimes on first app run
   //if (selectedExtrema < InfoTable::Extrema::custom || selectedExtrema > InfoTable::Extrema::local)
-    setupExtrema();
+  setupExtrema();
 
   const AbstractTrackTable *trackTable =
     file->dataModel->montageTable()->trackTable(
@@ -231,14 +232,25 @@ void ScalpMap::updateSpectrum() {
 
   const int position = OpenDataFile::infoTable.getPosition();
 
-  std::vector<float> signalSamplePosition = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
+  std::vector<float> samples = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
 
-  if (selectedExtrema == InfoTable::Extrema::local) {
-    frequencyMin = *std::min_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
-    frequencyMax = *std::max_element(std::begin(signalSamplePosition), std::end(signalSamplePosition));
+  //TODO: amlitudes are low, what to do with numbers next to gradient? they are all 0 now
+  //multiply samples by amplitude
+  int hidden = 0;
+  for (int i = 0; i < trackTable->rowCount(); i++) {
+    if (trackTable->row(i).hidden) {
+      hidden++;
+      continue;
+    }
+    samples[i - hidden] *= trackTable->row(i).amplitude;
   }
 
-  scalpCanvas->setPositionFrequencies(signalSamplePosition, frequencyMin, frequencyMax);
+  if (selectedExtrema == InfoTable::Extrema::local) {
+    frequencyMin = *std::min_element(std::begin(samples), std::end(samples));
+    frequencyMax = *std::max_element(std::begin(samples), std::end(samples));
+  }
+
+  scalpCanvas->setPositionFrequencies(samples, frequencyMin, frequencyMax);
   scalpCanvas->update();
 }
 

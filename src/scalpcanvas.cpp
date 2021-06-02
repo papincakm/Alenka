@@ -43,6 +43,8 @@ using namespace AlenkaFile;
 using namespace AlenkaSignal;
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
+  gradient = std::make_unique<graphics::Gradient>(
+    graphics::Gradient(gradientX, gradientX + 0.05f, gradientBotY, gradientTopY, this));
 }
 
 ScalpCanvas::~ScalpCanvas() {
@@ -213,14 +215,6 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
   menu->exec(mapToGlobal(pos));
 }
 
-void ScalpCanvas::mouseReleaseEvent(QMouseEvent * event) {
-  if (event->button() == Qt::RightButton)
-  {
-    renderPopupMenu(event->pos());
-  }
-  QOpenGLWidget::mouseReleaseEvent(event);
-}
-
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
@@ -343,6 +337,7 @@ void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBu
 
 void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
   // checkGLMessages();
+  gradient->update();
 }
 
 //TODO: testing, refactor in future, use less data containers
@@ -800,4 +795,27 @@ std::vector<GLfloat> ScalpCanvas::generateTriangulatedGrid(const std::vector<flo
   }
 
   return triangles;
+}
+
+void ScalpCanvas::mousePressEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
+    gradient->clicked(event->pos());
+  }
+}
+
+void ScalpCanvas::mouseMoveEvent(QMouseEvent* event) {
+  if (gradient->isClicked) {
+    gradient->change(colormap, event->globalPos());
+    update();
+  }
+}
+
+void ScalpCanvas::mouseReleaseEvent(QMouseEvent* event) {
+  if (gradient->isClicked) {
+    gradient->released();
+  }
+  else if (event->button() == Qt::RightButton)
+  {
+    renderPopupMenu(event->pos());
+  }
 }

@@ -4,6 +4,7 @@
 #include "SignalProcessor/lrucache.h"
 #include "openglinterface.h"
 #include "GraphicsTools/colormap.h"
+#include "GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
@@ -96,6 +97,7 @@ class ScalpCanvas : public QOpenGLWidget {
 	QAction *setChannelDrawing;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
+  std::unique_ptr<graphics::Gradient> gradient;
 
   float minFrequency = 0;
   float maxFrequency = 0;
@@ -124,9 +126,11 @@ public:
 protected:
 	void cleanup();
   void initializeGL() override;
-	void mouseReleaseEvent(QMouseEvent * event) override;
 	void paintGL() override;
   void resizeGL(int w, int h) override;
+  void mousePressEvent(QMouseEvent * event) override;
+  void mouseMoveEvent(QMouseEvent * event) override;
+  void mouseReleaseEvent(QMouseEvent * event) override;
 
 
 private:
