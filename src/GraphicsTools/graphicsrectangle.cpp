@@ -21,10 +21,10 @@ void Rectangle::renderFull() {
   //painter.setWindow(QRect(-1, -1, 1, 1));
   //painter.drawLine(realBotx - 0.6f, realBoty, realBotx - 0.6f, realTopy);
   //painter.drawLine(realTopx + 1.5f, realBoty, realTopx + 1.5f, realTopy);
-  painter.drawRect(QRectF(xleftReal, ytopReal, realWidth, realHeight));
+  painter.drawRect(QRectF(xleftReal, ytopReal, widthReal, heightReal));
 }
 
-void Rectangle::calculateWidgetProportions() {
+void QtObject::calculateWidgetProportions() {
   //TODO: using brute correction to match opengl drawing
   xleftReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xleft - 0.5f;
   xrightReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xright + 0.5f;
@@ -32,8 +32,8 @@ void Rectangle::calculateWidgetProportions() {
   ytopReal = widget->height() / 2.0f + (widget->height() / 2.0f) * ytop * -1 - 0.5f;
 
   //1.0f is correction to match opengl
-  realHeight = abs(ytopReal - ybotReal);// +1.0f;
-  realWidth = abs(xrightReal - xleftReal);// +1.0f;
+  heightReal = abs(ytopReal - ybotReal);// +1.0f;
+  widthReal = abs(xrightReal - xleftReal);// +1.0f;
 }
 
 void Rectangle::render() {
@@ -95,32 +95,62 @@ void Line::renderCenter() {
 }
 
 void RectangleText::drawText(float x, float y) {
-  int fontSize = std::max(8, static_cast<int>(realHeight / 10.0f));
-  //std::cout << "text rendering text on y: " << realBoty << " boty is " << boty << " fontsize is : " << fontSize << "\n";
-  //text is corrupted if this is not called
-  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
   QPainter painter(widget);
   painter.setBackgroundMode(Qt::OpaqueMode);
   //painter.setRenderHints(QPainter::TextAntialiasing);
   painter.setBackground(backgroundColor);
   painter.setPen(textColor);
   painter.setBrush(textColor);
-  painter.setFont(QFont(font, fontSize, QFont::Bold));
-  painter.drawText(QRectF(x, y, realWidth, realHeight), text);
+  painter.setFont(QFont(font, 8));
+
+
+  if (textOrientation == Orientation::Vertical) {
+    //rotate
+    painter.translate(widget->width() / 2, widget->height() / 2);
+    painter.rotate(-90);
+    painter.translate(widget->height() / -2, widget->width() / -2);
+    //painter.drawText(y, x, text);
+
+    //scale
+    auto rect = QRectF(y, x, heightReal, widthReal);
+    QFontMetrics fm(painter.font());
+    qreal sx = rect.width() * 1.0f / fm.width(text);
+    qreal sy = rect.height() * 1.0f / fm.height();
+    painter.translate(rect.center());
+    painter.scale(sx, sy);
+    painter.translate(-rect.center());
+    painter.drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
+  }
+  else {
+    //scale
+    const auto rect = QRectF(x, y, widthReal, heightReal);
+    QFontMetrics fm(painter.font());
+    qreal sx = rect.width() * 1.0f / fm.width(text);
+    qreal sy = rect.height() * 1.0f / fm.height();
+    painter.translate(rect.center());
+    painter.scale(sx, sy);
+    painter.translate(-rect.center());
+    painter.drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
+  }
   painter.end();
 }
 
 //same as renderTop rn
 void RectangleText::renderFull() {
-  drawText(xleftReal, ytopReal);
+  if (textOrientation == Orientation::Vertical) {
+    drawText(xleftReal, ytopReal);
+  }
+  else {
+    drawText(xleftReal, ytopReal);
+  }
 }
 
 void RectangleText::renderTop() {
   if (orientation == Orientation::Vertical) {
-    drawText(xleftReal, ytopReal);
+    drawText(xleftReal, boundRect.getYtopReal() - heightReal);
   }
   else {
-    drawText(xrightReal, ytopReal);
+    drawText(boundRect.getXrightReal() - widthReal, ytopReal);
   }
 
 }
@@ -136,6 +166,11 @@ void RectangleText::renderBot() {
 }
 
 void RectangleChain::constructObjects() {
+  objectWidth = std::abs(xleft - xright) / objectCount / 5.0f;
+  objectHeight = std::abs(ytop - ybot) / objectCount / 5.0f;
+  objectWidthReal = std::abs(xleftReal - xrightReal) / objectCount / 5.0f;
+  objectHeightReal = std::abs(ytopReal - ybotReal) / objectCount / 5.0f;
+
   if (orientation == Vertical) {
     constructVertical();
   }
@@ -155,15 +190,15 @@ void RectangleChain::constructVertical() {
   float height = std::fabs(ytop - ybot);
   
   //std::cout << "topx: " << topx <<  " topy: " << topy  << " height is: " << height << "\n";
-  float biny = height / static_cast<float>(clusterCount - 1);
+  float biny = height / static_cast<float>(objectCount - 1);
   float ypos = ybot;
 
-  createObject(0, xleft, xright, ybot, ybot + biny, childOrientation, Bot);
-  for (int i = 0; i < clusterCount - 2; i++) {
+  createObject(0, xleft, xright, ypos, ypos + biny, childOrientation, Bot);
+  for (int i = 0; i < objectCount - 2; i++) {
     ypos += biny;
     createObject(i + 1, xleft, xright, ypos, ypos + biny, childOrientation, Bot);
   }
-  createObject(clusterCount - 1, xleft, xright, ypos, ypos + biny, childOrientation, Top);
+  createObject(objectCount - 1, xleft, xright, ypos, ypos + biny, childOrientation, Top);
 }
 
 void RectangleChain::constructHorizontal() {
@@ -171,15 +206,15 @@ void RectangleChain::constructHorizontal() {
   float width = std::fabs(xright - xleft);
 
   //std::cout << "topx: " << topx <<  " topy: " << topy  << " height is: " << height << "\n";
-  float binx = width / static_cast<float>(clusterCount - 1);
+  float binx = width / static_cast<float>(objectCount - 1);
   float xpos = xleft;
 
-  createObject(0, xleft, xleft + binx, ybot, ytop, childOrientation, Bot);
-  for (int i = 0; i < clusterCount - 2; i++) {
+  createObject(0, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
+  for (int i = 0; i < objectCount - 2; i++) {
     xpos += binx;
-    createObject(i + 1, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
+    createObject(i, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
   }
-  createObject(clusterCount - 1, xpos, xpos + binx, ybot, ytop, childOrientation, Top);
+  createObject(objectCount - 1, xpos, xpos + binx, ybot, ytop, childOrientation, Top);
 }
 
 void LineChain::createObject(int position, float botx, float topx, float boty, float topy,
@@ -190,9 +225,23 @@ void LineChain::createObject(int position, float botx, float topx, float boty, f
 
 void NumberRange::createObject(int position, float botx, float topx, float boty, float topy,
   Orientation objectOrientation, Alignment alignment) {
+  float xl, xr, yb, yt = 0;
+  if (objectOrientation == Orientation::Vertical) {
+    xl = botx;
+    xr = topx;
+    yb = boty + objectHeight / 2;
+    yt = yb + objectHeight;
+  }
+  else {
+    xl = botx - objectWidth / 2;
+    xr = xl + objectWidth;
+    yb = boty;
+    yt = topy;
+  }
+
   objects.push_back(std::make_shared<RectangleText>(
-    RectangleText(botx, topx, boty, topy, widget, "Arial", textColor,
-      QString::number(from + position * length / (clusterCount - 1), 'f', 1), objectOrientation, alignment)
+    RectangleText(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, "Arial", textColor,
+      QString::number(from + position * length / (objectCount - 1), 'f', 1), objectOrientation, alignment)
     ));
 }
 
@@ -200,7 +249,7 @@ Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widg
   Orientation orientation, Alignment alignment) :
   Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {
 
-  changeRange = std::min(realHeight, 300.0f);
+  changeRange = std::min(heightReal, 300.0f);
 }
 
 void Gradient::change(Colormap& colormap, const QPoint& newPoint) {

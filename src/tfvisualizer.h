@@ -61,7 +61,7 @@ public:
 		~TfVisualizer() override;
     void setDataToDraw(std::vector<float> values, float xCount, float yCount);
     void setSeconds(int secs);
-    void setFrameSize(int fs);
+    void setFrequency(int fs);
     void updateColormapTexture();
 
 protected:
@@ -104,11 +104,10 @@ private:
   graphics::SquareMesh specMesh;
   //graphics::SquareMesh gradientMesh;
   //TODO: move this to separate class
-  const float gradientX = 0.9f;
   float maxGradVal = 0.0f;
   float minGradVal = 0.0f;
   int seconds = 0;
-  int frameSize = 0;
+  int frequency = 0;
   bool gradClicked = false;
   std::unique_ptr<graphics::Gradient> gradient;
 };

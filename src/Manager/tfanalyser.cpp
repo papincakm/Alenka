@@ -36,10 +36,13 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   frameLine = new QLineEdit();
   frameLine->setValidator(new QIntValidator(frameLine));
   connect(frameLine, SIGNAL(editingFinished()), this,
-    SLOT(setFrameSize()));
+    SLOT(setFrequency()));
   frameLine->insert(QString::number(frameSize));
 
   menuBox->addWidget(frameLine);
+
+  QLabel* frameSampleLabel = new QLabel("samples");
+  menuBox->addWidget(frameSampleLabel);
 
   //hop size
 
@@ -54,6 +57,8 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   hopLine->insert(QString::number(hopSize));
 
   menuBox->addWidget(hopLine);
+  QLabel* hopSampleLabel = new QLabel("samples");
+  menuBox->addWidget(hopSampleLabel);
 
   //channel select
   QLabel* chanLabel = new QLabel("Channel");
@@ -120,7 +125,7 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
 
   //TODO: refactor this so it doesnt have to be set on multiple places
   visualizer->setSeconds(secondsToDisplay);
-  visualizer->setFrameSize(frameSize);
+  visualizer->setFrequency(frameSize);
 }
 
 void TfAnalyser::changeFile(OpenDataFile *file) {
@@ -253,7 +258,7 @@ void TfAnalyser::updateSpectrum() {
   }
 
   visualizer->setSeconds(secondsToDisplay);
-  visualizer->setFrameSize(frameSize);
+  visualizer->setFrequency(file->file->getSamplingFrequency() / 2);
   visualizer->setDataToDraw(processedValues, frameCount, freqBins);
   visualizer->update();
 }

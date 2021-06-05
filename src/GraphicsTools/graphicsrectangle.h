@@ -53,15 +53,62 @@ public:
   SquareMesh(float xleft, float xright, float ybot, float ytop) : Object(xleft, xright, ybot, ytop) {};
 };
 
+class QtObject : public Object {
+public:
+  QtObject(float xleft, float xright, float ybot, float ytop, QWidget* widget) :
+    Object(xleft, xright, ybot, ytop), widget(widget) {
+    calculateWidgetProportions();
+  };
+
+  QtObject(const QtObject& object) {
+    xleft = object.xleft;
+    xright = object.xright;
+    ybot = object.ybot;
+    ytop = object.ytop;
+    widget = object.widget;
+    calculateWidgetProportions();
+  };
+
+  QtObject(const Object& object, QWidget* widget) : Object(object), widget(widget) {
+    calculateWidgetProportions();
+  };
+
+  float getXleftReal() { return xleftReal; };
+  float getXrightReal() { return xrightReal; };
+  float getYbotReal() { return ybotReal; };
+  float getYtopReal() { return ytopReal; }
+
+protected:
+  QWidget* widget;
+
+  float xleftReal = 0.0f;
+  float xrightReal = 0.0f;
+  float ybotReal = 0.0f;
+  float ytopReal = 0.0f;
+
+  float heightReal = 0.0f;
+  float widthReal = 0.0f;
+
+  void calculateWidgetProportions();
+};
+
 /**
 * @brief This is a class used for rendering of rectangle objects.
 * Takes coordinates in {-1, 1} range and draws objects scaled according to widgets real proportions.
 */
-class Rectangle : public Object {
+class Rectangle : public QtObject {
 public:
   Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor backgroundColor,
     Orientation orientation = Orientation::Vertical, Alignment alignment = Alignment::None) :
-    Object(xleft, xright, ybot, ytop), widget(widget), backgroundColor(backgroundColor),
+    QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
+    backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
+    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
+  };
+
+  Rectangle(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
+    QColor backgroundColor, Orientation orientation = Orientation::Vertical,
+    Alignment alignment = Alignment::None) :
+    QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), backgroundColor(backgroundColor),
     orientation(orientation), alignment(alignment) {
     calculateWidgetProportions();
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
@@ -69,15 +116,25 @@ public:
 
   Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget,
     Orientation orientation = Orientation::Vertical, Alignment alignment = Alignment::None) :
-    Object(xleft, xright, ybot, ytop), widget(widget), orientation(orientation), alignment(alignment) {
+    QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
+    orientation(orientation), alignment(alignment) {
+    backgroundColor = widget->palette().color(QPalette::Window);
+    calculateWidgetProportions();
+    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
+  };
+
+  Rectangle(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
+    Orientation orientation = Orientation::Vertical, Alignment alignment = Alignment::None) :
+    QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), orientation(orientation),
+    alignment(alignment) {
     backgroundColor = widget->palette().color(QPalette::Window);
     calculateWidgetProportions();
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
   Rectangle(const Object& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
-    Alignment alignment = Alignment::None) : Object(object), widget(widget), backgroundColor(backgroundColor),
-    orientation(orientation), alignment(alignment) {
+    Alignment alignment = Alignment::None) : QtObject(object, widget), boundRect(object, widget),
+    backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
     calculateWidgetProportions();
   };
 
@@ -87,18 +144,8 @@ public:
 protected:
   Orientation orientation;
   Alignment alignment;
-  QWidget* widget;
   QColor backgroundColor;
-
-  float xleftReal = 0.0f;
-  float xrightReal = 0.0f;
-  float ybotReal = 0.0f;
-  float ytopReal = 0.0f;
-
-  float realHeight = 0.0f;
-  float realWidth = 0.0f;
-
-  void calculateWidgetProportions();
+  QtObject boundRect;
 
   virtual void renderTop() { std::cout << "renderTOP\n"; };
   virtual void renderBot() {};
@@ -124,15 +171,22 @@ class RectangleText : public Rectangle {
 public:
   RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QString font,
     QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Alignment alignment = Alignment::None) :
+    Alignment alignment = Alignment::None, Orientation textOrientation = Orientation::Horizontal) :
       Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment), font(font), textColor(textColor),
-      text(text) {};
+      text(text), textOrientation(textOrientation) {};
+
+  RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
+    QString font, QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
+    Alignment alignment = Alignment::None, Orientation textOrientation = Orientation::Horizontal) :
+    Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
+    text(text), textOrientation(textOrientation) {};
 
   void setText(const QString& newText) { text = newText; };
 protected:
   QString text;
   QString font = "Arial";
   QColor textColor;
+  Orientation textOrientation;
 
   //TODO: refactor text drawing
   void renderFull() override;
@@ -143,14 +197,20 @@ protected:
 
 class RectangleChain : public Rectangle {
 public:
-  RectangleChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, int repeats,
+  RectangleChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
     Orientation orientation = Vertical, Orientation childOrientation = Horizontal) : 
-    Rectangle(xleft, xright, ybot, ytop, widget, orientation), clusterCount(repeats), childOrientation(childOrientation) {};
+    Rectangle(xleft, xright, ybot, ytop, widget, orientation), objectCount(objectCount), childOrientation(childOrientation) {};
 
   void render();
   void constructObjects();
 protected:
-  int clusterCount = 0;
+  int objectCount = 0;
+  //TODO: mby use better system for converting (scale or smthng), not storing stuff everywhere
+  float objectWidth = 0;
+  float objectHeight = 0;
+  float objectWidthReal = 0;
+  float objectHeightReal = 0;
+
   graphics::Orientation childOrientation;
   std::vector<std::shared_ptr<Rectangle>> objects;
   
@@ -190,6 +250,7 @@ class NumberRange : public RectangleChain {
   float from = 0.0f;
   float to = 0.0f;
   float length;
+
   //TODO: make this changable in program options
   QString font = "Arial";
   QColor textColor;

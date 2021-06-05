@@ -58,7 +58,7 @@ TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
   specMesh = graphics::SquareMesh(-0.8f, 0.7f, -0.7f, 0.8f);
   
   gradient = std::make_unique<graphics::Gradient>(
-    graphics::Gradient(gradientX, gradientX + 0.05f, specMesh.getYbot(), specMesh.getYtop(), this));
+    graphics::Gradient(0.75f, 0.8f, specMesh.getYbot(), specMesh.getYtop(), this));
 }
 
 TfVisualizer::~TfVisualizer() {
@@ -226,8 +226,8 @@ void TfVisualizer::setSeconds(int secs) {
   seconds = secs;
 }
 
-void TfVisualizer::setFrameSize(int fs) {
-  frameSize = fs;
+void TfVisualizer::setFrequency(int fs) {
+  frequency = fs;
 }
 
 //TODO: copied from scalpcanvas, move this to separate class
@@ -236,20 +236,20 @@ void TfVisualizer::generateGradient(std::vector<GLfloat>& triangles, std::vector
   GLuint firstVertex = triangles.size() / 3;
 
   //1. triangle, left bot vertex
-  triangles.push_back(gradientX);
+  triangles.push_back(gradient->getXleft());
   triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
   //TODO: refactor this
   indices.push_back(firstVertex);
 
   //right bot vertex
-  triangles.push_back(gradientX + gradientWidth);
+  triangles.push_back(gradient->getXright());
   triangles.push_back(specMesh.getYbot());
   triangles.push_back(0.01f);
   indices.push_back(firstVertex + 1);
 
   //left top vertex
-  triangles.push_back(gradientX);
+  triangles.push_back(gradient->getXleft());
   triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
   indices.push_back(firstVertex + 2);
@@ -259,7 +259,7 @@ void TfVisualizer::generateGradient(std::vector<GLfloat>& triangles, std::vector
   indices.push_back(firstVertex + 1);
 
   //right top vertex
-  triangles.push_back(gradientX + gradientWidth);
+  triangles.push_back(gradient->getXright());
   triangles.push_back(specMesh.getYtop());
   triangles.push_back(1);
   indices.push_back(firstVertex + 3);
@@ -295,32 +295,51 @@ void TfVisualizer::paintGL() {
   gradWindow.render();
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
-    graphics::LineChain(gradientX - 0.02f, gradientX, specMesh.getYbot(), specMesh.getYtop(), this, 5,
+    graphics::LineChain(gradient->getXright(), gradient->getXright() + 0.02f, specMesh.getYbot(), specMesh.getYtop(), this, 5,
     graphics::Orientation::Vertical)
   );
 
   gradAxisLines->render();
 
   auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(gradientX - 0.15f, gradientX - 0.05f, specMesh.getYbot() + 0.025f,
+    graphics::NumberRange(gradient->getXright() + 0.05f, gradient->getXright() + 0.10f, specMesh.getYbot() + 0.025f,
     specMesh.getYtop() + 0.025f, this, 5, minGradVal, maxGradVal, QColor(0, 0, 0),
     graphics::Orientation::Vertical)
   );
   gradAxisNumbers->render();
 
-  auto frameAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
+  float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
+  auto gradAxisLabel = graphics::RectangleText(0.95f, 0.98f,
+    specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Amplitude",
+    graphics::Orientation::Vertical, graphics::Alignment::None, graphics::Orientation::Vertical);
+  gradAxisLabel.render();
+
+  //frequency
+  
+  /*graphics::Rectangle(-0.95f, -0.90f,
+    specMesh.getYbot() + specYSize / 4, specMesh.getYtop() - specYSize / 4, this);
+  frequencyAxisLabel.render();*/
+  //TODO: specmesh getYbot seems off (or rotated text drawing is off)
+  //specMesh.getYbot() + specYSize / 1.8f, specMesh.getYbot() + specYSize / 4.0
+  auto frequencyAxisLabel = graphics::RectangleText(-0.98f, -0.92f,
+    specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
+    graphics::Orientation::Vertical, graphics::Alignment::None, graphics::Orientation::Vertical);
+  frequencyAxisLabel.render();
+
+  auto frequencyAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+    graphics::NumberRange(specMesh.getXleft() - 0.10f, specMesh.getXleft() - 0.05f, specMesh.getYbot() + 0.025f,
+    specMesh.getYtop() + 0.025f, this, 5, 0, frequency, QColor(0, 0, 0), graphics::Orientation::Vertical)
+  );
+  frequencyAxisNumbers->render();
+  
+    auto frameAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
     graphics::LineChain(specMesh.getXleft() - 0.02f, specMesh.getXleft(), specMesh.getYbot(),
     specMesh.getYtop(), this, 5, graphics::Orientation::Vertical)
   );
 
   frameAxisLines->render();
-
-  auto frameAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(specMesh.getXleft() - 0.15f, specMesh.getXleft() - 0.05f, specMesh.getYbot() + 0.025f,
-    specMesh.getYtop() + 0.025f, this, 5, 0, frameSize, QColor(0, 0, 0), graphics::Orientation::Vertical)
-  );
-  frameAxisNumbers->render();
-
+  
+  //time
   auto timeAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
     graphics::LineChain(specMesh.getXleft(), specMesh.getXright(), specMesh.getYbot() - 0.02f,
     specMesh.getYbot(), this, 5, graphics::Orientation::Horizontal, graphics::Orientation::Vertical)
@@ -329,11 +348,18 @@ void TfVisualizer::paintGL() {
   timeAxisLines->render();
 
   auto timeAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-    graphics::NumberRange(specMesh.getXleft() + 0.025f, specMesh.getXright() + 0.025f, specMesh.getYbot() - 0.15f,
+    graphics::NumberRange(specMesh.getXleft() - 0.025f, specMesh.getXright() + 0.025f, specMesh.getYbot() - 0.15f,
     specMesh.getYbot() - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Orientation::Horizontal,
     graphics::Orientation::Horizontal)
   );
   timeAxisNumbers->render();
+
+  float specXSize = std::abs(specMesh.getXleft() - specMesh.getXright());
+  auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 3,
+    specMesh.getXright() - specXSize / 3, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.15f,
+    this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
+    graphics::Alignment::None); //graphics::Orientation::Vertical);
+  timeAxisLabel.render();
 
 #endif
   if (ready()) {
