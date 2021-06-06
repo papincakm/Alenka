@@ -355,8 +355,8 @@ void TfVisualizer::paintGL() {
   timeAxisNumbers->render();
 
   float specXSize = std::abs(specMesh.getXleft() - specMesh.getXright());
-  auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 3,
-    specMesh.getXright() - specXSize / 3, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.15f,
+  auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 2.4f,
+    specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.15f,
     this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
     graphics::Alignment::None); //graphics::Orientation::Vertical);
   timeAxisLabel.render();
