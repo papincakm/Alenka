@@ -241,7 +241,8 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
 
   objects.push_back(std::make_shared<RectangleText>(
     RectangleText(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, "Arial", textColor,
-      QString::number(from + position * length / (objectCount - 1), 'f', 1), objectOrientation, alignment)
+      QString::number(from + position * length / (objectCount - 1), 'f', 1), objectOrientation,
+      Orientation::Horizontal, alignment)
     ));
 }
 

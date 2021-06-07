@@ -57,10 +57,11 @@ private:
   int frameSize = 128;
   int hopSize = 16;
   bool freeze = true;
+  bool parentVisible = true;
 
   std::unique_ptr<AlenkaSignal::FftProcessor> fftProcessor;
-  TfVisualizer *visualizer;
-  OpenDataFile *file = nullptr;
+  TfVisualizer* visualizer;
+  OpenDataFile* file = nullptr;
   std::vector<QMetaObject::Connection> connections;
   std::unique_ptr<Eigen::FFT<float>> fft;
   QLineEdit* frameLine;
@@ -70,6 +71,7 @@ private:
   void updateConnections();
   bool ready();
   void applyWindowFunction(std::vector<float>& data);
+  void setupTfVisualizer(QVBoxLayout* mainBox);
 
 private slots:
 	void updateSpectrum();
@@ -79,6 +81,8 @@ private slots:
   void setSecondsToDisplay(int s);
   void setFreezeSpectrum(bool f);
   void setFilterWindow(int fw);
+  void parentVisibilityChanged(bool vis);
+  //void topLevelChanged(bool topLevel);
 };
 
 #endif // TFANALYSER_H

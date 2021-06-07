@@ -50,6 +50,10 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 ScalpCanvas::~ScalpCanvas() {
 	logToFile("Destructor in ScalpCanvas.");
 	cleanup();
+
+  channelProgram.reset();
+
+  labelProgram.reset();
 }
 
 void ScalpCanvas::forbidDraw(QString errorString) {
@@ -214,18 +218,16 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
 
   menu->exec(mapToGlobal(pos));
 }
-
+//TODO: use indices for painting
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
 
+  gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 	gl()->glDeleteBuffers(1, &posBuffer);
 
   gl()->glDeleteTextures(1, &colormapTextureId);
-
   gl()->glBindTexture(GL_TEXTURE_1D, 0);
-
-	scalpMesh.clear();
 
 	channelProgram.reset();
 
@@ -305,7 +307,7 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
 
   //TODO: refactor me
   triangulatedPositions = generateTriangulatedPositions(originalPositions);
-
+  std::cout << "setup scalp mesh from set channel pos\n";
   setupScalpMesh();
 }
 
@@ -529,6 +531,7 @@ void ScalpCanvas::paintGL() {
     }
 
     if (scalpMesh.empty()) {
+      std::cout << "setup scalpMesh from paint event\n";
       setupScalpMesh();
     }
 

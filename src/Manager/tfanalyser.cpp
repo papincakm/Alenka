@@ -22,6 +22,9 @@ using namespace AlenkaFile;
 
 
 TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<float>()) {
+  connect(parent, SIGNAL(visibilityChanged(bool)),
+    SLOT(parentVisibilityChanged(bool)));
+
   auto mainBox = new QVBoxLayout();
   //auto splitter = new QSplitter(Qt::Vertical);
 
@@ -113,12 +116,15 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   checkBox->setChecked(freeze);
   menuBox->addWidget(checkBox);
 
-  //setupVisualizer
+  mainBox->addLayout(menuBox);
+  setupTfVisualizer(mainBox);
+}
+
+void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {
   visualizer = new TfVisualizer(this);
   auto vizBox = new QVBoxLayout();
   vizBox->addWidget(visualizer);
 
-  mainBox->addLayout(menuBox);
   mainBox->addLayout(vizBox);
 
   setLayout(mainBox);
@@ -151,10 +157,10 @@ void TfAnalyser::updateConnections() {
 }
 
 bool TfAnalyser::ready() {
-  if (!file || secondsToDisplay == 0 || !this->isVisible() || frameSize <= 0 || hopSize <= 0 ||
+  //TODO: widget is visible when tabbed into different widget
+  if (!file || secondsToDisplay == 0 || !this->isVisible() || !parentVisible || frameSize <= 0 || hopSize <= 0 ||
       freeze)
     return false;
-
   return true;
 }
 
@@ -293,4 +299,8 @@ void TfAnalyser::setFreezeSpectrum(bool f) {
 void TfAnalyser::setFilterWindow(int wf) {
   filterWindow = wf;
   updateSpectrum();
+}
+
+void TfAnalyser::parentVisibilityChanged(bool vis) {
+  parentVisible = vis;
 }

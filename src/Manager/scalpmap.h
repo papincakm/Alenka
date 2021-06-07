@@ -30,10 +30,11 @@ class ScalpMap : public QWidget {
   InfoTable::Extrema selectedExtrema;
   float frequencyMin = 0.0f;
   float frequencyMax = 0.0f;
+  bool parentVisible = true;
   //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
   //which will be referenced in here and trackLabelBar
   std::vector<QMetaObject::Connection> trackTableConnections;
-  std::vector<QMetaObject::Connection> scalpConnections;
+  std::vector<QMetaObject::Connection> fileInfoConnections;
   std::vector<QString> labels;
   std::vector<QColor> colors;
   std::vector<QVector3D> positions;
@@ -50,18 +51,17 @@ public:
 
 private:
   void deleteTrackTableConnections();
-  void deleteScalpConnections();
+  void deleteFileInfoConnections();
   void setupCanvas();
-  void setupScalpConnections();
+  void updateFileInfoConnections();
   void setupExtrema();
   void updatePositionsProjected();
   void updateExtremaGlobalValue();
   bool positionsValid();
   bool enabled();
-  void hideEvent(QHideEvent * event);
-  void showEvent(QShowEvent * event);
 
 private slots:
+  void parentVisibilityChanged(bool vis);
   void updateTrackTableConnections(int row);
   void updateLabels();
   void updateSpectrum();

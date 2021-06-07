@@ -65,6 +65,7 @@ TfVisualizer::~TfVisualizer() {
   cleanup();
 	// Release these three objects here explicitly to make sure the right GL
 	// context is bound by makeCurrent().
+  channelProgram.reset();
 }
 
 void TfVisualizer::deleteColormapTexture() {
@@ -276,6 +277,7 @@ void TfVisualizer::paintGL() {
 
 #ifndef NDEBUG
   logToFile("Painting started.");
+#endif
   GLfloat red = palette().color(QPalette::Window).redF();
   GLfloat green = palette().color(QPalette::Window).greenF();
   GLfloat blue = palette().color(QPalette::Window).blueF();
@@ -311,7 +313,7 @@ void TfVisualizer::paintGL() {
   float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
   auto gradAxisLabel = graphics::RectangleText(0.95f, 0.98f,
     specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Amplitude",
-    graphics::Orientation::Vertical, graphics::Alignment::None, graphics::Orientation::Vertical);
+    graphics::Orientation::Vertical, graphics::Orientation::Vertical);
   gradAxisLabel.render();
 
   //frequency
@@ -323,7 +325,7 @@ void TfVisualizer::paintGL() {
   //specMesh.getYbot() + specYSize / 1.8f, specMesh.getYbot() + specYSize / 4.0
   auto frequencyAxisLabel = graphics::RectangleText(-0.98f, -0.92f,
     specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
-    graphics::Orientation::Vertical, graphics::Alignment::None, graphics::Orientation::Vertical);
+    graphics::Orientation::Vertical, graphics::Orientation::Vertical);
   frequencyAxisLabel.render();
 
   auto frequencyAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
@@ -358,10 +360,9 @@ void TfVisualizer::paintGL() {
   auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 2.4f,
     specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.15f,
     this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
-    graphics::Alignment::None); //graphics::Orientation::Vertical);
+    graphics::Orientation::Horizontal, graphics::Alignment::None);
   timeAxisLabel.render();
 
-#endif
   if (ready()) {
     if (colormap.changed) {
       updateColormapTexture();

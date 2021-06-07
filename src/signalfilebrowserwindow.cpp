@@ -176,12 +176,12 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
 
   auto scalpMapDockWidget = new QDockWidget("Scalp Map", this);
   scalpMapDockWidget->setObjectName("Scalp Map QDockWidget");
-  scalpMap = new ScalpMap(this);
+  scalpMap = new ScalpMap(scalpMapDockWidget);
   scalpMapDockWidget->setWidget(scalpMap);
 
 	auto tfAnalyserDockWidget = new QDockWidget("Time-frequency Analysis", this);
 	tfAnalyserDockWidget->setObjectName("Time-frequency Analysis QDockWidget");
-  tfAnalyser = new TfAnalyser(this);
+  tfAnalyser = new TfAnalyser(tfAnalyserDockWidget);
 	tfAnalyserDockWidget->setWidget(tfAnalyser);
 
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);

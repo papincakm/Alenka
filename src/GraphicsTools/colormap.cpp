@@ -1,6 +1,7 @@
 #include "colormap.h"
 
 #include <iostream>
+#include <cmath>
 
 using namespace graphics;
 

@@ -21,35 +21,35 @@ using namespace std;
 
 
 ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
-  connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
-    SLOT(updateTrackTableConnections(int)));
-  
-  //std::cout << "SCALPMAP CONSTRUCTOR CALLED\n";
+  connect(parent, SIGNAL(visibilityChanged(bool)),
+    SLOT(parentVisibilityChanged(bool)));
+
+  setupCanvas();
 }
 
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
-
-  if (enabled()) {
+  updateFileInfoConnections();
+  //scalpCanvas->clear();
+  updateLabels();
+  /*if (enabled()) {
     if (!scalpCanvas) {
       //std::cout << "change file SETUPING canvas\n";
       setupCanvas();
     }
     else {
-      scalpCanvas->clear();
-      updateLabels();
     }
-  }
+  }*/
 }
 
 bool ScalpMap::enabled() {
-  return (file && isVisible());
+  return (file && isVisible() && parentVisible);
 }
 
-void ScalpMap::deleteScalpConnections() {
-  for (auto e : scalpConnections)
+void ScalpMap::deleteFileInfoConnections() {
+  for (auto e : fileInfoConnections)
     disconnect(e);
-  scalpConnections.clear();
+  fileInfoConnections.clear();
 }
 
 void ScalpMap::deleteTrackTableConnections() {
@@ -58,40 +58,49 @@ void ScalpMap::deleteTrackTableConnections() {
   trackTableConnections.clear();
 }
 
-void ScalpMap::setupScalpConnections() {
+void ScalpMap::updateFileInfoConnections() {
+  deleteFileInfoConnections();
+
   auto c = connect(&file->infoTable, SIGNAL(signalCurPosProcessedChanged()),
     this, SLOT(updateSpectrum()));
-  scalpConnections.push_back(c);
+  fileInfoConnections.push_back(c);
 
   c = connect(&file->infoTable, SIGNAL(useExtremaGlobal()),
     this, SLOT(updateToExtremaGlobal()));
-  scalpConnections.push_back(c);
+  fileInfoConnections.push_back(c);
 
   c = connect(&file->infoTable, SIGNAL(useExtremaLocal()),
     this, SLOT(updateToExtremaLocal()));
-  scalpConnections.push_back(c);
+  fileInfoConnections.push_back(c);
+
+  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
+    SLOT(updateTrackTableConnections(int)));
+}
+
+void ScalpMap::parentVisibilityChanged(bool vis) {
+  parentVisible = vis;
+  if (vis)
+    updateSpectrum();
 }
 
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateTrackTableConnections(int row) {
-  if (enabled()) {
-    deleteTrackTableConnections();
+  deleteTrackTableConnections();
 
-    const AbstractMontageTable *mt = file->dataModel->montageTable();
+  const AbstractMontageTable *mt = file->dataModel->montageTable();
 
-    if (0 <= row && row < mt->rowCount()) {
-      auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
+  if (0 <= row && row < mt->rowCount()) {
+    auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
 
-      auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
-      trackTableConnections.push_back(c);
+    auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
+    trackTableConnections.push_back(c);
 
-      c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
-      trackTableConnections.push_back(c);
+    c = connect(vitness, SIGNAL(rowsInserted(int, int)), this, SLOT(updateLabels()));
+    trackTableConnections.push_back(c);
 
-      c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateLabels()));
-      trackTableConnections.push_back(c);
-    }
+    c = connect(vitness, SIGNAL(rowsRemoved(int, int)), this, SLOT(updateLabels()));
+    trackTableConnections.push_back(c);
   }
 }
 
@@ -111,44 +120,16 @@ bool ScalpMap::positionsValid() {
   return true;
 }
 
-void ScalpMap::hideEvent(QHideEvent * event) {
-  //std::cout << "hideEvent\n";
-  if (scalpCanvas && scalpCanvas->isVisible()) {
-    //scalpCanvas.reset();
-    delete scalpCanvas;
-  }
-
-  QLayout* layout = this->layout();
-  if (layout) {
-    delete layout;
-  }
-
-  deleteScalpConnections();
-}
-
 void ScalpMap::setupCanvas() {
-  //std::cout << "setuping canvas\n";
   auto box = new QVBoxLayout;
   setLayout(box);
   box->setContentsMargins(0, 0, 0, 0);
   box->setSpacing(0);
 
-  //scalpCanvas = make_unique<ScalpCanvas>(this);
   scalpCanvas = new ScalpCanvas(this);
-  //box->addWidget(scalpCanvas.get());
   box->addWidget(scalpCanvas);
   setMinimumHeight(100);
   setMinimumWidth(100);
-
-  setupScalpConnections();
-  updateLabels();
-}
-
-void ScalpMap::showEvent(QShowEvent* event) {
-  //udocking calls destructor in scalpCanvas
-  //std::cout << "showEvent\n";
-  if (enabled() || (scalpCanvas && scalpCanvas->isVisible()))
-    setupCanvas();
 }
 
 //TODO: copied from canvas.cpp
@@ -160,7 +141,7 @@ const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateLabels() {
-  if (!enabled() || file->dataModel->montageTable()->rowCount() <= 0)
+  if (!file || file->dataModel->montageTable()->rowCount() <= 0)
     return;
   
   labels.clear();
@@ -181,7 +162,8 @@ void ScalpMap::updateLabels() {
   }
 
   if (!positionsValid() || trackTable->rowCount() < 3) {
-    scalpCanvas->forbidDraw("Channel positions are invalid(Two positions can't be the same).");
+    scalpCanvas->forbidDraw("Electrode positions are invalid(Two positions can't have the same coordinates)."\
+      "Change the coordinates or disable the invalid electrodes.");
     return;
   }
   
@@ -192,6 +174,9 @@ void ScalpMap::updateLabels() {
 
   scalpCanvas->setChannelLabels(labels);
   scalpCanvas->setChannelPositions(positionsProjected);
+
+  if (!enabled())
+    return;
 
   scalpCanvas->allowDraw();
 }
@@ -215,8 +200,7 @@ void ScalpMap::setupExtrema() {
 
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
-  std::cout << "updateSpectrum\n";
-  if (!enabled() || !scalpCanvas)
+  if (!enabled())
     return;
 
   //TODO: rethink this, extreme is not selected sometimes on first app run

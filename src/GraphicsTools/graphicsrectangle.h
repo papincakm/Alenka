@@ -171,13 +171,13 @@ class RectangleText : public Rectangle {
 public:
   RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QString font,
     QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Alignment alignment = Alignment::None, Orientation textOrientation = Orientation::Horizontal) :
+    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
       Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment), font(font), textColor(textColor),
       text(text), textOrientation(textOrientation) {};
 
   RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
     QString font, QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Alignment alignment = Alignment::None, Orientation textOrientation = Orientation::Horizontal) :
+    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
     Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
     text(text), textOrientation(textOrientation) {};
 
