@@ -62,10 +62,10 @@ TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
 TfVisualizer::~TfVisualizer() {
-  cleanup();
+  if (glInitialized)
+    cleanup();
 	// Release these three objects here explicitly to make sure the right GL
 	// context is bound by makeCurrent().
-  channelProgram.reset();
 }
 
 void TfVisualizer::deleteColormapTexture() {
@@ -76,12 +76,6 @@ void TfVisualizer::deleteColormapTexture() {
 
 void TfVisualizer::cleanup() {
 		makeCurrent();
-
-    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-		gl()->glDeleteBuffers(1, &posBuffer);
-
-    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    gl()->glDeleteBuffers(1, &indexBuffer);
 
     deleteColormapTexture();
 
@@ -120,6 +114,7 @@ void TfVisualizer::updateColormapTexture() {
 
 void TfVisualizer::initializeGL() {
 	logToFile("Initializing OpenGL in TfVisualizer.");
+  glInitialized = true;
 
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &TfVisualizer::cleanup);
 	if (!OPENGL_INTERFACE)
@@ -137,12 +132,6 @@ void TfVisualizer::initializeGL() {
 	string channelFrag = channelFragFile.readAll().toStdString();
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
-
-  gl()->glUseProgram(channelProgram->getGLProgram());
-
-	gl()->glGenBuffers(1, &posBuffer);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-	gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   colormapTextureId = setupColormapTexture(colormap.get());
 
@@ -374,6 +363,7 @@ void TfVisualizer::paintGL() {
     gl()->glUseProgram(channelProgram->getGLProgram());
 
     gl()->glGenBuffers(1, &indexBuffer);
+    gl()->glGenBuffers(1, &posBuffer);
 
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
     gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -398,8 +388,14 @@ void TfVisualizer::paintGL() {
     }
 
     //important for QPainter to work
+    //gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl()->glDeleteBuffers(1, &posBuffer);
+
     gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    gl()->glDeleteBuffers(1, &indexBuffer);
 
     gl()->glFlush();
 

@@ -110,6 +110,10 @@ class ScalpCanvas : public QOpenGLWidget {
 	bool shouldDrawChannels = false;
 	bool shouldDrawLabels = false;
 	bool shouldDraw = false;
+  bool glInitialized = false;
+
+  std::string lastGLMessage;
+  int lastGLMessageCount = 0;
 
 public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
@@ -167,7 +171,7 @@ private:
   GLuint setupColormapTexture(std::vector<float> colormap);
   void updateColormapTexture();
   void setupScalpMesh();
-
+  void checkGLMessages();
   std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
     const std::vector<float> yAxis, const std::vector<float>& values);
 

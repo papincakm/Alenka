@@ -49,7 +49,8 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 
 ScalpCanvas::~ScalpCanvas() {
 	logToFile("Destructor in ScalpCanvas.");
-	cleanup();
+	if (glInitialized)
+    cleanup();
 
   channelProgram.reset();
 
@@ -83,6 +84,7 @@ void bindArray(GLuint array, GLuint buffer) {
 }
 
 void ScalpCanvas::initializeGL() {
+  glInitialized = true;
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
 
 	if (!OPENGL_INTERFACE) {
@@ -117,8 +119,6 @@ void ScalpCanvas::initializeGL() {
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
   gl()->glUseProgram(channelProgram->getGLProgram());
-
-	gl()->glGenBuffers(1, &posBuffer);
 	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
   colormapTextureId = setupColormapTexture(colormap.get());
@@ -127,6 +127,8 @@ void ScalpCanvas::initializeGL() {
   gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
 
   gl()->glFlush();
+
+  checkGLMessages();
 }
 
 void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
@@ -222,9 +224,6 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
-
-  gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-	gl()->glDeleteBuffers(1, &posBuffer);
 
   gl()->glDeleteTextures(1, &colormapTextureId);
   gl()->glBindTexture(GL_TEXTURE_1D, 0);
@@ -537,6 +536,7 @@ void ScalpCanvas::paintGL() {
 
     gl()->glUseProgram(channelProgram->getGLProgram());
 
+    gl()->glGenBuffers(1, &posBuffer);
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
     gl()->glBufferData(GL_ARRAY_BUFFER, scalpMesh.size() * sizeof(GLfloat), &scalpMesh[0], GL_STATIC_DRAW);
@@ -601,8 +601,13 @@ void ScalpCanvas::paintGL() {
     gl()->glFinish();
 	}
 
+  gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+  gl()->glDeleteBuffers(1, &posBuffer);
+
 	if (errorMsg != "")
 			renderErrorMsg();
+
+  checkGLMessages();
 
 #ifndef NDEBUG
 	logToFile("Painting finished.");
@@ -625,7 +630,9 @@ float ScalpCanvas::leftEdgePosition() {
 }
 
 void ScalpCanvas::logLastGLMessage() {
-
+  if (lastGLMessageCount > 1) {
+    logToFile("OpenGL message (" << lastGLMessageCount - 1 << "x): " << lastGLMessage);
+  }
 }
 
 bool ScalpCanvas::ready() {
@@ -820,5 +827,25 @@ void ScalpCanvas::mouseReleaseEvent(QMouseEvent* event) {
   else if (event->button() == Qt::RightButton)
   {
     renderPopupMenu(event->pos());
+  }
+}
+
+void ScalpCanvas::checkGLMessages() {
+  auto logPtr = OPENGL_INTERFACE->log();
+
+  if (logPtr) {
+    for (const auto &m : logPtr->loggedMessages()) {
+      string message = m.message().toStdString();
+
+      if (message != lastGLMessage) {
+        logLastGLMessage();
+        lastGLMessageCount = 0;
+
+        logToFile("OpenGL message: " << message);
+      }
+
+      lastGLMessage = message;
+      ++lastGLMessageCount;
+    }
   }
 }

@@ -55,6 +55,27 @@ struct GraphicsNumberRange : GraphicsRectangle {
  */
 class TfVisualizer : public QOpenGLWidget {
 Q_OBJECT
+  std::unique_ptr<OpenGLProgram> channelProgram;
+  bool paintingDisabled = false;
+  GLuint posBuffer;
+  GLuint indexBuffer;
+  std::vector<GLfloat> paintVertices;
+  std::vector<GLuint> paintIndices;
+  graphics::Colormap colormap;
+  GLuint colormapTextureId;
+
+  //spectogram
+  graphics::SquareMesh specMesh;
+  //graphics::SquareMesh gradientMesh;
+  //TODO: move this to separate class
+  float maxGradVal = 0.0f;
+  float minGradVal = 0.0f;
+  int seconds = 0;
+  int frequency = 0;
+  bool gradClicked = false;
+  bool glInitialized = false;
+
+  std::unique_ptr<graphics::Gradient> gradient;
 
 public:
 		explicit TfVisualizer(QWidget *parent = nullptr);
@@ -90,26 +111,6 @@ private:
    * open and/or the current montage is empty.
    */
   bool ready();
-
-  std::unique_ptr<OpenGLProgram> channelProgram;
-  bool paintingDisabled = false;
-  GLuint posBuffer;
-  GLuint indexBuffer;
-  std::vector<GLfloat> paintVertices;
-  std::vector<GLuint> paintIndices;
-  graphics::Colormap colormap;
-  GLuint colormapTextureId;
-
-  //spectogram
-  graphics::SquareMesh specMesh;
-  //graphics::SquareMesh gradientMesh;
-  //TODO: move this to separate class
-  float maxGradVal = 0.0f;
-  float minGradVal = 0.0f;
-  int seconds = 0;
-  int frequency = 0;
-  bool gradClicked = false;
-  std::unique_ptr<graphics::Gradient> gradient;
 };
 
 #endif // TFVISUALIZER_H
