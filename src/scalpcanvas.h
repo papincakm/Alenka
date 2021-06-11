@@ -109,7 +109,7 @@ class ScalpCanvas : public QOpenGLWidget {
 
 	bool shouldDrawChannels = false;
 	bool shouldDrawLabels = false;
-	bool shouldDraw = false;
+	bool dataReadyToDraw = false;
   bool glInitialized = false;
 
   std::string lastGLMessage;
@@ -135,6 +135,7 @@ protected:
   void mousePressEvent(QMouseEvent * event) override;
   void mouseMoveEvent(QMouseEvent * event) override;
   void mouseReleaseEvent(QMouseEvent * event) override;
+  void mouseDoubleClickEvent(QMouseEvent* e) override;
 
 
 private:

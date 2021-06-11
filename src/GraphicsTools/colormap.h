@@ -28,6 +28,7 @@ public:
   void setPartitionCount(int count);
   void changeColorPallete(ColorPallete colorPallete);
   void change(float contrast, float brightness);
+  void reset();
   const std::vector<float>& get();
   QMenu* getColormapMenu(QWidget* widget);
 

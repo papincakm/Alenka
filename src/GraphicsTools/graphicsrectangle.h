@@ -280,10 +280,15 @@ public:
   bool isClicked = false;
 
 private:
-  float changeRange = 1.0f;
+  float changeRangeY = 1.0f;
+  float changeRangeX = 1.0f;
   float contrast = 1.0f;
   float brightness = 0.0f;
-  QPoint lastChangePoint;
+
+  float newContrast;
+  float newBrightness;
+
+  QPoint clickPoint;
   
 };
 

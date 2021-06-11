@@ -43,6 +43,7 @@ using namespace AlenkaFile;
 using namespace AlenkaSignal;
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
+  //std::cout << "scalpcanvas constructor\n";
   gradient = std::make_unique<graphics::Gradient>(
     graphics::Gradient(gradientX, gradientX + 0.05f, gradientBotY, gradientTopY, this));
 }
@@ -59,12 +60,12 @@ ScalpCanvas::~ScalpCanvas() {
 
 void ScalpCanvas::forbidDraw(QString errorString) {
 		errorMsg = errorString;
-		shouldDraw = false;
+		dataReadyToDraw = false;
 }
 
 void ScalpCanvas::allowDraw() {
 		errorMsg = "";
-		shouldDraw = true;
+		dataReadyToDraw = true;
 }
 
 void ScalpCanvas::clear() {
@@ -84,6 +85,7 @@ void bindArray(GLuint array, GLuint buffer) {
 }
 
 void ScalpCanvas::initializeGL() {
+  //std::cout << "scalpcanvas initialized\n";
   glInitialized = true;
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
 
@@ -306,7 +308,7 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
 
   //TODO: refactor me
   triangulatedPositions = generateTriangulatedPositions(originalPositions);
-  std::cout << "setup scalp mesh from set channel pos\n";
+  //std::cout << "setup scalp mesh from set channel pos\n";
   setupScalpMesh();
 }
 
@@ -530,7 +532,7 @@ void ScalpCanvas::paintGL() {
     }
 
     if (scalpMesh.empty()) {
-      std::cout << "setup scalpMesh from paint event\n";
+      //std::cout << "setup scalpMesh from paint event\n";
       setupScalpMesh();
     }
 
@@ -637,7 +639,8 @@ void ScalpCanvas::logLastGLMessage() {
 
 bool ScalpCanvas::ready() {
 	//TODO: think this through
-		return shouldDraw && triangulatedPositions.size() > 0;
+  //std::cout << "should draw" << dataReadyToDraw << "triangulatedPos size: " << triangulatedPositions.size() << "\n";
+  return dataReadyToDraw && triangulatedPositions.size() > 0;
 }
 
 void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
@@ -815,7 +818,7 @@ void ScalpCanvas::mousePressEvent(QMouseEvent* event) {
 
 void ScalpCanvas::mouseMoveEvent(QMouseEvent* event) {
   if (gradient->isClicked) {
-    gradient->change(colormap, event->globalPos());
+    gradient->change(colormap, event->pos());
     update();
   }
 }
@@ -827,6 +830,15 @@ void ScalpCanvas::mouseReleaseEvent(QMouseEvent* event) {
   else if (event->button() == Qt::RightButton)
   {
     renderPopupMenu(event->pos());
+  }
+}
+
+void ScalpCanvas::mouseDoubleClickEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MiddleButton && gradient->contains(event->pos()))
+  {
+    colormap.reset();
+    update();
   }
 }
 

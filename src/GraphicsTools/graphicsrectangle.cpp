@@ -250,31 +250,42 @@ Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widg
   Orientation orientation, Alignment alignment) :
   Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {
 
-  changeRange = std::min(heightReal, 300.0f);
+  changeRangeY = std::min(heightReal, 300.0f) / 3.0f;
+  changeRangeX = std::min(widthReal, 50.0f) * 50;
+
+  newContrast = contrast;
+  newBrightness = brightness;
 }
 
 void Gradient::change(Colormap& colormap, const QPoint& newPoint) {
   //std::cout << "realTopy" << realTopy << " realBoty: " << realBoty << " realHeight: " << realHeight << "\n"; 
   //TODO: mby make a single class/method to keep number in range
-  if (newPoint.x() > lastChangePoint.x()) {
-    contrast = std::max(contrast - std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange / 10.0f, 1.0);
-  } else {
-    contrast = std::min(contrast + std::fabs(lastChangePoint.x() - newPoint.x()) / changeRange / 10.0f, 100.0);
-  }
 
+  float xDist = std::fabs(clickPoint.x() - newPoint.x());
+  //dont change contrast if mouse is inside of gradient
+  if (xDist > widthReal / 2.0f) {
+    if (newPoint.x() > clickPoint.x()) {
+      newContrast = std::max(contrast - xDist / changeRangeX, 1.0f);
+    }
+    else {
+      newContrast = std::min(contrast + xDist / changeRangeX, 100.0f);
+    }
+  }
+  std::cout << "clickPoint x: " << clickPoint.x() << " nePoint x: " << newPoint.x() << "\n";
+  std::cout << "newContrast: " << newContrast << "\n";
   //TODO: set limits globaly, join colormap and this
-  if (newPoint.y() > lastChangePoint.y()) {
-    brightness = std::max(brightness - std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, -149.0);
+
+  float yDist = std::abs(clickPoint.y() - newPoint.y());
+  if (newPoint.y() > clickPoint.y()) {
+    newBrightness = std::max(brightness - yDist / changeRangeY, -149.0f);
   }
   else {
-    brightness = std::min(brightness + std::fabs(lastChangePoint.y() - newPoint.y()) / changeRange * 5, 149.0);
+    newBrightness = std::min(brightness + yDist / changeRangeY, 149.0f);
   }
 
-  lastChangePoint = newPoint;
+  colormap.change(newContrast, newBrightness);
 
-  colormap.change(contrast, brightness);
-
-  std::cout << "clickedPointY: " << lastChangePoint.y() << " y: " << newPoint.y() << " contrast: " << contrast << " brightness: " << brightness << "\n";
+  //std::cout << "clickedPointY: " << lastChangePoint.y() << " y: " << newPoint.y() << " contrast: " << contrast << " brightness: " << brightness << "\n";
 }
 
 bool Gradient::contains(const QPoint& p) {
@@ -287,9 +298,12 @@ bool Gradient::contains(const QPoint& p) {
 
 void Gradient::clicked(const QPoint& p) {
   isClicked = true;
-  lastChangePoint = p;
+  clickPoint = p;
 }
 
 void Gradient::released() {
   isClicked = false;
+
+  brightness = newBrightness;
+  contrast = newContrast;
 }

@@ -82,7 +82,6 @@ private slots:
   void setFreezeSpectrum(bool f);
   void setFilterWindow(int fw);
   void parentVisibilityChanged(bool vis);
-  //void topLevelChanged(bool topLevel);
 };
 
 #endif // TFANALYSER_H

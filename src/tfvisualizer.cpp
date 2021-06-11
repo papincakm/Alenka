@@ -133,6 +133,8 @@ void TfVisualizer::initializeGL() {
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
 
+  gl()->glUseProgram(channelProgram->getGLProgram());
+
   colormapTextureId = setupColormapTexture(colormap.get());
 
   gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
@@ -488,9 +490,18 @@ void TfVisualizer::mousePressEvent(QMouseEvent* event) {
   }
 }
 
+void TfVisualizer::mouseDoubleClickEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MiddleButton && gradient->contains(event->pos()))
+  {
+    colormap.reset();
+    update();
+  }
+}
+
 void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
   if (gradient->isClicked) {
-    gradient->change(colormap, event->globalPos());
+    gradient->change(colormap, event->pos());
     update();
   }
 }

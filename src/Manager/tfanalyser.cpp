@@ -39,7 +39,7 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   frameLine = new QLineEdit();
   frameLine->setValidator(new QIntValidator(frameLine));
   connect(frameLine, SIGNAL(editingFinished()), this,
-    SLOT(setFrequency()));
+    SLOT(setFrameSize()));
   frameLine->insert(QString::number(frameSize));
 
   menuBox->addWidget(frameLine);

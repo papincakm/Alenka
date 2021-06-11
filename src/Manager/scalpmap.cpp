@@ -235,6 +235,7 @@ void ScalpMap::updateSpectrum() {
   }
 
   scalpCanvas->setPositionFrequencies(samples, frequencyMin, frequencyMax);
+  scalpCanvas->allowDraw();
   scalpCanvas->update();
 }
 
