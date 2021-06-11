@@ -40,6 +40,29 @@ namespace AlenkaSignal {
 */
 class TfAnalyser : public QWidget {
 	Q_OBJECT
+
+int parallelQueues = 0;
+int channelToDisplay = 0;
+int secondsToDisplay = 10;
+int filterWindow = 1;
+int frameSize = 128;
+int hopSize = 16;
+int minFreqDraw = 0;
+int maxFreqDraw = 0;
+bool freeze = true;
+bool parentVisible = true;
+
+std::unique_ptr<AlenkaSignal::FftProcessor> fftProcessor;
+TfVisualizer* visualizer;
+OpenDataFile* file = nullptr;
+std::vector<QMetaObject::Connection> connections;
+std::unique_ptr<Eigen::FFT<float>> fft;
+QLineEdit* frameLine;
+QLineEdit* hopLine;
+QLineEdit* minLine;
+QLineEdit* maxLine;
+QSpinBox* channelSpinBox;
+
 public:
 	explicit TfAnalyser(QWidget *parent = nullptr);
 
@@ -50,33 +73,22 @@ public:
 	void changeFile(OpenDataFile *file);
 
 private:
-  int parallelQueues = 0;
-  int channelToDisplay = 0;
-  int secondsToDisplay = 10;
-  int filterWindow = 1;
-  int frameSize = 128;
-  int hopSize = 16;
-  bool freeze = true;
-  bool parentVisible = true;
-
-  std::unique_ptr<AlenkaSignal::FftProcessor> fftProcessor;
-  TfVisualizer* visualizer;
-  OpenDataFile* file = nullptr;
-  std::vector<QMetaObject::Connection> connections;
-  std::unique_ptr<Eigen::FFT<float>> fft;
-  QLineEdit* frameLine;
-  QLineEdit* hopLine;
-  QSpinBox* channelSpinBox;
-
   void updateConnections();
   bool ready();
   void applyWindowFunction(std::vector<float>& data);
   void setupTfVisualizer(QVBoxLayout* mainBox);
 
+  //menus
+  QGroupBox* createResolutionMenu();
+  QGroupBox* createFrequencyMenu();
+  QGroupBox* createFilterMenu();
+  QLayout* createChannelTimeMenu();
 private slots:
 	void updateSpectrum();
   void setFrameSize();
   void setHopSize();
+  void setMinFreqDraw();
+  void setMaxFreqDraw();
   void setChannelToDisplay(int ch);
   void setSecondsToDisplay(int s);
   void setFreezeSpectrum(bool f);

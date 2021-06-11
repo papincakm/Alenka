@@ -27,86 +27,12 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
 
   auto mainBox = new QVBoxLayout();
   //auto splitter = new QSplitter(Qt::Vertical);
-
-  //setupMenu
   auto menuBox = new QHBoxLayout();
 
-  //frame size
-  QLabel* frameLabel = new QLabel("Frame:", this);
-  frameLabel->setToolTip("Single frame size, in samples, for short-time fourier transform.");
-  menuBox->addWidget(frameLabel);
-
-  frameLine = new QLineEdit();
-  frameLine->setValidator(new QIntValidator(frameLine));
-  connect(frameLine, SIGNAL(editingFinished()), this,
-    SLOT(setFrameSize()));
-  frameLine->insert(QString::number(frameSize));
-
-  menuBox->addWidget(frameLine);
-
-  QLabel* frameSampleLabel = new QLabel("samples");
-  menuBox->addWidget(frameSampleLabel);
-
-  //hop size
-
-  QLabel *hopLabel = new QLabel("Hop:", this);
-  hopLabel->setToolTip("Hop size, in samples, between successive DFTs.");
-  menuBox->addWidget(hopLabel);
-
-  hopLine = new QLineEdit();
-  hopLine->setValidator(new QIntValidator(hopLine));
-  connect(hopLine, SIGNAL(editingFinished()), this,
-    SLOT(setHopSize()));
-  hopLine->insert(QString::number(hopSize));
-
-  menuBox->addWidget(hopLine);
-  QLabel* hopSampleLabel = new QLabel("samples");
-  menuBox->addWidget(hopSampleLabel);
-
-  //channel select
-  QLabel* chanLabel = new QLabel("Channel");
-  chanLabel->setToolTip("Index of the channel from the original file to be used as "
-    "input for the spectrum graph");
-  menuBox->addWidget(chanLabel);
-
-  channelSpinBox = new QSpinBox();
-  channelSpinBox->setRange(0, 180);
-  connect(channelSpinBox, SIGNAL(valueChanged(int)), this,
-    SLOT(setChannelToDisplay(int)));
-
-  menuBox->addWidget(channelSpinBox);
-
-  //time select
-  auto spinBox = new QSpinBox();
-  spinBox->setRange(0, 100);
-  connect(spinBox, SIGNAL(valueChanged(int)), this,
-    SLOT(setSecondsToDisplay(int)));
-
-  spinBox->setValue(secondsToDisplay);
-  menuBox->addWidget(spinBox);
-
-  QLabel* secLabel = new QLabel("sec");
-  secLabel->setToolTip("Interval in seconds to be used for the STFT");
-  menuBox->addWidget(secLabel);
-
-  //window function select
-  QLabel* FilterWindowlabel = new QLabel("Filter window:");
-  FilterWindowlabel->setToolTip(
-    "Window function to be used to modify data going to the STFT.");
-  menuBox->addWidget(FilterWindowlabel);
-
-  auto windowCombo = new QComboBox();
-  //0
-  windowCombo->addItem("None");
-  //1
-  windowCombo->addItem("Hamming");
-  //2
-  windowCombo->addItem("Blackman");
-  connect(windowCombo, SIGNAL(currentIndexChanged(int)), this,
-    SLOT(setFilterWindow(int)));
-  windowCombo->setCurrentIndex(filterWindow);
-
-  menuBox->addWidget(windowCombo);
+  menuBox->addLayout(createChannelTimeMenu());
+  menuBox->addWidget(createResolutionMenu());
+  menuBox->addWidget(createFrequencyMenu());
+  menuBox->addWidget(createFilterMenu());
 
   //freeze select
   QCheckBox *checkBox = new QCheckBox("freeze");
@@ -118,6 +44,154 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
 
   mainBox->addLayout(menuBox);
   setupTfVisualizer(mainBox);
+}
+
+QLayout* TfAnalyser::createChannelTimeMenu() {
+  QGridLayout* gLayout = new QGridLayout();
+  //setup first row - channel
+  QLabel* chanLabel = new QLabel("Channel:");
+  chanLabel->setToolTip("Index of the channel from the original file to be used as "
+    "input for the spectrum graph");
+
+  channelSpinBox = new QSpinBox();
+  //TODO: set max pos channel from file
+  channelSpinBox->setRange(0, 180);
+  connect(channelSpinBox, SIGNAL(valueChanged(int)), this,
+    SLOT(setChannelToDisplay(int)));
+
+  gLayout->addWidget(chanLabel, 0, 0, 1, 1);
+  gLayout->addWidget(channelSpinBox, 0, 1, 1, 1);
+
+  //setup time
+  QLabel* timeLabel = new QLabel("Time:");
+  timeLabel->setToolTip("Time window for time-frequency analysis.");
+
+  auto timeSpinBox = new QSpinBox();
+  //TODO: set max time from what?
+  timeSpinBox->setRange(0, 100);
+  connect(timeSpinBox, SIGNAL(valueChanged(int)), this,
+    SLOT(setSecondsToDisplay(int)));
+  timeSpinBox->setValue(secondsToDisplay);
+
+  QLabel* secLabel = new QLabel("sec");
+  secLabel->setToolTip("Interval in seconds to be used for the STFT");
+
+  gLayout->addWidget(timeLabel, 1, 0, 1, 1);
+  gLayout->addWidget(timeSpinBox, 1, 1, 1, 1);
+  gLayout->addWidget(secLabel, 1, 2, 1, 1);
+
+  return gLayout;
+}
+
+QGroupBox* TfAnalyser::createResolutionMenu() {
+  QGroupBox* resGroup = new QGroupBox(tr("Resolution"));
+
+  QGridLayout* gLayout = new QGridLayout();
+
+  //setup first row - frame size
+  QLabel* frameLabel = new QLabel("Frame:", this);
+  frameLabel->setToolTip("Size of single short-time fourier transform.");
+
+  frameLine = new QLineEdit();
+  frameLine->setValidator(new QIntValidator(frameLine));
+  connect(frameLine, SIGNAL(editingFinished()), this,
+    SLOT(setFrameSize()));
+  frameLine->insert(QString::number(frameSize));
+
+  QLabel* frameSampleLabel = new QLabel("samples");
+
+  gLayout->addWidget(frameLabel, 0, 0, 1, 1);
+  gLayout->addWidget(frameLine, 0, 1, 1, 1);
+  gLayout->addWidget(frameSampleLabel, 0, 2, 1, 1);
+
+  //setup second row - hop size
+  QLabel *hopLabel = new QLabel("Hop:  ", this);
+  hopLabel->setToolTip("Gap between successive short-time fourier transforms.");
+
+  hopLine = new QLineEdit();
+  hopLine->setValidator(new QIntValidator(hopLine));
+  connect(hopLine, SIGNAL(editingFinished()), this,
+    SLOT(setHopSize()));
+  hopLine->insert(QString::number(hopSize));
+
+  QLabel* hopSampleLabel = new QLabel("samples");
+
+  gLayout->addWidget(hopLabel, 1, 0, 1, 1);
+  gLayout->addWidget(hopLine, 1, 1, 1, 1);
+  gLayout->addWidget(hopSampleLabel, 1, 2, 1, 1);
+
+  resGroup->setLayout(gLayout);
+
+  return resGroup;
+}
+
+QGroupBox* TfAnalyser::createFrequencyMenu() {
+  QGroupBox* freqGroup = new QGroupBox(tr("Frequency"));
+
+  QGridLayout* gLayout = new QGridLayout();
+
+  //setup first row - frame size
+  QLabel* minLabel = new QLabel("Min:", this);
+  minLabel->setToolTip("Minimum frequency for spectogram.");
+
+  minLine = new QLineEdit();
+  minLine->setValidator(new QIntValidator(minLine));
+  connect(minLine, SIGNAL(editingFinished()), this,
+    SLOT(setMinFreqDraw()));
+  minLine->insert(QString::number(minFreqDraw));
+
+  QLabel* minHzLabel = new QLabel("Hz");
+
+  gLayout->addWidget(minLabel, 0, 0, 1, 1);
+  gLayout->addWidget(minLine, 0, 1, 1, 1);
+  gLayout->addWidget(minHzLabel, 0, 2, 1, 1);
+
+  //setup second row - hop size
+  QLabel *maxLabel = new QLabel("Max:  ", this);
+  maxLabel->setToolTip("Maximum frequency for spectogram.");
+
+  maxLine = new QLineEdit();
+  maxLine->setValidator(new QIntValidator(maxLine));
+  connect(maxLine, SIGNAL(editingFinished()), this,
+    SLOT(setMaxFreqDraw()));
+  maxLine->insert(QString::number(maxFreqDraw));
+
+  QLabel* maxHzLabel = new QLabel("Hz");
+
+  gLayout->addWidget(maxLabel, 1, 0, 1, 1);
+  gLayout->addWidget(maxLine, 1, 1, 1, 1);
+  gLayout->addWidget(maxHzLabel, 1, 2, 1, 1);
+
+  freqGroup->setLayout(gLayout);
+
+  return freqGroup;
+}
+
+QGroupBox* TfAnalyser::createFilterMenu() {
+  QGroupBox* filterGroup = new QGroupBox(tr("Filter"));
+  auto filterBox = new QVBoxLayout();
+  auto fWindowBox = new QHBoxLayout();
+
+  QLabel* FilterWindowlabel = new QLabel("Window:");
+  FilterWindowlabel->setToolTip(
+    "Window function to be used to modify data going to the STFT.");
+  fWindowBox->addWidget(FilterWindowlabel);
+
+  auto windowCombo = new QComboBox();
+  //0
+  windowCombo->addItem("None");
+  //1
+  windowCombo->addItem("Hamming");
+  //2
+  windowCombo->addItem("Blackman");
+  connect(windowCombo, SIGNAL(currentIndexChanged(int)), this,
+    SLOT(setFilterWindow(int)));
+  windowCombo->setCurrentIndex(filterWindow);
+  fWindowBox->addWidget(windowCombo);
+  filterBox->addLayout(fWindowBox);
+  filterGroup->setLayout(filterBox);
+
+  return filterGroup;
 }
 
 void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {
@@ -277,6 +351,16 @@ void TfAnalyser::setFrameSize() {
 void TfAnalyser::setHopSize() {
   hopSize = hopLine->text().toInt();
   updateSpectrum();
+}
+
+void TfAnalyser::setMinFreqDraw() {
+  minFreqDraw = minLine->text().toInt();
+  //updateSpectrum();
+}
+
+void TfAnalyser::setMaxFreqDraw() {
+  maxFreqDraw = minLine->text().toInt();
+  //updateSpectrum();
 }
 
 //TODO: rework to set by channel label

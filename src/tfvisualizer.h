@@ -72,6 +72,8 @@ Q_OBJECT
   float minGradVal = 0.0f;
   int seconds = 0;
   int frequency = 0;
+  int minFreqDraw = 0;
+  int maxFreqDraw = 0;
   bool gradClicked = false;
   bool glInitialized = false;
 
