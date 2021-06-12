@@ -220,6 +220,24 @@ void TfVisualizer::setSeconds(int secs) {
 
 void TfVisualizer::setFrequency(int fs) {
   frequency = fs;
+  maxFreqDraw = std::min(maxFreqDraw, fs);
+  maxFreqDraw = std::min(minFreqDraw, fs);
+}
+
+void TfVisualizer::setMinFrequency(int fs) {
+  minFreqDraw = fs;
+}
+
+void TfVisualizer::setMaxFrequency(int fs) {
+  maxFreqDraw = fs;
+}
+
+int TfVisualizer::getMinFrequency() {
+  return minFreqDraw;
+}
+
+int TfVisualizer::getMaxFrequency() {
+  return maxFreqDraw;
 }
 
 //TODO: copied from scalpcanvas, move this to separate class
@@ -321,7 +339,7 @@ void TfVisualizer::paintGL() {
 
   auto frequencyAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
     graphics::NumberRange(specMesh.getXleft() - 0.10f, specMesh.getXleft() - 0.05f, specMesh.getYbot() + 0.025f,
-    specMesh.getYtop() + 0.025f, this, 5, 0, frequency, QColor(0, 0, 0), graphics::Orientation::Vertical)
+    specMesh.getYtop() + 0.025f, this, 5, minFreqDraw, maxFreqDraw, QColor(0, 0, 0), graphics::Orientation::Vertical)
   );
   frequencyAxisNumbers->render();
   

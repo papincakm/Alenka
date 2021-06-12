@@ -93,7 +93,8 @@ QGroupBox* TfAnalyser::createResolutionMenu() {
   frameLabel->setToolTip("Size of single short-time fourier transform.");
 
   frameLine = new QLineEdit();
-  frameLine->setValidator(new QIntValidator(frameLine));
+  //TODO: what should be the max value here?
+  frameLine->setValidator(new QIntValidator(0, 2048, frameLine));
   connect(frameLine, SIGNAL(editingFinished()), this,
     SLOT(setFrameSize()));
   frameLine->insert(QString::number(frameSize));
@@ -109,7 +110,7 @@ QGroupBox* TfAnalyser::createResolutionMenu() {
   hopLabel->setToolTip("Gap between successive short-time fourier transforms.");
 
   hopLine = new QLineEdit();
-  hopLine->setValidator(new QIntValidator(hopLine));
+  hopLine->setValidator(new QIntValidator(0, frameSize + 1, hopLine));
   connect(hopLine, SIGNAL(editingFinished()), this,
     SLOT(setHopSize()));
   hopLine->insert(QString::number(hopSize));
@@ -134,32 +135,32 @@ QGroupBox* TfAnalyser::createFrequencyMenu() {
   QLabel* minLabel = new QLabel("Min:", this);
   minLabel->setToolTip("Minimum frequency for spectogram.");
 
-  minLine = new QLineEdit();
-  minLine->setValidator(new QIntValidator(minLine));
-  connect(minLine, SIGNAL(editingFinished()), this,
+  minFreqLine = new QLineEdit();
+  minFreqLine->setValidator(new QIntValidator(0, frequency, minFreqLine));
+  connect(minFreqLine, SIGNAL(editingFinished()), this,
     SLOT(setMinFreqDraw()));
-  minLine->insert(QString::number(minFreqDraw));
+  minFreqLine->insert(QString::number(0));
 
   QLabel* minHzLabel = new QLabel("Hz");
 
   gLayout->addWidget(minLabel, 0, 0, 1, 1);
-  gLayout->addWidget(minLine, 0, 1, 1, 1);
+  gLayout->addWidget(minFreqLine, 0, 1, 1, 1);
   gLayout->addWidget(minHzLabel, 0, 2, 1, 1);
 
   //setup second row - hop size
   QLabel *maxLabel = new QLabel("Max:  ", this);
   maxLabel->setToolTip("Maximum frequency for spectogram.");
 
-  maxLine = new QLineEdit();
-  maxLine->setValidator(new QIntValidator(maxLine));
-  connect(maxLine, SIGNAL(editingFinished()), this,
+  maxFreqLine = new QLineEdit();
+  maxFreqLine->setValidator(new QIntValidator(frequency / freqBins + 1, frequency, maxFreqLine));
+  connect(maxFreqLine, SIGNAL(editingFinished()), this,
     SLOT(setMaxFreqDraw()));
-  maxLine->insert(QString::number(maxFreqDraw));
+  maxFreqLine->insert(QString::number(0));
 
   QLabel* maxHzLabel = new QLabel("Hz");
 
   gLayout->addWidget(maxLabel, 1, 0, 1, 1);
-  gLayout->addWidget(maxLine, 1, 1, 1, 1);
+  gLayout->addWidget(maxFreqLine, 1, 1, 1, 1);
   gLayout->addWidget(maxHzLabel, 1, 2, 1, 1);
 
   freqGroup->setLayout(gLayout);
@@ -205,7 +206,6 @@ void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {
 
   //TODO: refactor this so it doesnt have to be set on multiple places
   visualizer->setSeconds(secondsToDisplay);
-  visualizer->setFrequency(frameSize);
 }
 
 void TfAnalyser::changeFile(OpenDataFile *file) {
@@ -213,6 +213,20 @@ void TfAnalyser::changeFile(OpenDataFile *file) {
 		if (file) {
 				updateConnections();
 				updateSpectrum();
+
+        frequency = file->file->getSamplingFrequency() / 2;
+        visualizer->setFrequency(file->file->getSamplingFrequency() / 2);
+
+        minFreqLine->clear();
+        delete minFreqLine->validator();
+        minFreqLine->insert(QString::number(0));
+        minFreqLine->setValidator(new QIntValidator(0, frequency, minFreqLine));
+
+        maxFreqLine->clear();
+        delete maxFreqLine->validator();
+        maxFreqLine->insert(QString::number(frequency));
+        maxFreqLine->setValidator(new QIntValidator(frequency / freqBins + 1, frequency, maxFreqLine));
+        std::cout << "maxFreqVal: " << frequency / freqBins << "\n";
 		}
 }
 
@@ -295,7 +309,6 @@ void TfAnalyser::updateSpectrum() {
     signal.push_back(0.0f);
   }
 
-  int freqBins = frameSize / 2 + 1;
   std::vector<float> fftValues;
   int tempFrameSize;
 
@@ -318,33 +331,34 @@ void TfAnalyser::updateSpectrum() {
     fftValues.insert(fftValues.end(), input.begin(), input.end());
   }
 
-  //std::vector<std::complex<float>> spectrum;
   std::vector<std::complex<float>> spectrum;
-  //TODO: do everything in one clfft batch
   spectrum = fftProcessor->process(fftValues, globalContext.get(), frameCount, tempFrameSize);
   std::vector<float> processedValues;
 
-  for (int f = 0; f < spectrum.size(); f++) {
-    //assert(static_cast<int>(input.size()) == tempFrameSize);
-    //assert(static_cast<int>(spectrum.size()) == tempFrameSize);
-
-    float val = std::abs(spectrum[f]);
-    if (std::isfinite(val)) {
-      processedValues.push_back(val);
-    }
-    else {
-      processedValues.push_back(0);
+  int freqBinsUsed = maxFreqBinDraw - minFreqBinDraw;
+  for (int fc = 0; fc < frameCount; fc++) {
+    for (int fb = minFreqBinDraw; fb < maxFreqBinDraw; fb++) {
+      float val = std::abs(spectrum[fc * freqBins + fb]);
+      if (std::isfinite(val)) {
+        processedValues.push_back(val);
+      }
+      else {
+        processedValues.push_back(0);
+      }
     }
   }
 
   visualizer->setSeconds(secondsToDisplay);
-  visualizer->setFrequency(file->file->getSamplingFrequency() / 2);
-  visualizer->setDataToDraw(processedValues, frameCount, freqBins);
+  visualizer->setDataToDraw(processedValues, frameCount, freqBinsUsed);
   visualizer->update();
 }
 
 void TfAnalyser::setFrameSize() {
   frameSize = frameLine->text().toInt();
+  freqBins = frameSize / 2 + 1;
+  maxFreqBinDraw = std::min(maxFreqBinDraw, freqBins);
+  minFreqBinDraw = std::min(minFreqBinDraw, freqBins);
+
   updateSpectrum();
 }
 
@@ -354,13 +368,20 @@ void TfAnalyser::setHopSize() {
 }
 
 void TfAnalyser::setMinFreqDraw() {
-  minFreqDraw = minLine->text().toInt();
-  //updateSpectrum();
+  visualizer->setMinFrequency(minFreqLine->text().toInt());
+  float minFreqRatio = minFreqLine->text().toFloat() / frequency;
+  //QtValidator doesn't take care of values below Hz size of 1 freqBin
+  minFreqBinDraw = std::max(1, static_cast<int>(minFreqRatio * freqBins));
+
+  updateSpectrum();
 }
 
 void TfAnalyser::setMaxFreqDraw() {
-  maxFreqDraw = minLine->text().toInt();
-  //updateSpectrum();
+  visualizer->setMaxFrequency(maxFreqLine->text().toInt());
+  float maxFreqRatio = maxFreqLine->text().toFloat() / frequency;
+  //QtValidator doesn't take care of values below Hz size of 1 freqBin
+  maxFreqBinDraw = std::max(1, static_cast<int>(std::ceil(maxFreqRatio * freqBins)));
+  updateSpectrum();
 }
 
 //TODO: rework to set by channel label

@@ -85,7 +85,12 @@ public:
     void setDataToDraw(std::vector<float> values, float xCount, float yCount);
     void setSeconds(int secs);
     void setFrequency(int fs);
+    void setMinFrequency(int fs);
+    void setMaxFrequency(int fs);
     void updateColormapTexture();
+
+    int getMinFrequency();
+    int getMaxFrequency();
 
 protected:
   void deleteColormapTexture();
