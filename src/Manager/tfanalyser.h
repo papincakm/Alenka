@@ -86,6 +86,7 @@ private:
   QGroupBox* createResolutionMenu();
   QGroupBox* createFrequencyMenu();
   QGroupBox* createFilterMenu();
+  QWidget* createFreezeMenu();
   QLayout* createChannelTimeMenu();
 private slots:
 	void updateSpectrum();

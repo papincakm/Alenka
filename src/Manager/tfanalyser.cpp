@@ -33,14 +33,7 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent), fft(new Eigen::FFT<fl
   menuBox->addWidget(createResolutionMenu());
   menuBox->addWidget(createFrequencyMenu());
   menuBox->addWidget(createFilterMenu());
-
-  //freeze select
-  QCheckBox *checkBox = new QCheckBox("freeze");
-  checkBox->setToolTip("Freeze STFT.");
-  connect(checkBox, SIGNAL(clicked(bool)), this,
-    SLOT(setFreezeSpectrum(bool)));
-  checkBox->setChecked(freeze);
-  menuBox->addWidget(checkBox);
+  menuBox->addWidget(createFreezeMenu());
 
   mainBox->addLayout(menuBox);
   setupTfVisualizer(mainBox);
@@ -214,6 +207,15 @@ QGroupBox* TfAnalyser::createFilterMenu() {
   filterGroup->setLayout(filterBox);
 
   return filterGroup;
+}
+
+QWidget* TfAnalyser::createFreezeMenu() {
+  QCheckBox *checkBox = new QCheckBox("freeze");
+  checkBox->setToolTip("Freeze STFT.");
+  connect(checkBox, SIGNAL(clicked(bool)), this,
+    SLOT(setFreezeSpectrum(bool)));
+  checkBox->setChecked(freeze);
+  return checkBox;
 }
 
 void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {

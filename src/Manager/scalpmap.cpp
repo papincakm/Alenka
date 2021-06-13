@@ -218,17 +218,6 @@ void ScalpMap::updateSpectrum() {
 
   std::vector<float> samples = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
 
-  //TODO: amlitudes are low, what to do with numbers next to gradient? they are all 0 now
-  //multiply samples by amplitude
-  int hidden = 0;
-  for (int i = 0; i < trackTable->rowCount(); i++) {
-    if (trackTable->row(i).hidden) {
-      hidden++;
-      continue;
-    }
-    samples[i - hidden] *= trackTable->row(i).amplitude;
-  }
-
   if (selectedExtrema == InfoTable::Extrema::local) {
     frequencyMin = *std::min_element(std::begin(samples), std::end(samples));
     frequencyMax = *std::max_element(std::begin(samples), std::end(samples));
