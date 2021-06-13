@@ -51,6 +51,8 @@ class TfAnalyser : public QWidget {
   int freqBins = 65;
   int minFreqBinDraw = 0;
   int maxFreqBinDraw = 65;
+  bool fCompensation = false;
+  bool logCompensation = false;
   bool freeze = true;
   bool parentVisible = true;
 
@@ -94,6 +96,8 @@ private slots:
   void setChannelToDisplay(int ch);
   void setSecondsToDisplay(int s);
   void setFreezeSpectrum(bool f);
+  void setFCompensation(bool f);
+  void setLogCompensation(bool l);
   void setFilterWindow(int fw);
   void parentVisibilityChanged(bool vis);
 };

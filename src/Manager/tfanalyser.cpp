@@ -190,6 +190,27 @@ QGroupBox* TfAnalyser::createFilterMenu() {
   windowCombo->setCurrentIndex(filterWindow);
   fWindowBox->addWidget(windowCombo);
   filterBox->addLayout(fWindowBox);
+
+  auto compBox = new QHBoxLayout();
+
+  //1/f compensation
+  QCheckBox *fCheckBox = new QCheckBox("1/f");
+  fCheckBox->setToolTip("1/f compensation. Divide every power value by its frequency.");
+  connect(fCheckBox, SIGNAL(clicked(bool)), this,
+    SLOT(setFCompensation(bool)));
+  fCheckBox->setChecked(fCompensation);
+  compBox->addWidget(fCheckBox);
+
+  //log compensation
+  QCheckBox *logCheckBox = new QCheckBox("log");
+  logCheckBox->setToolTip("Log compensation. Logarithmize every power value.");
+  connect(logCheckBox, SIGNAL(clicked(bool)), this,
+    SLOT(setLogCompensation(bool)));
+  logCheckBox->setChecked(logCompensation);
+  compBox->addWidget(logCheckBox);
+
+  filterBox->addLayout(compBox);
+
   filterGroup->setLayout(filterBox);
 
   return filterGroup;
@@ -340,6 +361,15 @@ void TfAnalyser::updateSpectrum() {
     for (int fb = minFreqBinDraw; fb < maxFreqBinDraw; fb++) {
       float val = std::abs(spectrum[fc * freqBins + fb]);
       if (std::isfinite(val)) {
+
+        if (fCompensation) {
+          val *= (fb + 1) * static_cast<float>(frequency) / freqBins;
+        }
+
+        if (logCompensation) {
+          val = std::log(val);
+        }
+
         processedValues.push_back(val);
       }
       else {
@@ -400,6 +430,17 @@ void TfAnalyser::setFreezeSpectrum(bool f) {
   if (!f)
     updateSpectrum();
 }
+
+void TfAnalyser::setFCompensation(bool f) {
+  fCompensation = f;
+  updateSpectrum();
+}
+
+void TfAnalyser::setLogCompensation(bool l) {
+  logCompensation = l;
+  updateSpectrum();
+}
+
 
 void TfAnalyser::setFilterWindow(int wf) {
   filterWindow = wf;
