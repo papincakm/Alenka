@@ -175,7 +175,7 @@ QGroupBox* TfAnalyser::createFilterMenu() {
 
   QLabel* FilterWindowlabel = new QLabel("Window:");
   FilterWindowlabel->setToolTip(
-    "Window function to be used to modify data going to the STFT.");
+    "Window function to be used to filter data going to the STFT.");
   fWindowBox->addWidget(FilterWindowlabel);
 
   auto windowCombo = new QComboBox();
@@ -195,7 +195,7 @@ QGroupBox* TfAnalyser::createFilterMenu() {
 
   //1/f compensation
   QCheckBox *fCheckBox = new QCheckBox("1/f");
-  fCheckBox->setToolTip("1/f compensation. Divide every power value by its frequency.");
+  fCheckBox->setToolTip("1/f compensation. Multiply every power value by its bin frequency.");
   connect(fCheckBox, SIGNAL(clicked(bool)), this,
     SLOT(setFCompensation(bool)));
   fCheckBox->setChecked(fCompensation);
@@ -203,7 +203,7 @@ QGroupBox* TfAnalyser::createFilterMenu() {
 
   //log compensation
   QCheckBox *logCheckBox = new QCheckBox("log");
-  logCheckBox->setToolTip("Log compensation. Logarithmize every power value.");
+  logCheckBox->setToolTip("Log compensation. Logarithmize(natural) every power value.");
   connect(logCheckBox, SIGNAL(clicked(bool)), this,
     SLOT(setLogCompensation(bool)));
   logCheckBox->setChecked(logCompensation);

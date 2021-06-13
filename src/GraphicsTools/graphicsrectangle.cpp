@@ -212,7 +212,7 @@ void RectangleChain::constructHorizontal() {
   createObject(0, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
   for (int i = 0; i < objectCount - 2; i++) {
     xpos += binx;
-    createObject(i, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
+    createObject(i + 1, xpos, xpos + binx, ybot, ytop, childOrientation, Bot);
   }
   createObject(objectCount - 1, xpos, xpos + binx, ybot, ytop, childOrientation, Top);
 }
@@ -241,7 +241,7 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
 
   objects.push_back(std::make_shared<RectangleText>(
     RectangleText(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, "Arial", textColor,
-      QString::number(from + position * length / (objectCount - 1), 'f', 1), objectOrientation,
+      QString::number(fromNumber + position * length / (objectCount - 1), 'f', 1), objectOrientation,
       Orientation::Horizontal, alignment)
     ));
 }

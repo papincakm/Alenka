@@ -247,8 +247,8 @@ public:
 * @brief This class uses QPaint to render number row.
 */
 class NumberRange : public RectangleChain {
-  float from = 0.0f;
-  float to = 0.0f;
+  float fromNumber = 0.0f;
+  float toNumber = 0.0f;
   float length;
 
   //TODO: make this changable in program options
@@ -258,7 +258,7 @@ class NumberRange : public RectangleChain {
 public:
   NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
     float from, float to, QColor color, Orientation orientation = Vertical, Orientation childOrientation = Vertical)
-    : RectangleChain(xleft, xright, ybot, ytop, widget, objectCount, orientation, childOrientation), from(from), to(to),
+    : RectangleChain(xleft, xright, ybot, ytop, widget, objectCount, orientation, childOrientation), fromNumber(from), toNumber(to),
       textColor(color), length(std::fabs(to - from)) {};
 protected:
   void createObject(int position, float xleft, float xright, float ybot, float ytop, Orientation objectOrientation,

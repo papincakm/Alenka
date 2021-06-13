@@ -296,12 +296,6 @@ void TfVisualizer::paintGL() {
   auto specWindow = graphics::Rectangle(specMesh, this);
   specWindow.render();
 
-  /*gradient.reset();
-  gradient = std::make_unique<graphics::Gradient>(graphics::Gradient(gradientX, gradientX + 0.05f, specBotY, specTopY, this));*/
-
-  /*auto gradWindow = graphics::Rectangle(gradientX, gradTopx, gradBoty, gradTopy, this);
-  gradWindow.render();*/
-  //std::cout << "gradWindow\n";
   auto gradWindow = graphics::Rectangle((graphics::Object) *gradient, this);
   gradWindow.render();
 
@@ -319,19 +313,9 @@ void TfVisualizer::paintGL() {
   );
   gradAxisNumbers->render();
 
-  float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
-  auto gradAxisLabel = graphics::RectangleText(0.95f, 0.98f,
-    specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Amplitude",
-    graphics::Orientation::Vertical, graphics::Orientation::Vertical);
-  gradAxisLabel.render();
-
   //frequency
-  
-  /*graphics::Rectangle(-0.95f, -0.90f,
-    specMesh.getYbot() + specYSize / 4, specMesh.getYtop() - specYSize / 4, this);
-  frequencyAxisLabel.render();*/
   //TODO: specmesh getYbot seems off (or rotated text drawing is off)
-  //specMesh.getYbot() + specYSize / 1.8f, specMesh.getYbot() + specYSize / 4.0
+  float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
   auto frequencyAxisLabel = graphics::RectangleText(-0.98f, -0.92f,
     specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
     graphics::Orientation::Vertical, graphics::Orientation::Vertical);
@@ -360,7 +344,7 @@ void TfVisualizer::paintGL() {
 
   auto timeAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
     graphics::NumberRange(specMesh.getXleft() - 0.025f, specMesh.getXright() + 0.025f, specMesh.getYbot() - 0.15f,
-    specMesh.getYbot() - 0.05f, this, 5, 0, seconds, QColor(0, 0, 0), graphics::Orientation::Horizontal,
+    specMesh.getYbot() - 0.05f, this, 5, -seconds / 2, seconds / 2, QColor(0, 0, 0), graphics::Orientation::Horizontal,
     graphics::Orientation::Horizontal)
   );
   timeAxisNumbers->render();
