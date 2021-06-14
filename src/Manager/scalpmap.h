@@ -27,9 +27,8 @@ class ScalpMap : public QWidget {
   ScalpCanvas *scalpCanvas = nullptr;
   //std::unique_ptr<ScalpCanvas> scalpCanvas;
   int selectedTrack = -1;
-  InfoTable::Extrema selectedExtrema;
-  float frequencyMin = 0.0f;
-  float frequencyMax = 0.0f;
+  float voltageMin = 0.0f;
+  float voltageMax = 0.0f;
   bool parentVisible = true;
   //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
   //which will be referenced in here and trackLabelBar
@@ -54,9 +53,7 @@ private:
   void deleteFileInfoConnections();
   void setupCanvas();
   void updateFileInfoConnections();
-  void setupExtrema();
   void updatePositionsProjected();
-  void updateExtremaGlobalValue();
   bool positionsValid();
   bool enabled();
 
@@ -65,8 +62,8 @@ private slots:
   void updateTrackTableConnections(int row);
   void updateLabels();
   void updateSpectrum();
+  void updateToExtremaCustom();
   void updateToExtremaLocal();
-  void updateToExtremaGlobal();
 };
 
 #endif // SCALPMAP_H

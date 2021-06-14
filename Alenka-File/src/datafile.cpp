@@ -310,32 +310,6 @@ double DataFile::getPhysicalMinimum(unsigned int channel) {
   return physicalMin[channel];
 }
 
-float DataFile::getGlobalPhysicalMaximum(const std::vector<bool>& skip) {
-  if (physicalMax.empty())
-    computePhysicalMinMax();
-
-  float max = FLT_MIN;
-  for (int i = 0; i < physicalMax.size(); i++) {
-    if (!skip[i] && physicalMax[i] > max)
-      max = physicalMax[i];
-  }
-
-  return max;
-}
-
-float DataFile::getGlobalPhysicalMinimum(const std::vector<bool>& skip) {
-  if (physicalMin.empty())
-    computePhysicalMinMax();
-
-  float min = FLT_MAX;
-  for (int i = 0; i < physicalMin.size(); i++) {
-    if (!skip[i] && physicalMin[i] < min)
-      min = physicalMin[i];
-  }
-
-  return min;
-}
-
 vector<string> DataFile::getLabels() {
   std::vector<std::string> labels;
   labels.reserve(getChannelCount());

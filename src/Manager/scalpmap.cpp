@@ -65,8 +65,8 @@ void ScalpMap::updateFileInfoConnections() {
     this, SLOT(updateSpectrum()));
   fileInfoConnections.push_back(c);
 
-  c = connect(&file->infoTable, SIGNAL(useExtremaGlobal()),
-    this, SLOT(updateToExtremaGlobal()));
+  c = connect(&file->infoTable, SIGNAL(useExtremaCustom()),
+    this, SLOT(updateToExtremaCustom()));
   fileInfoConnections.push_back(c);
 
   c = connect(&file->infoTable, SIGNAL(useExtremaLocal()),
@@ -166,9 +166,6 @@ void ScalpMap::updateLabels() {
       "Change the coordinates or disable the invalid electrodes.");
     return;
   }
-  
-  if (selectedExtrema == InfoTable::Extrema::global)
-    updateExtremaGlobalValue();
 
   updatePositionsProjected();
 
@@ -181,31 +178,10 @@ void ScalpMap::updateLabels() {
   scalpCanvas->allowDraw();
 }
 
-void ScalpMap::setupExtrema() {
-  switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
-  case InfoTable::Extrema::local:
-    selectedExtrema = InfoTable::Extrema::local;
-    break;
-  case InfoTable::Extrema::global:
-    selectedExtrema = InfoTable::Extrema::global;
-    updateExtremaGlobalValue();
-    break;
-  case InfoTable::Extrema::custom:
-    //TODO: do extrema custom
-    //updateToExtremaLocal();
-    selectedExtrema = InfoTable::Extrema::local;
-    break;
-  }
-}
-
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
   if (!enabled())
     return;
-
-  //TODO: rethink this, extreme is not selected sometimes on first app run
-  //if (selectedExtrema < InfoTable::Extrema::custom || selectedExtrema > InfoTable::Extrema::local)
-  setupExtrema();
 
   const AbstractTrackTable *trackTable =
     file->dataModel->montageTable()->trackTable(
@@ -218,38 +194,71 @@ void ScalpMap::updateSpectrum() {
 
   std::vector<float> samples = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
 
-  if (selectedExtrema == InfoTable::Extrema::local) {
-    frequencyMin = *std::min_element(std::begin(samples), std::end(samples));
-    frequencyMax = *std::max_element(std::begin(samples), std::end(samples));
+  if (OpenDataFile::infoTable.getScalpMapExtrema() == InfoTable::Extrema::local) {
+    voltageMin = *std::min_element(std::begin(samples), std::end(samples));
+    voltageMax = *std::max_element(std::begin(samples), std::end(samples));
   }
 
-  scalpCanvas->setPositionFrequencies(samples, frequencyMin, frequencyMax);
+  scalpCanvas->setPositionVoltages(samples, voltageMin, voltageMax);
   scalpCanvas->allowDraw();
   scalpCanvas->update();
 }
 
-void ScalpMap::updateExtremaGlobalValue() {
-  //get hidden channels vector
-  std::vector<bool> hidden;
-  const AbstractTrackTable *trackTable = getTrackTable(file);
-  for (int i = 0; i < trackTable->rowCount(); i++) {
-    Track t = trackTable->row(i);
-    hidden.push_back(t.hidden);
-  }
-
-  frequencyMin = file->file->getGlobalPhysicalMinimum(hidden);
-  frequencyMax = file->file->getGlobalPhysicalMaximum(hidden);
-}
-
-void ScalpMap::updateToExtremaGlobal() {
-  selectedExtrema = InfoTable::Extrema::global;
-  updateExtremaGlobalValue();
-  updateSpectrum();
-}
-
 void ScalpMap::updateToExtremaLocal() {
-  selectedExtrema = InfoTable::Extrema::local;
   updateSpectrum();
+}
+
+void ScalpMap::updateToExtremaCustom() {
+  QDialog* dialog = new QDialog(this);
+  QFormLayout* form = new QFormLayout(dialog);
+
+  QLabel* statusBar = new QLabel("Insert custom extrema values.", dialog);
+  form->addRow(statusBar);
+
+  //setup first row - min voltage
+  QLabel* minLabel = new QLabel("Min:", this);
+  minLabel->setToolTip("Minimum amplitude.");
+
+  QLineEdit* minVolLine = new QLineEdit();
+  minVolLine->setValidator(new QDoubleValidator(minVolLine));
+  minVolLine->insert(QString::number(voltageMin));
+  form->addRow(minLabel, minVolLine);
+
+  //setup second row - max voltage
+  QLabel* maxLabel = new QLabel("Max:  ", this);
+  maxLabel->setToolTip("Maximum amplitude.");
+
+  QLineEdit* maxVolLine = new QLineEdit();
+  maxVolLine->setValidator(new QDoubleValidator(maxVolLine));
+  maxVolLine->insert(QString::number(voltageMax));
+  form->addRow(maxLabel, maxVolLine);
+
+  // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+  QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+    Qt::Horizontal, dialog);
+  form->addRow(buttonBox);
+
+  connect(buttonBox, &QDialogButtonBox::accepted, [this, dialog, minVolLine, maxVolLine, statusBar]() {
+    if (minVolLine->text().toFloat() > maxVolLine->text().toFloat()) {
+      statusBar->setText("Min value has to be lesser than max value.");
+      return;
+    }
+
+    voltageMin = minVolLine->text().toFloat();
+    voltageMax = maxVolLine->text().toFloat();
+    dialog->close();
+    updateSpectrum();
+    //TODO: check if min is lesser than max
+    std::cout << "custom extrema accepted\n";
+  });
+
+  connect(buttonBox, &QDialogButtonBox::rejected, [this, dialog]() {
+    std::cout << "custom extrema rejected\n";
+    OpenDataFile::infoTable.setExtremaLocal();
+    dialog->close();
+  });
+
+  dialog->exec();
 }
 
 float degToRad(float n) {

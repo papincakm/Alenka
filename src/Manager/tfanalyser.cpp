@@ -148,7 +148,7 @@ QGroupBox* TfAnalyser::createFrequencyMenu() {
   maxFreqLine->setValidator(new QIntValidator(frequency / freqBins + 1, frequency, maxFreqLine));
   connect(maxFreqLine, SIGNAL(editingFinished()), this,
     SLOT(setMaxFreqDraw()));
-  maxFreqLine->insert(QString::number(0));
+  maxFreqLine->insert(QString::number(frequency));
 
   QLabel* maxHzLabel = new QLabel("Hz");
 
@@ -238,7 +238,9 @@ void TfAnalyser::changeFile(OpenDataFile *file) {
 				updateSpectrum();
 
         frequency = file->file->getSamplingFrequency() / 2;
-        visualizer->setFrequency(file->file->getSamplingFrequency() / 2);
+        visualizer->setFrequency(frequency);
+        visualizer->setMinFrequency(0);
+        visualizer->setMaxFrequency(frequency);
 
         minFreqLine->clear();
         delete minFreqLine->validator();
@@ -249,7 +251,7 @@ void TfAnalyser::changeFile(OpenDataFile *file) {
         delete maxFreqLine->validator();
         maxFreqLine->insert(QString::number(frequency));
         maxFreqLine->setValidator(new QIntValidator(frequency / freqBins + 1, frequency, maxFreqLine));
-        std::cout << "maxFreqVal: " << frequency / freqBins << "\n";
+        //std::cout << "maxFreqVal: " << frequency / freqBins << "\n";
 		}
 }
 
@@ -400,6 +402,11 @@ void TfAnalyser::setHopSize() {
 }
 
 void TfAnalyser::setMinFreqDraw() {
+  if (minFreqLine->text().toInt() > maxFreqLine->text().toInt()) {
+    minFreqLine->setText(QString::number(visualizer->getMinFrequency()));
+    return;
+  }
+
   visualizer->setMinFrequency(minFreqLine->text().toInt());
   float minFreqRatio = minFreqLine->text().toFloat() / frequency;
   //QtValidator doesn't take care of values below Hz size of 1 freqBin
@@ -409,6 +416,11 @@ void TfAnalyser::setMinFreqDraw() {
 }
 
 void TfAnalyser::setMaxFreqDraw() {
+  if (maxFreqLine->text().toInt() < minFreqLine->text().toInt()) {
+    maxFreqLine->setText(QString::number(visualizer->getMaxFrequency()));
+    return;
+  }
+
   visualizer->setMaxFrequency(maxFreqLine->text().toInt());
   float maxFreqRatio = maxFreqLine->text().toFloat() / frequency;
   //QtValidator doesn't take care of values below Hz size of 1 freqBin

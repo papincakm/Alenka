@@ -47,8 +47,8 @@ class OpenGLProgram;
 //TODO: move to some utils class
 class ElectrodePosition {
 public:
-	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), frequency(frequency) { }
-	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), frequency(0) { }
+	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), voltage(frequency) { }
+	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), voltage(0) { }
 
 	bool operator == (const ElectrodePosition& position) const
 	{
@@ -64,18 +64,18 @@ public:
 
 	GLfloat x = 0;
 	GLfloat y = 0;
-	GLfloat frequency = 0;
+	GLfloat voltage = 0;
 };
 
 /**
 * @brief Distance coefficients of nearest points in tessalated triangle mesh.
 */
-class PointCoefficient {
+class PointSpatialCoefficient {
 public:
   float coefficient;
   int toPoint;
 
-  PointCoefficient(float coefficient, int toPoint) : coefficient(coefficient), toPoint(toPoint) {};
+  PointSpatialCoefficient(float coefficient, int toPoint) : coefficient(coefficient), toPoint(toPoint) {};
 };
 
 class ScalpCanvas : public QOpenGLWidget {
@@ -90,7 +90,7 @@ class ScalpCanvas : public QOpenGLWidget {
   //TODO: replace with single struct
   std::vector<ElectrodePosition> triangulatedPositions;
   std::vector<GLfloat> splitTriangulatedPositions;
-  std::vector<std::vector<PointCoefficient>> pointCoefficients;
+  std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
 	GLuint posBuffer;
 	//TODO: possibly not needed
   std::vector<GLfloat> scalpMesh;
@@ -99,8 +99,8 @@ class ScalpCanvas : public QOpenGLWidget {
   GLuint colormapTextureId;
   std::unique_ptr<graphics::Gradient> gradient;
 
-  float minFrequency = 0;
-  float maxFrequency = 0;
+  float minVoltage = 0;
+  float maxVoltage = 0;
 
   const float gradientX = 0.9f;
   const float gradientBotY = -0.9f;
@@ -122,7 +122,7 @@ public:
   //TODO: refactor, right now labels and positions are instanced twice, here and in scalpMap
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
-	void setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
+	void setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
 	void forbidDraw(QString errorString);
 	void allowDraw();
 	void clear();
@@ -164,8 +164,8 @@ private:
   std::vector<GLfloat> generateScalpTriangleArray();
   std::vector<GLfloat> generateGradient();
   std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
-  void calculateFrequencies(std::vector<GLfloat>& points);
-  void calculateDistanceCoefficients(const std::vector<GLfloat>& points);
+  void calculateVoltages(std::vector<GLfloat>& points);
+  void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();
   void renderGradientText();
   void renderPopupMenu(const QPoint& pos);

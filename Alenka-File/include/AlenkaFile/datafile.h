@@ -149,8 +149,6 @@ public:
 
   virtual double getPhysicalMaximum(unsigned int channel);
   virtual double getPhysicalMinimum(unsigned int channel);
-  virtual float getGlobalPhysicalMaximum(const std::vector<bool>& skip);
-  virtual float getGlobalPhysicalMinimum(const std::vector<bool>& skip);
   virtual double getDigitalMaximum(unsigned int /*channel*/) { return 32767; }
   virtual double getDigitalMinimum(unsigned int /*channel*/) { return -32768; }
   virtual std::string getLabel(unsigned int channel) = 0;

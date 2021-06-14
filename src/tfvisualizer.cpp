@@ -220,8 +220,6 @@ void TfVisualizer::setSeconds(int secs) {
 
 void TfVisualizer::setFrequency(int fs) {
   frequency = fs;
-  maxFreqDraw = std::min(maxFreqDraw, fs);
-  maxFreqDraw = std::min(minFreqDraw, fs);
 }
 
 void TfVisualizer::setMinFrequency(int fs) {

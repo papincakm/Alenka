@@ -28,7 +28,7 @@ public:
   /**
   * @brief Enum defining extrema ranges used by scalpmap.
   */
-  enum class Extrema { custom, global, local };
+  enum class Extrema { custom, local };
 
 private:
   int virtualWidth;
@@ -138,7 +138,6 @@ signals:
   void globalMontageHeaderChanged(QString);
 	void signalCurPosProcessedChanged();
   void useExtremaCustom();
-  void useExtremaGlobal();
   void useExtremaLocal();
 
 public slots:
@@ -283,11 +282,6 @@ public slots:
   void setExtremaCustom() {
     selectedScalpMapExtrema = InfoTable::Extrema::custom;
     emit useExtremaCustom();
-  }
-
-  void setExtremaGlobal() {
-    selectedScalpMapExtrema = InfoTable::Extrema::global;
-    emit useExtremaGlobal();
   }
 
   void setExtremaLocal() {

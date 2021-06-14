@@ -182,35 +182,20 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
   extremaMenu->addAction(&setExtremaLocal);
   extremaGroup->addAction(&setExtremaLocal);
 
-  //set global extrema
-  QAction setExtremaGlobal("Global", this);
-
-  connect(&setExtremaGlobal, &QAction::triggered, [this]() {
-    OpenDataFile::infoTable.setExtremaGlobal();
-  });
-  setExtremaGlobal.setCheckable(true);
-
-  extremaMenu->addAction(&setExtremaGlobal);
-  extremaGroup->addAction(&setExtremaGlobal);
-
   //set custom extrema
-  /*QAction setExtremaCustom("Custom", this);
+  QAction setExtremaCustom("Custom", this);
 
   connect(&setExtremaCustom, &QAction::triggered, [this]() {
-  OpenDataFile::infoTable.setExtremaCustom();
+    OpenDataFile::infoTable.setExtremaCustom();
   });
-  setExtremaCustom.setCheckable(true);*/
+  setExtremaCustom.setCheckable(true);
 
-  //extremaMenu->addAction(&setExtremaCustom);
-  //extremaGroup->addAction(&setExtremaCustom);
+  extremaMenu->addAction(&setExtremaCustom);
+  extremaGroup->addAction(&setExtremaCustom);
 
   switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
-    /*case InfoTable::Extrema::custom:
+    case InfoTable::Extrema::custom:
     setExtremaCustom.setChecked(true);
-    break;*/
-  case InfoTable::Extrema::global:
-    // std::cout << "MENU: GLOBAL SELECTED\n";
-    setExtremaGlobal.setChecked(true);
     break;
   case InfoTable::Extrema::local:
     // std::cout << "MENU: LOCAL SELECTED\n";
@@ -287,8 +272,8 @@ void ScalpCanvas::setupScalpMesh() {
 
   scalpMesh = generateTriangulatedGrid(xAxis, yAxis, values);*/
   scalpMesh = generateScalpTriangleArray();
-  calculateDistanceCoefficients(scalpMesh);
-  calculateFrequencies(scalpMesh);
+  calculateSpatialCoefficients(scalpMesh);
+  calculateVoltages(scalpMesh);
 
   std::vector<GLfloat> gradient = generateGradient();
   scalpMesh.insert(std::end(scalpMesh), std::begin(gradient), std::end(gradient));
@@ -316,26 +301,45 @@ void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
   labels = channelLabels;
 }
 
-void ScalpCanvas::setPositionFrequencies(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
+void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
 	//TODO: theres less positions thant channelDataBuffer
 	//std::cout << "positions: " << positions.size() << "  channelBuffer: " << channelDataBuffer.size() << "freqs:\n";
 	//TODO: investigate, positions are sometimes smaller, even thoug scalpmap should take care of this
 	if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
 		return;
 	
-	minFrequency = min;
-	maxFrequency = max;
+	minVoltage = min;
+	maxVoltage = max;
 
-	float maxMinusMin = maxFrequency - minFrequency;
+  /*int size = std::min(originalPositions.size(), channelDataBuffer.size());
+  std::vector<float> newVoltages;
+  for (int i = 0; i < size; i++) {
+    if (channelDataBuffer[i] < minVoltage) {
+      newVoltages.push_back(minVoltage);
+    } else if (channelDataBuffer[i] > maxVoltage) {
+      newVoltages.push_back(maxVoltage);
+    }
+    else {
+      newVoltages.push_back(channelDataBuffer[i]);
+    }
+  }
+
+  convertToRange(newVoltages, 0, 1);
+
+  for (int i = 0; i < size; i++) {
+    originalPositions[i].voltage = newVoltages[i];
+  }*/
+  //TODO: if i set custom minmax to 1000 and 1500 (or -1000 2500) then some triangles are blue and should be red
+	float maxMinusMin = maxVoltage - minVoltage;
 
 	int size = std::min(originalPositions.size(), channelDataBuffer.size());
 
 	for (int i = 0; i < size; i++) {
-    float newFrequency = (channelDataBuffer[i] - minFrequency) / (maxMinusMin);
-		originalPositions[i].frequency = newFrequency < 0 ? 0 : (newFrequency > 1 ? 1 : newFrequency);
+    float newVoltage = (channelDataBuffer[i] - minVoltage) / (maxMinusMin);
+		originalPositions[i].voltage = newVoltage < 0 ? 0 : (newVoltage > 1 ? 1 : newVoltage);
 	}
 
-  calculateFrequencies(scalpMesh);
+  calculateVoltages(scalpMesh);
 }
 
 void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
@@ -367,12 +371,12 @@ std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedPositions(const 
 
 	return triangles;
 }
-void ScalpCanvas::calculateDistanceCoefficients(const std::vector<GLfloat>& points) {
-  pointCoefficients.clear();
+void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& points) {
+  pointSpatialCoefficients.clear();
 
   for (int i = 0; i < points.size(); i += 3) {
     std::vector<std::pair<float, int>> distances;
-    std::vector<PointCoefficient> singlePointCoefficients;
+    std::vector<PointSpatialCoefficient> singlePointSpatialCoefficients;
     float sumDistance = 0;
     bool samePoint = false;
 
@@ -398,20 +402,20 @@ void ScalpCanvas::calculateDistanceCoefficients(const std::vector<GLfloat>& poin
     }
 
     for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
-      singlePointCoefficients.push_back(PointCoefficient(distances[j].first / sumDistance, distances[j].second));
+      singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(distances[j].first / sumDistance, distances[j].second));
     }
 
-    pointCoefficients.push_back(singlePointCoefficients);
+    pointSpatialCoefficients.push_back(singlePointSpatialCoefficients);
   }
 }
-void ScalpCanvas::calculateFrequencies(std::vector<GLfloat>& points) {
-  for (int i = 0; i < pointCoefficients.size(); i ++) {
-    float newFrequency = 0;
+void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
+  for (int i = 0; i < pointSpatialCoefficients.size(); i ++) {
+    float newVoltage = 0;
 
-    for (int j = 0; j < pointCoefficients[i].size(); j++) {
-      newFrequency += pointCoefficients[i][j].coefficient * originalPositions[pointCoefficients[i][j].toPoint].frequency;
+    for (int j = 0; j < pointSpatialCoefficients[i].size(); j++) {
+      newVoltage += pointSpatialCoefficients[i][j].coefficient * originalPositions[pointSpatialCoefficients[i][j].toPoint].voltage;
     }
-    points[i * 3 + 2] = newFrequency;
+    points[i * 3 + 2] = newVoltage;
   }
 }
 
@@ -426,7 +430,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 		triangles.push_back(triangulatedPositions[i].y);
 
 		//frequency
-		triangles.push_back(triangulatedPositions[i].frequency);
+		triangles.push_back(triangulatedPositions[i].voltage);
 	}
 
   auto ss = splitTriangles(triangles);
@@ -475,12 +479,12 @@ void ScalpCanvas::renderGradientText() {
   QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
 	
 	float maxMinusMinY = gradientTopY - gradientBotY;
-	float maxMinusMinFreq = maxFrequency - minFrequency;
+	float maxMinusMinFreq = maxVoltage - minVoltage;
 
 	float binY = maxMinusMinY / 4;
 	float binFreq = maxMinusMinFreq / 4;
 
-	float freqToDisplay = minFrequency;
+	float freqToDisplay = minVoltage;
 	float yPos = gradientBotY;
 
 	for (int i = 0; i < 5; i += 1) {
