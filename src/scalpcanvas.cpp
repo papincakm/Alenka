@@ -434,7 +434,6 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	}
 
   auto ss = splitTriangles(triangles);
-  //ss = splitTriangles(ss);
   auto finalTriangles = splitTriangles(ss);
 
 	return finalTriangles;

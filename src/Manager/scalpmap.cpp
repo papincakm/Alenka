@@ -209,7 +209,7 @@ void ScalpMap::updateToExtremaLocal() {
 }
 
 void ScalpMap::updateToExtremaCustom() {
-  QDialog* dialog = new QDialog(this);
+  QDialog* dialog = new QDialog(this, Qt::MSWindowsFixedSizeDialogHint);
   QFormLayout* form = new QFormLayout(dialog);
 
   QLabel* statusBar = new QLabel("Insert custom extrema values.", dialog);
