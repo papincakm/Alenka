@@ -69,14 +69,26 @@ void TrackManager::loadCoordinates() {
 						std::getline(f, line);
 						std::istringstream iss(line);
 
-						std::string label;
-						std::string separator;
+						std::string label = "";
+						std::string loaded;
 						float posX;
 						float posY;
 						float posZ;
 
-						//TODO: Problem with label when its 2 and more words
-						iss >> label >> separator >> posX >> posY >> posZ;
+            int ll = 0;
+            while (++ll) {
+              iss >> loaded;
+
+              if (loaded == ":")
+                break;
+
+              if (ll > 1)
+                label.append(" ");
+
+              label.append(loaded);
+            }
+
+						iss >> posX >> posY >> posZ;
 
 						std::transform(label.begin(), label.end(), label.begin(), ::tolower);
 
@@ -92,11 +104,15 @@ void TrackManager::loadCoordinates() {
 				const int tableY = 7;
 				const int tableZ = 8;
 
-				// TODO: refactor, there must be better way to iterate the table
 				for (int i = 0; i < row; i++) {
 						bool found = false;
 						std::string label = tableView->model()->data(tableView->model()->index(i, tableLabel), Qt::DisplayRole).toString().toStdString();
 						std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+
+            bool tableViewBlockState;
+            if (i < row - 1) {
+              tableViewBlockState = tableView->model()->blockSignals(true);
+            }
 
 						for (auto v : positions) {
 								if ((label.compare(v.first)) == 0) {
@@ -109,6 +125,10 @@ void TrackManager::loadCoordinates() {
 						}
 						if (!found)
 								tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
+
+            if (i < row - 1) {
+              tableView->model()->blockSignals(tableViewBlockState);
+            }
 				}
 		}
 

@@ -271,8 +271,8 @@ void Gradient::change(Colormap& colormap, const QPoint& newPoint) {
       newContrast = std::min(contrast + xDist / changeRangeX, 100.0f);
     }
   }
-  std::cout << "clickPoint x: " << clickPoint.x() << " nePoint x: " << newPoint.x() << "\n";
-  std::cout << "newContrast: " << newContrast << "\n";
+  //std::cout << "clickPoint x: " << clickPoint.x() << " nePoint x: " << newPoint.x() << "\n";
+  //std::cout << "newContrast: " << newContrast << "\n";
   //TODO: set limits globaly, join colormap and this
 
   float yDist = std::abs(clickPoint.y() - newPoint.y());

@@ -29,9 +29,14 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
-  updateFileInfoConnections();
+  if (file) {
+    updateFileInfoConnections();
+    updateLabels();
+  }
+
+
   //scalpCanvas->clear();
-  updateLabels();
+
   /*if (enabled()) {
     if (!scalpCanvas) {
       //std::cout << "change file SETUPING canvas\n";
@@ -86,6 +91,9 @@ void ScalpMap::parentVisibilityChanged(bool vis) {
 //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
 //which will be referenced in here and trackLabelBar
 void ScalpMap::updateTrackTableConnections(int row) {
+  if (!file)
+    return;
+
   deleteTrackTableConnections();
 
   const AbstractMontageTable *mt = file->dataModel->montageTable();
@@ -143,6 +151,8 @@ const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
 void ScalpMap::updateLabels() {
   if (!file || file->dataModel->montageTable()->rowCount() <= 0)
     return;
+  
+  std::cout << "updating labels\n";
   
   labels.clear();
   colors.clear();
@@ -261,97 +271,130 @@ void ScalpMap::updateToExtremaCustom() {
   dialog->exec();
 }
 
-float degToRad(float n) {
-  return n * M_PI / 180;
+// this is reimplementation of https://www.geometrictools.com/Documentation/LeastSquaresFitting.pdf
+// p. 21
+bool fitSpehere(std::vector<QVector3D> points, QVector3D& center, float& radius) {
+  QVector3D average = { 0, 0, 0 };
+  for (size_t i = 0; i < points.size(); i++) {
+    average += points[i];
+  }
+  average /= points.size();
+
+  float m00 = 0, m01 = 0, m02 = 0, m11 = 0, m12 = 0, m22 = 0;
+  QVector3D r = { 0.0f, 0.0f, 0.0f };
+  for (size_t i = 0; i < points.size(); i++) {
+    //QVector2D y(points[i].x() - average.x(), points[i].y() - average.y());
+    QVector3D y = points[i] - average;
+    float y0y0 = y.x() * y.x(), y0y1 = y.x() * y.y(), y0y2 = y.x() * y.z();
+    float y1y1 = y.y() * y.y(), y1y2 = y.y() * y.z(), y2y2 = y.z() * y.z();
+    m00 += y0y0;
+    m01 += y0y1;
+    m02 += y0y2;
+    
+    m11 += y1y1;
+    m12 += y1y2;
+    m22 += y2y2;
+
+    r += (y0y0 + y1y1 + y2y2) * y;
+  }
+  r /= 2.0f;
+
+  float cof00 = m11 * m22 - m12 * m12;
+  float cof01 = m02 * m12 - m01 * m22;
+  float cof02 = m01 * m12 - m02 * m11;
+  float det = m00 * cof00 + m01 * cof01 + m02 * cof02;
+
+  if (det != 0) {
+    float cof11 = m00 * m22 - m02 * m02;
+    float cof12 = m01 * m02 - m00 * m12;
+    float cof22 = m00 * m11 - m01 * m01;
+
+    center.setX(average.x() + (cof00 * r.x() + cof01 * r.y() + cof02 * r.z()) / det);
+    center.setY(average.y() + (cof01 * r.x() + cof11 * r.y() + cof12 * r.z()) / det);
+    center.setZ(average.z() + (cof02 * r.x() + cof12 * r.y() + cof22 * r.z()) / det);
+    float rsqr = 0;
+
+    for (size_t i = 0; i < points.size(); i++) {
+      QVector3D delta = points[i] - center;
+      rsqr += QVector3D::dotProduct(delta, delta);
+    }
+    rsqr /= points.size();
+    radius = std::sqrt(rsqr);
+    return true;
+  } else {
+    center = { 0, 0, 0 };
+    radius = 0;
+    return false;
+  }
 }
 
-float radToDeg(float n) {
-  return n * 180 / M_PI;
+QVector3D projectPoint(const QVector3D& point, const QVector3D& sphereCenter, const float radius) {
+  QVector3D projectedPoint = point - sphereCenter;
+
+  float len = projectedPoint.length();
+
+  projectedPoint *= (radius / len);
+
+  return projectedPoint + sphereCenter;
 }
 
 //TODO: improvised algorithm, find a better way to do this
 void ScalpMap::updatePositionsProjected() {
   positionsProjected.clear();
-
-  //compute radius of sphere
-  float r = 0;
-  for (auto vec : positions) {
-    float rCan = std::abs(vec.x());
-
-
-    rCan = std::abs(vec.x());
-    if (rCan > r) {
-      r = rCan;
-    }
-
-    rCan = std::abs(vec.x());
-    if (rCan > r) {
-      r = rCan;
-    }
+  QVector3D sphereCenter = {0, 0, 0};
+  float radius = 0;
+  if (!fitSpehere(positions, sphereCenter, radius)) {
+    std::cout << "couldnt fite sphere\n";
   }
 
-  //compute unit sphere
-  std::vector<QVector3D> nPos;
-  for (auto vec : positions) {
-    float n = sqrt(vec.x() * vec.x() + vec.y() * vec.y()
-      + vec.z() * vec.z());
-    nPos.push_back(vec / n);
+  QVector3D projectSphere(sphereCenter.x() / -2.0f, sphereCenter.y() / -2.0f, sphereCenter.z() / -2.0f);
+
+  float r = std::sqrt((sphereCenter.x() * sphereCenter.x() + sphereCenter.y() * sphereCenter.y() +
+    sphereCenter.z() * sphereCenter.z()) / 4.0f - radius * 2);
+
+  std::vector<QVector3D> positionsProjectedOnSphere;
+  for (size_t i = 0; i < positions.size(); i++) {
+    positionsProjectedOnSphere.push_back(projectPoint(positions[i], projectSphere, r));
   }
 
-  //compute radiuses
-  std::vector<float> rads;
-  for (auto vec : nPos) {
-    rads.push_back(sqrt(vec.x() * vec.x() + vec.y() * vec.y()
-      + vec.z() * vec.z()));
-  }
-
-  //compute thetas
-  int i = 0;
-  std::vector<float> thetas;
-  for (auto vec : nPos) {
-    float theta = radToDeg(acos(vec.z() / rads[i]));
-    theta = (vec.x() >= 0) ? theta : -1 * theta;
-    thetas.push_back(theta);
-
-    i++;
-  }
-
-  //compute phis
-  std::vector<float> phis;
-  for (auto vec : nPos) {
-    //TODO: divide by zero?
-    float phi = radToDeg(atan(vec.y() / vec.x()));
-    phi = (vec.x() == 0) ? -1 * phi : phi;
-    phis.push_back(phi);
-  }
-
-  // project 3D vector to 2D
-  i = 0;
-  for (auto vec : nPos) {
-    float newX = degToRad(thetas[i]) * cos(degToRad(phis[i]));
-    float newY = degToRad(thetas[i]) * sin(degToRad(phis[i]));
-
-    positionsProjected.push_back(QVector2D(radToDeg(newX), radToDeg(newY)));
-    //positionsProjected.push_back(QVector2D(positions[i].x(), positions[i].y()));
-    i++;
+  for (size_t i = 0; i < positions.size(); i++) {
+    QVector2D newVec = { 0, 0 };
+ 
+    newVec.setX(positionsProjectedOnSphere[i].x() / (r - positionsProjectedOnSphere[i].z()));
+    newVec.setY(positionsProjectedOnSphere[i].y() / (r - positionsProjectedOnSphere[i].z()));
+    positionsProjected.push_back(newVec);
   }
 
   // normalize positions for opengl
   //TODO: this should be in scalpcanvas
-  float maxValue = 0;
-  for (auto vec : positionsProjected) {
-    if (std::abs(vec.x()) > maxValue)
-      maxValue = std::abs(vec.x());
+  float maxX = FLT_MIN;
+  float maxY = FLT_MIN;
+  float minX = FLT_MAX;
+  float minY = FLT_MAX;
 
-    if (std::abs(vec.y()) > maxValue)
-      maxValue = std::abs(vec.y());
+  for (auto vec : positionsProjected) {
+    if (vec.x() > maxX)
+      maxX = vec.x();
+
+    if (vec.y() > maxY)
+      maxY = vec.y();
+
+    if (vec.x() < minX)
+      minX = vec.x();
+
+    if (vec.y() < minY)
+      minY = vec.y();
   }
 
-  //TODO: temp scaling
-  maxValue *= 1.5;
+  float scale = std::max(maxX - minX, maxY - minY);
+  std::cout << "scale = " << scale << "\n";
 
-  for_each(positionsProjected.begin(), positionsProjected.end(), [maxValue](auto& v)
+  for_each(positionsProjected.begin(), positionsProjected.end(), [scale, maxX, maxY, minX, minY](auto& v)
   {
-    v *= 1 / maxValue;
+    v.setX(v.x() - ((maxX + minX) / 2.0f));
+    v.setY(v.y() - ((maxY + minY) / 2.0f));
+
+    v.setX(v.x() / scale * 1.6f);
+    v.setY(v.y() / scale * 1.6f);
   });
 }

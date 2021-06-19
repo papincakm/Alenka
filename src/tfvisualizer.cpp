@@ -351,7 +351,7 @@ void TfVisualizer::paintGL() {
   auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 2.4f,
     specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.15f,
     this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
-    graphics::Orientation::Horizontal, graphics::Alignment::None);
+    graphics::Orientation::Horizontal);
   timeAxisLabel.render();
 
   if (ready()) {

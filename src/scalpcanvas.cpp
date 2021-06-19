@@ -371,6 +371,12 @@ std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedPositions(const 
 
 	return triangles;
 }
+
+float getDistance(const float x1, const float y1, const float x2, const float y2) {
+  return std::sqrt((x1 - x2) * (x1 - x2) +
+    (y1 - y2) * (y1- y2));
+}
+//takes triangulated positions, whe each position is represented by 3 floats - x, y, z
 void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& points) {
   pointSpatialCoefficients.clear();
 
@@ -381,8 +387,10 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& point
     bool samePoint = false;
 
     for (int j = 0; j < originalPositions.size(); j++) {
-      float distance = std::sqrt((points[i] - originalPositions[j].x) * (points[i] - originalPositions[j].x) +
-        (points[i + 1] - originalPositions[j].y) * (points[i + 1] - originalPositions[j].y));
+      /*float distance = std::sqrt((points[i] - originalPositions[j].x) * (points[i] - originalPositions[j].x) +
+        (points[i + 1] - originalPositions[j].y) * (points[i + 1] - originalPositions[j].y));*/
+
+      float distance = getDistance(points[i], points[i + 1], originalPositions[j].x, originalPositions[j].y);
 
       if (distance == 0) {
         distance = 0.00001f;
@@ -395,14 +403,15 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& point
 
     float newFrequency = 0;
 
-    int usedPos = 3;
+    int usedNearestPos = 3;
 
-    for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
+    /*for (int j = distances.size() - 1; j > distances.size() - usedNearestPos - 1; j--) {
       sumDistance += distances[j].first;
-    }
+    }*/
 
-    for (int j = distances.size() - 1; j > distances.size() - usedPos - 1; j--) {
-      singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(distances[j].first / sumDistance, distances[j].second));
+    for (int j = distances.size() - 1; j > distances.size() - usedNearestPos - 1; j--) {
+     // singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(distances[j].first / sumDistance, distances[j].second));
+      singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(1 / distances[j].first * distances[j].first * distances[j].first, distances[j].second));
     }
 
     pointSpatialCoefficients.push_back(singlePointSpatialCoefficients);
@@ -411,10 +420,13 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& point
 void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
   for (int i = 0; i < pointSpatialCoefficients.size(); i ++) {
     float newVoltage = 0;
-
+    float sumCoefficient = 0;
     for (int j = 0; j < pointSpatialCoefficients[i].size(); j++) {
       newVoltage += pointSpatialCoefficients[i][j].coefficient * originalPositions[pointSpatialCoefficients[i][j].toPoint].voltage;
+      sumCoefficient += pointSpatialCoefficients[i][j].coefficient;
     }
+    newVoltage /= sumCoefficient;
+
     points[i * 3 + 2] = newVoltage;
   }
 }
@@ -434,6 +446,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray() {
 	}
 
   auto ss = splitTriangles(triangles);
+  //ss = splitTriangles(ss);
   auto finalTriangles = splitTriangles(ss);
 
 	return finalTriangles;
@@ -570,6 +583,7 @@ void ScalpCanvas::paintGL() {
     //POINTS
     //TODO: use positions, triangulatedPositions are inflated, repeated draws
     if (shouldDrawChannels) {
+      gl()->glPointSize(10.0f);
       std:vector<GLfloat> channelBufferData(originalPositions.size() * 2);
       for (int i = 0; i < originalPositions.size(); i++) {
         channelBufferData.push_back(originalPositions[i].x);
