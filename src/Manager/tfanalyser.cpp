@@ -316,20 +316,28 @@ void TfAnalyser::updateSpectrum() {
   //TODO: check if this should be possible, right now it throws error
   if (frameCount < 1 || frameSize < hopSize)
     return;
-
-  const int totalSampleCount = frameCount * frameSize;  
+ 
   const int position = OpenDataFile::infoTable.getPosition();
   int startFileSample = std::max(0, position - samplesToUse / 2);
-  int endFileSample = std::min(static_cast<int>(file->file->getSamplesRecorded()), startFileSample + samplesToUse - 1);
+  //TODO: there was startFileSample + samplesToUse - 1, is it ok?
+  int endFileSample = std::min(static_cast<int>(file->file->getSamplesRecorded()), position + samplesToUse / 2);
 
   //read data
-  int readSampleCount = endFileSample - startFileSample + 2; // TODO: Maybe round this to a power of two.
+  int readSampleCount = endFileSample - startFileSample + 2;
   std::vector<float> buffer(readSampleCount * file->file->getChannelCount());
   file->file->readSignal(buffer.data(), startFileSample, endFileSample);
 
   auto begin = buffer.begin() + readSampleCount * channelToDisplay;
-  std::vector<float> signal(begin, begin + readSampleCount);
+  std::vector<float> signal;
+  //pad with zeroes at beginning
+  for (int i = position - samplesToUse / 2; i <= 0; i++) {
+    signal.push_back(0.0f);
+  }
 
+  signal.insert(signal.end(), begin, begin + readSampleCount);
+
+  //pad with zeroes on end
+  const int totalSampleCount = frameCount * hopSize + frameSize;
   for (int i = readSampleCount; i < totalSampleCount; i++) {
     signal.push_back(0.0f);
   }
@@ -345,7 +353,7 @@ void TfAnalyser::updateSpectrum() {
     //TODO: mby do this in fftprocessor
     applyWindowFunction(input);
 
-    //is power of 2
+    //pad with zeroes
     //TODO: is this correct?
     tempFrameSize = frameSize;
     while ((tempFrameSize  & (tempFrameSize - 1)) != 0) {
@@ -356,8 +364,8 @@ void TfAnalyser::updateSpectrum() {
     fftValues.insert(fftValues.end(), input.begin(), input.end());
   }
 
-  std::vector<std::complex<float>> spectrum;
-  spectrum = fftProcessor->process(fftValues, globalContext.get(), frameCount, tempFrameSize);
+  std::vector<std::complex<float>> spectrum = fftProcessor->process(fftValues, globalContext.get(),
+    frameCount, tempFrameSize);
   std::vector<float> processedValues;
 
   int freqBinsUsed = maxFreqBinDraw - minFreqBinDraw;
@@ -388,6 +396,7 @@ void TfAnalyser::updateSpectrum() {
 }
 
 void TfAnalyser::setFrameSize() {
+  //TODO TUJE TEN MAJOR BUG
   frameSize = frameLine->text().toInt();
   freqBins = frameSize / 2 + 1;
   maxFreqBinDraw = std::min(maxFreqBinDraw, freqBins);

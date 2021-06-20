@@ -618,10 +618,10 @@ void ScalpCanvas::paintGL() {
     renderGradientText();
 
     gl()->glFinish();
-	}
 
-  gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-  gl()->glDeleteBuffers(1, &posBuffer);
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl()->glDeleteBuffers(1, &posBuffer);
+  }
 
 	if (errorMsg != "")
 			renderErrorMsg();

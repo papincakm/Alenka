@@ -177,7 +177,12 @@ void ScalpMap::updateLabels() {
     return;
   }
 
-  updatePositionsProjected();
+  if (!updatePositionsProjected()) {
+    scalpCanvas->forbidDraw("Electrode positions are invalid(A sphere cant be fitted to the coordinates,"\
+    "scalpmap cant be generated).Change the coordinates or disable the invalid electrodes.");
+    return;
+  }
+
 
   scalpCanvas->setChannelLabels(labels);
   scalpCanvas->setChannelPositions(positionsProjected);
@@ -271,8 +276,11 @@ void ScalpMap::updateToExtremaCustom() {
   dialog->exec();
 }
 
-// this is reimplementation of https://www.geometrictools.com/Documentation/LeastSquaresFitting.pdf
-// p. 21
+// method fitSphere is a reimplementation of pseudocode written by David Eberly
+// written in his work Least Squares Fitting of Data by Linear or QuadraticStructures, p. 21
+// link -> https://www.geometrictools.com/Documentation/LeastSquaresFitting.pdf
+// the work is licenced under Creative Commons Attribution 4.0 International License
+// https://creativecommons.org/licenses/by/4.0/
 bool fitSpehere(std::vector<QVector3D> points, QVector3D& center, float& radius) {
   QVector3D average = { 0, 0, 0 };
   for (size_t i = 0; i < points.size(); i++) {
@@ -283,7 +291,6 @@ bool fitSpehere(std::vector<QVector3D> points, QVector3D& center, float& radius)
   float m00 = 0, m01 = 0, m02 = 0, m11 = 0, m12 = 0, m22 = 0;
   QVector3D r = { 0.0f, 0.0f, 0.0f };
   for (size_t i = 0; i < points.size(); i++) {
-    //QVector2D y(points[i].x() - average.x(), points[i].y() - average.y());
     QVector3D y = points[i] - average;
     float y0y0 = y.x() * y.x(), y0y1 = y.x() * y.y(), y0y2 = y.x() * y.z();
     float y1y1 = y.y() * y.y(), y1y2 = y.y() * y.z(), y2y2 = y.z() * y.z();
@@ -338,13 +345,12 @@ QVector3D projectPoint(const QVector3D& point, const QVector3D& sphereCenter, co
   return projectedPoint + sphereCenter;
 }
 
-//TODO: improvised algorithm, find a better way to do this
-void ScalpMap::updatePositionsProjected() {
-  positionsProjected.clear();
+bool ScalpMap::updatePositionsProjected() {
   QVector3D sphereCenter = {0, 0, 0};
   float radius = 0;
   if (!fitSpehere(positions, sphereCenter, radius)) {
     std::cout << "couldnt fite sphere\n";
+    return false;
   }
 
   QVector3D projectSphere(sphereCenter.x() / -2.0f, sphereCenter.y() / -2.0f, sphereCenter.z() / -2.0f);
@@ -357,6 +363,7 @@ void ScalpMap::updatePositionsProjected() {
     positionsProjectedOnSphere.push_back(projectPoint(positions[i], projectSphere, r));
   }
 
+  positionsProjected.clear();
   for (size_t i = 0; i < positions.size(); i++) {
     QVector2D newVec = { 0, 0 };
  

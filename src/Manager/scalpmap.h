@@ -53,7 +53,7 @@ private:
   void deleteFileInfoConnections();
   void setupCanvas();
   void updateFileInfoConnections();
-  void updatePositionsProjected();
+  bool updatePositionsProjected();
   bool positionsValid();
   bool enabled();
 
