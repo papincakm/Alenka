@@ -26,7 +26,7 @@ namespace AlenkaSignal {
 } // namespace AlenkaSignal
 
 /**
-* @brief Implements 2D scalp map.
+* @brief Time frequency model.
 */
 class TfModel {
 
@@ -53,10 +53,15 @@ public:
 
 	TfModel() {};
 
+  /**
+  * @brief Returns STFT result in a form of framcount * freqbin array.
+  * Results are filtered by min/max freq filter.
+  */
   std::vector<float> getStftValues();
 
 private:
   void applyWindowFunction(std::vector<float>& data);
+  std::vector<float> loadSamples();
 };
 
 #endif // TFMODEL_H
