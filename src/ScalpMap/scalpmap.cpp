@@ -3,7 +3,7 @@
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
-#include "../scalpcanvas.h"
+#include "scalpcanvas.h"
 #include <elidedlabel.h>
 #include <helplink.h>
 #include <QVBoxLayout>

@@ -1,13 +1,10 @@
 #include "tfvisualizer.h"
 
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
-#include "DataModel/opendatafile.h"
-#include "DataModel/undocommandfactory.h"
-#include "DataModel/vitnessdatamodel.h"
-#include "error.h"
-#include "myapplication.h"
-#include "openglprogram.h"
-#include "options.h"
+#include "../DataModel/opendatafile.h"
+#include "../error.h"
+#include "../openglprogram.h"
+#include "../options.h"
 
 #include <QCursor>
 #include <QKeyEvent>
@@ -39,19 +36,6 @@
 using namespace std;
 using namespace AlenkaFile;
 using namespace AlenkaSignal;
-
-namespace {
-const AbstractTrackTable *getTrackTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->trackTable(
-      OpenDataFile::infoTable.getSelectedMontage());
-}
-
-const AbstractEventTable *getEventTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->eventTable(
-      OpenDataFile::infoTable.getSelectedMontage());
-}
-
-} // namespace
 
 TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
   //TODO: initiate all rectangles here and update later in paint
@@ -358,8 +342,7 @@ void TfVisualizer::paintGL() {
     if (colormap.changed) {
       updateColormapTexture();
     }
-
-    //std::cout << "tf painting\n";
+    
     QPainter painter(this);
     painter.beginNativePainting();
     gl()->glUseProgram(channelProgram->getGLProgram());

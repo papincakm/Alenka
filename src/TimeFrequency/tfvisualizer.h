@@ -1,8 +1,8 @@
 #ifndef TFVISUALIZER_H
 #define TFVISUALIZER_H
 
-#include "openglinterface.h"
-#include "GraphicsTools/graphicsrectangle.h"
+#include "../openglinterface.h"
+#include "../GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>

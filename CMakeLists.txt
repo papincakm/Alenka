@@ -146,20 +146,22 @@ set(SRC
   src/Manager/montagemanager.h
   src/Manager/montagetablemodel.cpp
   src/Manager/montagetablemodel.h
-  src/Manager/scalpmap.cpp
-  src/Manager/scalpmap.h
   src/Manager/sortproxymodel.cpp
   src/Manager/sortproxymodel.h
   src/Manager/tablemodel.cpp
   src/Manager/tablemodel.h
-  src/Manager/tfanalyser.cpp
-  src/Manager/tfanalyser.h
   src/Manager/trackmanager.cpp
   src/Manager/trackmanager.h
   src/Manager/tracktablemodel.cpp
   src/Manager/tracktablemodel.h
   src/Manager/videoplayer.cpp
   src/Manager/videoplayer.h
+  src/ScalpMap/scalpcanvas.cpp
+  src/ScalpMap/scalpcanvas.h
+  src/ScalpMap/scalpmap.cpp
+  src/ScalpMap/scalpmap.h
+  src/ScalpMap/scalpmodel.cpp
+  src/ScalpMap/scalpmodel.h
   src/SignalProcessor/analysis.h
   src/SignalProcessor/automaticmontage.h
   src/SignalProcessor/bipolarmontage.cpp
@@ -180,6 +182,12 @@ set(SRC
   src/Sync/syncdialog.h
   src/Sync/syncserver.cpp
   src/Sync/syncserver.h
+  src/TimeFrequency/tfanalyser.cpp
+  src/TimeFrequency/tfanalyser.h
+  src/TimeFrequency/tfmodel.cpp
+  src/TimeFrequency/tfmodel.h
+  src/TimeFrequency/tfvisualizer.cpp
+  src/TimeFrequency/tfvisualizer.h
   src/canvas.cpp
   src/canvas.h
   src/error.cpp
@@ -197,16 +205,12 @@ set(SRC
   src/openglprogram.h
   src/options.cpp
   src/options.h
-  src/scalpcanvas.h
-  src/scalpcanvas.cpp
   src/signalfilebrowserwindow.cpp
   src/signalfilebrowserwindow.h
   src/signalviewer.cpp
   src/signalviewer.h
   src/spikedetsettingsdialog.cpp
   src/spikedetsettingsdialog.h
-  src/tfvisualizer.cpp
-  src/tfvisualizer.h
   src/tracklabelbar.cpp
   src/tracklabelbar.h
   #  Second version Alenka 2.0

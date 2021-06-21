@@ -1,15 +1,11 @@
 #include "scalpcanvas.h"
 
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
-#include "DataModel/opendatafile.h"
-#include "DataModel/undocommandfactory.h"
-#include "DataModel/vitnessdatamodel.h"
-#include "SignalProcessor/signalprocessor.h"
-#include "error.h"
-#include "myapplication.h"
-#include "openglprogram.h"
-#include "options.h"
-#include "signalviewer.h"
+#include "../DataModel/opendatafile.h"
+#include "../error.h"
+#include "../myapplication.h"
+#include "../openglprogram.h"
+#include "../options.h"
 
 #include <QCursor>
 #include <QKeyEvent>

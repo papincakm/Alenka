@@ -1,10 +1,10 @@
 #ifndef SCALPCANVAS_H
 #define SCALPCANVAS_H
 
-#include "SignalProcessor/lrucache.h"
-#include "openglinterface.h"
-#include "GraphicsTools/colormap.h"
-#include "GraphicsTools/graphicsrectangle.h"
+#include "../SignalProcessor/lrucache.h"
+#include "../openglinterface.h"
+#include "../GraphicsTools/colormap.h"
+#include "../GraphicsTools/graphicsrectangle.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl_gl.h>
