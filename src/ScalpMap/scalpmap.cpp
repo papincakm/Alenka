@@ -152,8 +152,6 @@ void ScalpMap::updateLabels() {
   if (!file || file->dataModel->montageTable()->rowCount() <= 0)
     return;
   
-  std::cout << "updating labels\n";
-  
   labels.clear();
   colors.clear();
   positions.clear();
@@ -264,11 +262,10 @@ void ScalpMap::updateToExtremaCustom() {
     dialog->close();
     updateSpectrum();
     //TODO: check if min is lesser than max
-    std::cout << "custom extrema accepted\n";
+
   });
 
   connect(buttonBox, &QDialogButtonBox::rejected, [this, dialog]() {
-    std::cout << "custom extrema rejected\n";
     OpenDataFile::infoTable.setExtremaLocal();
     dialog->close();
   });
@@ -349,7 +346,6 @@ bool ScalpMap::updatePositionsProjected() {
   QVector3D sphereCenter = {0, 0, 0};
   float radius = 0;
   if (!fitSpehere(positions, sphereCenter, radius)) {
-    std::cout << "couldnt fite sphere\n";
     return false;
   }
 
@@ -394,7 +390,6 @@ bool ScalpMap::updatePositionsProjected() {
   }
 
   float scale = std::max(maxX - minX, maxY - minY);
-  std::cout << "scale = " << scale << "\n";
 
   for_each(positionsProjected.begin(), positionsProjected.end(), [scale, maxX, maxY, minX, minY](auto& v)
   {

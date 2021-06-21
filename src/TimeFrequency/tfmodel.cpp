@@ -59,7 +59,7 @@ std::vector<float> TfModel::getStftValues() {
 
   std::vector<float> fftValues;
 
-  int tempFrameSize;
+  int zeroPaddedFrameSize;
   for (int f = 0; f < frameCount; f++) {
     auto begin = signal.begin() + f * hopSize;
     std::vector<float> input(begin, begin + frameSize);
@@ -69,18 +69,20 @@ std::vector<float> TfModel::getStftValues() {
 
     //pad with zeroes
     //TODO: is this correct?
-    tempFrameSize = frameSize;
-    while ((tempFrameSize  & (tempFrameSize - 1)) != 0) {
+    zeroPaddedFrameSize = frameSize;
+    while ((zeroPaddedFrameSize  & (zeroPaddedFrameSize - 1)) != 0) {
       input.push_back(0.0f);
-      tempFrameSize++;
+      zeroPaddedFrameSize++;
     }
 
     fftValues.insert(fftValues.end(), input.begin(), input.end());
   }
 
   std::vector<std::complex<float>> spectrum = fftProcessor->process(fftValues, globalContext.get(),
-    frameCount, tempFrameSize);
+    frameCount, zeroPaddedFrameSize);
   std::vector<float> processedValues;
+  
+  freqBins = zeroPaddedFrameSize / 2 + 1;
 
   freqBinsUsed = maxFreqBinDraw - minFreqBinDraw;
   for (int fc = 0; fc < frameCount; fc++) {
