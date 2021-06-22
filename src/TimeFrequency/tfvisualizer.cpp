@@ -222,44 +222,6 @@ int TfVisualizer::getMaxFrequency() {
   return maxFreqDraw;
 }
 
-//TODO: copied from scalpcanvas, move this to separate class
-void TfVisualizer::generateGradient(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices) {
-  float gradientWidth = 0.05f;
-  GLuint firstVertex = triangles.size() / 3;
-
-  //1. triangle, left bot vertex
-  triangles.push_back(gradient->getXleft());
-  triangles.push_back(specMesh.getYbot());
-  triangles.push_back(0.01f);
-  //TODO: refactor this
-  indices.push_back(firstVertex);
-
-  //right bot vertex
-  triangles.push_back(gradient->getXright());
-  triangles.push_back(specMesh.getYbot());
-  triangles.push_back(0.01f);
-  indices.push_back(firstVertex + 1);
-
-  //left top vertex
-  triangles.push_back(gradient->getXleft());
-  triangles.push_back(specMesh.getYtop());
-  triangles.push_back(1);
-  indices.push_back(firstVertex + 2);
-
-  //2. triangle
-  //right bot vertex
-  indices.push_back(firstVertex + 1);
-
-  //right top vertex
-  triangles.push_back(gradient->getXright());
-  triangles.push_back(specMesh.getYtop());
-  triangles.push_back(1);
-  indices.push_back(firstVertex + 3);
-
-  // left top vertex
-  indices.push_back(firstVertex + 2);
-}
-
 void TfVisualizer::paintGL() {
   using namespace chrono;
 
@@ -278,7 +240,7 @@ void TfVisualizer::paintGL() {
   auto specWindow = graphics::Rectangle(specMesh, this);
   specWindow.render();
 
-  auto gradWindow = graphics::Rectangle((graphics::Object) *gradient, this);
+  auto gradWindow = graphics::Rectangle((graphics::GObject) *gradient, this);
   gradWindow.render();
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
@@ -371,10 +333,6 @@ void TfVisualizer::paintGL() {
     for (int i = 0; i < 2; i++) {
       gl()->glDisableVertexAttribArray(i);
     }
-
-    //important for QPainter to work
-    //gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
     gl()->glDeleteBuffers(1, &posBuffer);
@@ -496,4 +454,43 @@ void TfVisualizer::mouseReleaseEvent(QMouseEvent* event) {
   {
     renderPopupMenu(event->pos());
   }
+}
+
+
+//TODO: copied from scalpcanvas, move this to separate class
+void TfVisualizer::generateGradient(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices) {
+  float gradientWidth = 0.05f;
+  GLuint firstVertex = triangles.size() / 3;
+
+  //1. triangle, left bot vertex
+  triangles.push_back(gradient->getXleft());
+  triangles.push_back(specMesh.getYbot());
+  triangles.push_back(0.01f);
+  //TODO: refactor this
+  indices.push_back(firstVertex);
+
+  //right bot vertex
+  triangles.push_back(gradient->getXright());
+  triangles.push_back(specMesh.getYbot());
+  triangles.push_back(0.01f);
+  indices.push_back(firstVertex + 1);
+
+  //left top vertex
+  triangles.push_back(gradient->getXleft());
+  triangles.push_back(specMesh.getYtop());
+  triangles.push_back(1);
+  indices.push_back(firstVertex + 2);
+
+  //2. triangle
+  //right bot vertex
+  indices.push_back(firstVertex + 1);
+
+  //right top vertex
+  triangles.push_back(gradient->getXright());
+  triangles.push_back(specMesh.getYtop());
+  triangles.push_back(1);
+  indices.push_back(firstVertex + 3);
+
+  // left top vertex
+  indices.push_back(firstVertex + 2);
 }

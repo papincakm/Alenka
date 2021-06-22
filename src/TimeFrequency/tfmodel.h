@@ -15,6 +15,7 @@ template <class T> T hammingWindow(int n, int M) {
   return static_cast<T>(0.54 - 0.46 * cos(tmp));
 }
 
+//TODO: copied from filterprocessor, this should be in separate filter function file
 template <class T> T blackmanWindow(int n, int M) {
   const double a = 0.16, a0 = (1 - a) / 2, a1 = 0.5, a2 = a / 2,
     tmp = 2 * M_PI * n / (M - 1);

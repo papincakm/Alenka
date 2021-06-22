@@ -106,7 +106,6 @@ void TfAnalyser::updateSpectrum() {
 }
 
 void TfAnalyser::setFrameSize() {
-  //TODO TUJE TEN MAJOR BUG
   tfModel->frameSize = frameLine->text().toInt();
 
   tfModel->maxFreqBinDraw = std::min(tfModel->maxFreqBinDraw, tfModel->freqBins);

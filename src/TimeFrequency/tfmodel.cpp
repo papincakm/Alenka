@@ -4,6 +4,7 @@
 #include "../DataModel/infotable.h"
 
 #include <algorithm>
+#include <iostream>
 
 #ifndef __APPLE__
 #if defined WIN_BUILD
@@ -27,31 +28,32 @@ std::vector<float> TfModel::getStftValues() {
 
   std::vector<float> signal = loadSamples();
 
-  std::vector<float> fftValues;
-
-  int zeroPaddedFrameSize;
+  std::vector<float> fftInput;
+  int zeroPaddedFrameSize = 0;
   for (int f = 0; f < frameCount; f++) {
     auto begin = signal.begin() + f * hopSize;
-    std::vector<float> input(begin, begin + frameSize);
+    std::vector<float> frameSamples(begin, begin + frameSize);
 
-    //TODO: mby do this in fftprocessor
-    applyWindowFunction(input);
+    applyWindowFunction(frameSamples);
 
     //pad with zeroes
-    //TODO: is this correct?
     zeroPaddedFrameSize = frameSize;
-    while ((zeroPaddedFrameSize  & (zeroPaddedFrameSize - 1)) != 0) {
-      input.push_back(0.0f);
+    while ((zeroPaddedFrameSize & (zeroPaddedFrameSize - 1)) != 0) {
+      frameSamples.push_back(0.0f);
       zeroPaddedFrameSize++;
     }
 
-    fftValues.insert(fftValues.end(), input.begin(), input.end());
+    fftInput.insert(fftInput.end(), std::make_move_iterator(frameSamples.begin()),
+      std::make_move_iterator(frameSamples.end()));
   }
 
-  std::vector<std::complex<float>> spectrum = fftProcessor->process(fftValues, globalContext.get(),
+  std::vector<std::complex<float>> spectrum = fftProcessor->process(fftInput, globalContext.get(),
     frameCount, zeroPaddedFrameSize);
 
   freqBins = zeroPaddedFrameSize / 2 + 1;
+
+  std::cout << "freqBins: " << freqBins << "\n";
+  std::cout << "specbins: " << spectrum.size() / (float) frameCount << "\n";
 
   //get magnitudes and filter undesired frequencies
   std::vector<float> processedValues;
@@ -117,14 +119,14 @@ std::vector<float> TfModel::loadSamples() {
   auto begin = buffer.begin() + readSampleCount * channelToDisplay;
   std::vector<float> signal;
 
-  //pad with zeroes at beginning
+  //pad with zeroes at the beginning
   for (int i = position - samplesToUse / 2; i <= 0; i++) {
     signal.push_back(0.0f);
   }
 
   signal.insert(signal.end(), begin, begin + readSampleCount);
 
-  //pad with zeroes on end
+  //pad with zeroes at the end
   const int totalSampleCount = frameCount * hopSize + frameSize;
   for (int i = readSampleCount; i < totalSampleCount; i++) {
     signal.push_back(0.0f);

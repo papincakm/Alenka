@@ -1,34 +1,26 @@
 #ifndef SCALPMODEL_H
 #define SCALPMODEL_H
 
-#include "../DataModel/infotable.h"
-
-#include <QWidget>
-#include <QColor>
-#include <QString>
 #include <QVector2D>
 #include <QVector3D>
 #include <memory>
 
-
 #include <vector>
-
-class OpenDataFile;
-class ScalpCanvas;
-class InfoTable;
 
 /**
 * @brief Implements 2D scalp map model.
 */
 class ScalpModel {
-  OpenDataFile *file = nullptr;
-  std::vector<QVector3D> positions;
-  std::vector<QVector2D> positionsProjected;
 
 public:
   ScalpModel(){};
 
+  std::vector<QVector2D> getPositionsProjected(const std::vector<QVector3D>& positions);
+
 private:
+  bool fitSpehere(std::vector<QVector3D> points, QVector3D& center, float& radius);
+  QVector3D projectPoint(const QVector3D& point, const QVector3D& sphereCenter, const float radius);
+  void scaleProjected(std::vector<QVector2D>& points);
 };
 
 #endif // SCALPMODEL_H

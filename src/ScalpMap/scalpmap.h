@@ -2,6 +2,7 @@
 #define SCALPMAP_H
 
 #include "../DataModel/infotable.h"
+#include "scalpmodel.h"
 
 #include <QWidget>
 #include <QColor>
@@ -25,6 +26,7 @@ class ScalpMap : public QWidget {
   Q_OBJECT
   OpenDataFile *file = nullptr;
   ScalpCanvas *scalpCanvas = nullptr;
+  ScalpModel model;
   //std::unique_ptr<ScalpCanvas> scalpCanvas;
   int selectedTrack = -1;
   float voltageMin = 0.0f;
@@ -34,10 +36,6 @@ class ScalpMap : public QWidget {
   //which will be referenced in here and trackLabelBar
   std::vector<QMetaObject::Connection> trackTableConnections;
   std::vector<QMetaObject::Connection> fileInfoConnections;
-  std::vector<QString> labels;
-  std::vector<QColor> colors;
-  std::vector<QVector3D> positions;
-  std::vector<QVector2D> positionsProjected;
 
 public:
   explicit ScalpMap(QWidget *parent = nullptr);
@@ -53,8 +51,7 @@ private:
   void deleteFileInfoConnections();
   void setupCanvas();
   void updateFileInfoConnections();
-  bool updatePositionsProjected();
-  bool positionsValid();
+  bool positionsValid(const std::vector<QVector3D>& positions);
   bool enabled();
 
 private slots:

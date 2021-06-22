@@ -21,11 +21,11 @@ enum Orientation { Horizontal, Vertical };
 
 enum Alignment { None, Center, Bot, Top};
 
-class Object {
+class GObject {
 public:
-  Object() {};
-  Object(float xleft, float xright, float ybot, float ytop) : xleft(xleft), xright(xright), ybot(ybot), ytop(ytop) {};
-  Object(const Object& object) { 
+  GObject() {};
+  GObject(float xleft, float xright, float ybot, float ytop) : xleft(xleft), xright(xright), ybot(ybot), ytop(ytop) {};
+  GObject(const GObject& object) { 
     xleft = object.xleft;
     xright = object.xright;
     ybot = object.ybot;
@@ -44,19 +44,19 @@ protected:
   float ytop = 0.0f;
 };
 
-class SquareMesh : public Object {
+class SquareMesh : public GObject {
 public:
   int rows = 0;
   int columns = 0;
 
   SquareMesh() {};
-  SquareMesh(float xleft, float xright, float ybot, float ytop) : Object(xleft, xright, ybot, ytop) {};
+  SquareMesh(float xleft, float xright, float ybot, float ytop) : GObject(xleft, xright, ybot, ytop) {};
 };
 
-class QtObject : public Object {
+class QtObject : public GObject {
 public:
   QtObject(float xleft, float xright, float ybot, float ytop, QWidget* widget) :
-    Object(xleft, xright, ybot, ytop), widget(widget) {
+    GObject(xleft, xright, ybot, ytop), widget(widget) {
     calculateWidgetProportions();
   };
 
@@ -69,7 +69,7 @@ public:
     calculateWidgetProportions();
   };
 
-  QtObject(const Object& object, QWidget* widget) : Object(object), widget(widget) {
+  QtObject(const GObject& object, QWidget* widget) : GObject(object), widget(widget) {
     calculateWidgetProportions();
   };
 
@@ -132,7 +132,7 @@ public:
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
-  Rectangle(const Object& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
+  Rectangle(const GObject& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
     Alignment alignment = Alignment::None) : QtObject(object, widget), boundRect(object, widget),
     backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
     calculateWidgetProportions();

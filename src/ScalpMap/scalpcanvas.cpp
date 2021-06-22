@@ -284,7 +284,7 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
   //TODO: make rotation option for user
   for (auto v : channelPositions) {
     //TODO: multiply more transparently, use different method, find proper way to do this
-    originalPositions.push_back(ElectrodePosition(-1 * v.y(), v.x()));
+    originalPositions.push_back(ElectrodePosition(-1 * v.y() - 0.17f, v.x()));
   }
 
   //TODO: refactor me
