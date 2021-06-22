@@ -129,80 +129,6 @@ void ScalpCanvas::initializeGL() {
   checkGLMessages();
 }
 
-void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
-  QMenu* menu = new QMenu(this);
-
-  //draw channels option
-  QAction setChannelDrawing("Draw Channels", this);
-
-  connect(&setChannelDrawing, &QAction::triggered, [this]() {
-    shouldDrawChannels = !shouldDrawChannels;
-    update();
-  });
-
-  menu->addAction(&setChannelDrawing);
-  menu->actions().back()->setCheckable(true);
-  menu->actions().back()->setChecked(shouldDrawChannels);
-
-  //draw labels option
-  QAction setLabelDrawing("Draw Labels", this);
-
-  connect(&setLabelDrawing, &QAction::triggered, [this]() {
-    shouldDrawLabels = !shouldDrawLabels;
-    update();
-  });
-
-  menu->addAction(&setLabelDrawing);
-  menu->actions().back()->setCheckable(true);
-  menu->actions().back()->setChecked(shouldDrawLabels);
-
-  menu->addSeparator();
-
-  menu->addMenu(colormap.getColormapMenu(this));
-
-  menu->addSeparator();
-
-  //setup extrema
-  QMenu* extremaMenu = menu->addMenu("Extrema");
-  auto* extremaGroup = new QActionGroup(this);
-  extremaGroup->setExclusive(true);
-
-  //set local extrema
-  QAction setExtremaLocal("Local", this);
-
-  connect(&setExtremaLocal, &QAction::triggered, [this]() {
-    OpenDataFile::infoTable.setExtremaLocal();
-  });
-  setExtremaLocal.setCheckable(true);
-
-  extremaMenu->addAction(&setExtremaLocal);
-  extremaGroup->addAction(&setExtremaLocal);
-
-  //set custom extrema
-  QAction setExtremaCustom("Custom", this);
-
-  connect(&setExtremaCustom, &QAction::triggered, [this]() {
-    OpenDataFile::infoTable.setExtremaCustom();
-  });
-  setExtremaCustom.setCheckable(true);
-
-  extremaMenu->addAction(&setExtremaCustom);
-  extremaGroup->addAction(&setExtremaCustom);
-
-  switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
-    case InfoTable::Extrema::custom:
-    setExtremaCustom.setChecked(true);
-    break;
-  case InfoTable::Extrema::local:
-    // std::cout << "MENU: LOCAL SELECTED\n";
-    setExtremaLocal.setChecked(true);
-    break;
-  }
-
-  menu->addMenu(extremaMenu);
-
-  menu->exec(mapToGlobal(pos));
-}
 //TODO: use indices for painting
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
@@ -527,7 +453,7 @@ void ScalpCanvas::paintGL() {
     gl()->glGenBuffers(1, &posBuffer);
     gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-    gl()->glBufferData(GL_ARRAY_BUFFER, scalpMesh.size() * sizeof(GLfloat), &scalpMesh[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ARRAY_BUFFER, scalpMesh.size() * sizeof(GLfloat), &scalpMesh[0], GL_DYNAMIC_DRAW);
 
     // 1st attribute buffer : vertices
     //current position
@@ -546,6 +472,11 @@ void ScalpCanvas::paintGL() {
 
     gl()->glFlush();
 
+    gl()->glFinish();
+
+    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    gl()->glDeleteBuffers(1, &posBuffer);
+
     // draw channels TODO: refactor - dont use points, add to main channel
     // TODO!!!:draw once and set it to be top of screen so it cant be drawn over
     //
@@ -562,7 +493,7 @@ void ScalpCanvas::paintGL() {
       gl()->glUseProgram(labelProgram->getGLProgram());
       gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
-      gl()->glBufferData(GL_ARRAY_BUFFER, channelBufferData.size() * sizeof(GLfloat), &channelBufferData[0], GL_STATIC_DRAW);
+      gl()->glBufferData(GL_ARRAY_BUFFER, channelBufferData.size() * sizeof(GLfloat), &channelBufferData[0], GL_DYNAMIC_DRAW);
 
       gl()->glEnableVertexAttribArray(0);
       gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -698,6 +629,125 @@ void ScalpCanvas::checkGLMessages() {
       ++lastGLMessageCount;
     }
   }
+}
+
+void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
+  QMenu* menu = new QMenu(this);
+
+  //draw channels option
+  QAction setChannelDrawing("Draw Channels", this);
+
+  connect(&setChannelDrawing, &QAction::triggered, [this]() {
+    shouldDrawChannels = !shouldDrawChannels;
+    update();
+  });
+
+  menu->addAction(&setChannelDrawing);
+  menu->actions().back()->setCheckable(true);
+  menu->actions().back()->setChecked(shouldDrawChannels);
+
+  //draw labels option
+  QAction setLabelDrawing("Draw Labels", this);
+
+  connect(&setLabelDrawing, &QAction::triggered, [this]() {
+    shouldDrawLabels = !shouldDrawLabels;
+    update();
+  });
+
+  menu->addAction(&setLabelDrawing);
+  menu->actions().back()->setCheckable(true);
+  menu->actions().back()->setChecked(shouldDrawLabels);
+
+  menu->addSeparator();
+
+  menu->addMenu(colormap.getColormapMenu(this));
+  menu->addMenu(setupProjectionMenu(menu));
+  menu->addSeparator();
+
+  QMenu* extremaMenu = menu->addMenu("Extrema");
+  auto* extremaGroup = new QActionGroup(this);
+  extremaGroup->setExclusive(true);
+
+  //set local extrema
+  QAction setExtremaLocal("Local", this);
+
+  connect(&setExtremaLocal, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setExtremaLocal();
+  });
+  setExtremaLocal.setCheckable(true);
+
+  extremaMenu->addAction(&setExtremaLocal);
+  extremaGroup->addAction(&setExtremaLocal);
+
+  //set custom extrema
+  QAction setExtremaCustom("Custom", this);
+
+  connect(&setExtremaCustom, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setExtremaCustom();
+  });
+  setExtremaCustom.setCheckable(true);
+
+  extremaMenu->addAction(&setExtremaCustom);
+  extremaGroup->addAction(&setExtremaCustom);
+
+  switch (OpenDataFile::infoTable.getScalpMapExtrema()) {
+  case InfoTable::Extrema::custom:
+    setExtremaCustom.setChecked(true);
+    break;
+  case InfoTable::Extrema::local:
+    setExtremaLocal.setChecked(true);
+    break;
+  }
+
+  //return extremaMenu;
+
+  menu->addMenu(extremaMenu);
+  menu->addSeparator();
+
+  menu->exec(mapToGlobal(pos));
+}
+
+QMenu* ScalpCanvas::setupExtremaMenu(QMenu* menu) {
+  return nullptr;
+}
+
+QMenu* ScalpCanvas::setupProjectionMenu(QMenu* menu) {
+  QMenu* projectionMenu =  new QMenu("Electrode Projection");
+  auto* projectionGroup = new QActionGroup(this);
+  projectionGroup->setExclusive(true);
+
+  //set no projection
+  QAction* setProjectionNone = new QAction("None", this);
+
+  connect(setProjectionNone, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setScalpMapProjection(false);
+  });
+  setProjectionNone->setCheckable(true);
+
+  projectionMenu->addAction(setProjectionNone);
+  projectionGroup->addAction(setProjectionNone);
+
+  //set stereographic projection
+  QAction* setProjectionStereo = new QAction("Stereographic", this);
+
+  connect(setProjectionStereo, &QAction::triggered, [this]() {
+    OpenDataFile::infoTable.setScalpMapProjection(true);
+  });
+  setProjectionStereo->setCheckable(true);
+
+  projectionMenu->addAction(setProjectionStereo);
+  projectionGroup->addAction(setProjectionStereo);
+
+  switch (OpenDataFile::infoTable.getScalpMapProjection()) {
+  case true:
+    setProjectionStereo->setChecked(true);
+    break;
+  case false:
+    setProjectionNone->setChecked(true);
+    break;
+  }
+
+  return projectionMenu;
 }
 
 //TODO: refactor with triangle class and operations!!

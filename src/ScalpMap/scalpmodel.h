@@ -13,6 +13,8 @@
 class ScalpModel {
 
 public:
+  bool useStereographicProjection = true;
+
   ScalpModel(){};
 
   std::vector<QVector2D> getPositionsProjected(const std::vector<QVector3D>& positions);

@@ -21,6 +21,7 @@ void InfoTable::setDefaultValues() {
   selectedMontage = 1;
   selectedScalpMapExtrema = Extrema::local;
   timeMode = InfoTable::TimeMode::offset;
+  scalpMapProjection = true;
   selectedType = 0;
   timeLineInterval = 1;
   frequencyMultipliers.clear();

@@ -162,7 +162,6 @@ private:
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();
   void renderGradientText();
-  void renderPopupMenu(const QPoint& pos);
   GLuint setupColormapTexture(std::vector<float> colormap);
   void updateColormapTexture();
   void setupScalpMesh();
@@ -170,6 +169,10 @@ private:
   std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
     const std::vector<float> yAxis, const std::vector<float>& values);
 
+  //menu
+  void renderPopupMenu(const QPoint& pos);
+  QMenu* setupExtremaMenu(QMenu* menu);
+  QMenu* setupProjectionMenu(QMenu* menu);
 };
 
 #endif // SCALPCANVAS_H

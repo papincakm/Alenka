@@ -105,6 +105,9 @@ void RectangleText::drawText(float x, float y) {
 
 
   if (textOrientation == Orientation::Vertical) {
+    //set minimum height
+    int textwidth = std::max(widthReal, 20.0f);
+
     //rotate
     painter.translate(widget->width() / 2, widget->height() / 2);
     painter.rotate(-90);
@@ -112,7 +115,7 @@ void RectangleText::drawText(float x, float y) {
     //painter.drawText(y, x, text);
 
     //scale
-    auto rect = QRectF(y, x, heightReal, widthReal);
+    auto rect = QRectF(y, x, heightReal, textwidth);
     QFontMetrics fm(painter.font());
     qreal sx = rect.width() * 1.0f / fm.width(text);
     qreal sy = rect.height() * 1.0f / fm.height();
@@ -122,8 +125,10 @@ void RectangleText::drawText(float x, float y) {
     painter.drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
   }
   else {
-    //scale
-    const auto rect = QRectF(x, y, widthReal, heightReal);
+    //set minimum height
+    int textHeight = std::max(heightReal, 20.0f);
+
+    const auto rect = QRectF(x, y, widthReal, textHeight);
     QFontMetrics fm(painter.font());
     qreal sx = rect.width() * 1.0f / fm.width(text);
     qreal sy = rect.height() * 1.0f / fm.height();

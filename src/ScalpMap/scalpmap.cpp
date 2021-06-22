@@ -30,6 +30,8 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
   if (file) {
+    model.useStereographicProjection = file->infoTable.getScalpMapProjection();
+
     updateFileInfoConnections();
     updateLabels();
   }
@@ -64,6 +66,10 @@ void ScalpMap::updateFileInfoConnections() {
 
   c = connect(&file->infoTable, SIGNAL(useExtremaLocal()),
     this, SLOT(updateToExtremaLocal()));
+  fileInfoConnections.push_back(c);
+
+  c = connect(&file->infoTable, SIGNAL(scalpMapProjectionChanged(bool)),
+    this, SLOT(setScalpMapProjection(bool)));
   fileInfoConnections.push_back(c);
 
   c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
@@ -263,4 +269,10 @@ void ScalpMap::updateToExtremaCustom() {
   });
 
   dialog->exec();
+}
+
+void ScalpMap::setScalpMapProjection(bool proj) {
+  model.useStereographicProjection = proj;
+  updateLabels();
+  updateSpectrum();
 }

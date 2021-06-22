@@ -42,7 +42,6 @@ private:
   AlenkaSignal::WindowFunction filterWindow;
   int selectedMontage;
   InfoTable::TimeMode timeMode;
-  InfoTable::Extrema selectedScalpMapExtrema;
   int selectedType;
   double timeLineInterval;
   std::vector<dpair> frequencyMultipliers;
@@ -55,6 +54,8 @@ private:
   int pixelViewWidth;
   std::vector<float> filterCoefficients;
   QString globalMontageHeader;
+  bool scalpMapProjection;
+  InfoTable::Extrema selectedScalpMapExtrema;
   std::vector<float> signalCurPosProcessed;
 
 public:
@@ -112,6 +113,9 @@ public:
   const InfoTable::Extrema getScalpMapExtrema() const {
     return selectedScalpMapExtrema;
   }
+  const bool getScalpMapProjection() const {
+    return scalpMapProjection;
+  }
   QString getGlobalMontageHeader() const { return globalMontageHeader; }
 
 signals:
@@ -136,6 +140,7 @@ signals:
   void pixelViewWidthChanged(int);
   void filterCoefficientsChanged();
   void globalMontageHeaderChanged(QString);
+  void scalpMapProjectionChanged(bool);
 	void signalCurPosProcessedChanged();
   void useExtremaCustom();
   void useExtremaLocal();
@@ -287,6 +292,11 @@ public slots:
   void setExtremaLocal() {
     selectedScalpMapExtrema = InfoTable::Extrema::local;
     emit useExtremaLocal();
+  }
+
+  void setScalpMapProjection(bool proj) {
+    scalpMapProjection = proj;
+    emit scalpMapProjectionChanged(proj);
   }
 };
 

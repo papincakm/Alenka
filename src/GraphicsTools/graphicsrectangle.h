@@ -21,6 +21,9 @@ enum Orientation { Horizontal, Vertical };
 
 enum Alignment { None, Center, Bot, Top};
 
+/**
+* @brief Defines the coordinates of a graphical object.
+*/
 class GObject {
 public:
   GObject() {};
@@ -53,6 +56,9 @@ public:
   SquareMesh(float xleft, float xright, float ybot, float ytop) : GObject(xleft, xright, ybot, ytop) {};
 };
 
+/**
+* @brief GObject with real Qt coordinates based on the input widget.
+*/
 class QtObject : public GObject {
 public:
   QtObject(float xleft, float xright, float ybot, float ytop, QWidget* widget) :
@@ -110,7 +116,6 @@ public:
     Alignment alignment = Alignment::None) :
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), backgroundColor(backgroundColor),
     orientation(orientation), alignment(alignment) {
-    calculateWidgetProportions();
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
@@ -119,7 +124,6 @@ public:
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
     orientation(orientation), alignment(alignment) {
     backgroundColor = widget->palette().color(QPalette::Window);
-    calculateWidgetProportions();
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
@@ -128,14 +132,12 @@ public:
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), orientation(orientation),
     alignment(alignment) {
     backgroundColor = widget->palette().color(QPalette::Window);
-    calculateWidgetProportions();
     //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
   Rectangle(const GObject& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
     Alignment alignment = Alignment::None) : QtObject(object, widget), boundRect(object, widget),
     backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
-    calculateWidgetProportions();
   };
 
   virtual void render();

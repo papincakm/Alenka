@@ -56,6 +56,7 @@ private slots:
   void updateSpectrum();
   void updateToExtremaCustom();
   void updateToExtremaLocal();
+  void setScalpMapProjection(bool proj);
 };
 
 #endif // SCALPMAP_H

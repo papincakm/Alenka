@@ -240,8 +240,7 @@ void TfVisualizer::paintGL() {
   auto specWindow = graphics::Rectangle(specMesh, this);
   specWindow.render();
 
-  auto gradWindow = graphics::Rectangle((graphics::GObject) *gradient, this);
-  gradWindow.render();
+  gradient->render();
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
     graphics::LineChain(gradient->getXright(), gradient->getXright() + 0.02f, specMesh.getYbot(), specMesh.getYtop(), this, 5,

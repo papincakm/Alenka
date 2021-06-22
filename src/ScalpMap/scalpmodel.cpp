@@ -98,10 +98,14 @@ std::vector<QVector2D> ScalpModel::getPositionsProjected(const std::vector<QVect
   for (size_t i = 0; i < positions.size(); i++) {
     QVector2D newVec = { 0, 0 };
 
-    newVec.setX(positionsProjectedOnSphere[i].x() / (r - positionsProjectedOnSphere[i].z()));
-    newVec.setY(positionsProjectedOnSphere[i].y() / (r - positionsProjectedOnSphere[i].z()));
-    //newVec.setX(positionsProjectedOnSphere[i].x());
-    //newVec.setY(positionsProjectedOnSphere[i].y());
+    if (useStereographicProjection) {
+      newVec.setX(positionsProjectedOnSphere[i].x() / (r - positionsProjectedOnSphere[i].z()));
+      newVec.setY(positionsProjectedOnSphere[i].y() / (r - positionsProjectedOnSphere[i].z()));
+    }
+    else {
+      newVec.setX(positionsProjectedOnSphere[i].x());
+      newVec.setY(positionsProjectedOnSphere[i].y());
+    }
 
     positionsProjected.push_back(newVec);
   }
