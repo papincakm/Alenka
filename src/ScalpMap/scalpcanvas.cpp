@@ -307,24 +307,6 @@ void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffe
 	minVoltage = min;
 	maxVoltage = max;
 
-  /*int size = std::min(originalPositions.size(), channelDataBuffer.size());
-  std::vector<float> newVoltages;
-  for (int i = 0; i < size; i++) {
-    if (channelDataBuffer[i] < minVoltage) {
-      newVoltages.push_back(minVoltage);
-    } else if (channelDataBuffer[i] > maxVoltage) {
-      newVoltages.push_back(maxVoltage);
-    }
-    else {
-      newVoltages.push_back(channelDataBuffer[i]);
-    }
-  }
-
-  convertToRange(newVoltages, 0, 1);
-
-  for (int i = 0; i < size; i++) {
-    originalPositions[i].voltage = newVoltages[i];
-  }*/
   //TODO: if i set custom minmax to 1000 and 1500 (or -1000 2500) then some triangles are blue and should be red
 	float maxMinusMin = maxVoltage - minVoltage;
 
@@ -383,9 +365,6 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& point
     bool samePoint = false;
 
     for (int j = 0; j < originalPositions.size(); j++) {
-      /*float distance = std::sqrt((points[i] - originalPositions[j].x) * (points[i] - originalPositions[j].x) +
-        (points[i + 1] - originalPositions[j].y) * (points[i + 1] - originalPositions[j].y));*/
-
       float distance = getDistance(points[i], points[i + 1], originalPositions[j].x, originalPositions[j].y);
 
       if (distance == 0) {
@@ -401,12 +380,7 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& point
 
     int usedNearestPos = 3;
 
-    /*for (int j = distances.size() - 1; j > distances.size() - usedNearestPos - 1; j--) {
-      sumDistance += distances[j].first;
-    }*/
-
     for (int j = distances.size() - 1; j > distances.size() - usedNearestPos - 1; j--) {
-     // singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(distances[j].first / sumDistance, distances[j].second));
       singlePointSpatialCoefficients.push_back(PointSpatialCoefficient(1 / distances[j].first * distances[j].first * distances[j].first, distances[j].second));
     }
 
@@ -656,29 +630,6 @@ bool ScalpCanvas::ready() {
   return dataReadyToDraw && triangulatedPositions.size() > 0;
 }
 
-void ScalpCanvas::drawCircle(float cx, float cy, float r, int num_segments)
-{
-	float theta = 2 * 3.1415926 / float(num_segments);
-	float c = cosf(theta);//precalculate the sine and cosine
-	float s = sinf(theta);
-	float t;
-
-	float x = r;//we start at angle = 0 
-	float y = 0;
-
-	glBegin(GL_LINE_LOOP);
-	for (int ii = 0; ii < num_segments; ii++)
-	{
-		glVertex2f(x + cx, y + cy);//output vertex 
-
-								   //apply the rotation matrix
-		t = x;
-		x = c * x - s * y;
-		y = s * t + c * y;
-	}
-	glEnd();
-}
-
 void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
 	int realX = width() / 2 + (width() / 2) * x;
 	int realY = height() / 2 + (height() / 2) * y * -1;
@@ -695,6 +646,58 @@ void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& 
 	painter.setFont(font);
 	painter.drawText(realX, realY, str);
   painter.end();
+}
+
+void ScalpCanvas::mousePressEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
+    gradient->clicked(event->pos());
+  }
+}
+
+void ScalpCanvas::mouseMoveEvent(QMouseEvent* event) {
+  if (gradient->isClicked) {
+    gradient->change(colormap, event->pos());
+    update();
+  }
+}
+
+void ScalpCanvas::mouseReleaseEvent(QMouseEvent* event) {
+  if (gradient->isClicked) {
+    gradient->released();
+  }
+  else if (event->button() == Qt::RightButton)
+  {
+    renderPopupMenu(event->pos());
+  }
+}
+
+void ScalpCanvas::mouseDoubleClickEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::MiddleButton && gradient->contains(event->pos()))
+  {
+    colormap.reset();
+    update();
+  }
+}
+
+void ScalpCanvas::checkGLMessages() {
+  auto logPtr = OPENGL_INTERFACE->log();
+
+  if (logPtr) {
+    for (const auto &m : logPtr->loggedMessages()) {
+      string message = m.message().toStdString();
+
+      if (message != lastGLMessage) {
+        logLastGLMessage();
+        lastGLMessageCount = 0;
+
+        logToFile("OpenGL message: " << message);
+      }
+
+      lastGLMessage = message;
+      ++lastGLMessageCount;
+    }
+  }
 }
 
 //TODO: refactor with triangle class and operations!!
@@ -821,56 +824,4 @@ std::vector<GLfloat> ScalpCanvas::generateTriangulatedGrid(const std::vector<flo
   }
 
   return triangles;
-}
-
-void ScalpCanvas::mousePressEvent(QMouseEvent* event) {
-  if (event->button() == Qt::LeftButton && gradient->contains(event->pos())) {
-    gradient->clicked(event->pos());
-  }
-}
-
-void ScalpCanvas::mouseMoveEvent(QMouseEvent* event) {
-  if (gradient->isClicked) {
-    gradient->change(colormap, event->pos());
-    update();
-  }
-}
-
-void ScalpCanvas::mouseReleaseEvent(QMouseEvent* event) {
-  if (gradient->isClicked) {
-    gradient->released();
-  }
-  else if (event->button() == Qt::RightButton)
-  {
-    renderPopupMenu(event->pos());
-  }
-}
-
-void ScalpCanvas::mouseDoubleClickEvent(QMouseEvent* event)
-{
-  if (event->button() == Qt::MiddleButton && gradient->contains(event->pos()))
-  {
-    colormap.reset();
-    update();
-  }
-}
-
-void ScalpCanvas::checkGLMessages() {
-  auto logPtr = OPENGL_INTERFACE->log();
-
-  if (logPtr) {
-    for (const auto &m : logPtr->loggedMessages()) {
-      string message = m.message().toStdString();
-
-      if (message != lastGLMessage) {
-        logLastGLMessage();
-        lastGLMessageCount = 0;
-
-        logToFile("OpenGL message: " << message);
-      }
-
-      lastGLMessage = message;
-      ++lastGLMessageCount;
-    }
-  }
 }

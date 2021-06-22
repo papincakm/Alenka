@@ -89,11 +89,9 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<ElectrodePosition> originalPositions;
   //TODO: replace with single struct
   std::vector<ElectrodePosition> triangulatedPositions;
-  std::vector<GLfloat> splitTriangulatedPositions;
-  std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
-	GLuint posBuffer;
-	//TODO: possibly not needed
   std::vector<GLfloat> scalpMesh;
+  std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
+  GLuint posBuffer;
 	QAction *setChannelDrawing;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
@@ -153,10 +151,6 @@ private:
    * open and/or the current montage is empty.
    */
   bool ready();
-
-  //TODO:: move to approp file
-  //source: http://slabode.exofire.net/circle_draw.shtml
-  void drawCircle(float cx, float cy, float r, int num_segments);
 
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 

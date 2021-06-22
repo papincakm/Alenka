@@ -5,13 +5,10 @@
 #include "scalpmodel.h"
 
 #include <QWidget>
-#include <QColor>
 #include <QString>
 #include <QVector2D>
 #include <QVector3D>
 #include <memory>
-
-
 #include <vector>
 
 class OpenDataFile;
