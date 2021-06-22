@@ -1,10 +1,11 @@
 #include "trackmanager.h"
 
 #include "../../Alenka-File/include/AlenkaFile/datafile.h"
+#include "../../Alenka-File/include/AlenkaFile/elc.h"
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
-#include <fstream>
-#include <sstream>
+
+#include<iostream>
 
 using namespace AlenkaFile;
 
@@ -36,101 +37,50 @@ bool TrackManager::insertRowBack() {
 //TODO: move this to separate file and refactor
 //TODO: treat errors
 void TrackManager::loadCoordinates() {
-		QString fileName = QFileDialog::getOpenFileName(this, tr("Load Electrode Locations"), "/", "Electrode location files (*.elc)");
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Load Electrode Locations"), "/", "Electrode location files (*.elc)");
+  std::vector<ElcPosition> positions = ElcFileReader::read(fileName.toStdString());
 
-		//TODO: move to separate file
-		std::ifstream f(fileName.toStdString());
+  if (!positions.empty()) {
 
-		if (f.is_open()) {
-				std::vector<std::pair<std::string, QVector3D>> positions;
-				std::string line;
-				int nPositions;
+    int row = tableView->model()->rowCount();
+    int col = tableView->model()->columnCount();
 
-				//get positions count
-				while (std::getline(f, line)) {
-						if ((line.find("NumberPositions=") != std::string::npos)) {
-								std::istringstream iss(line);
-								std::string data;
-								iss >> data;
-								iss >> nPositions;
-								break;
-						}
-				}
+    const int tableLabel = 1;
+    const int tableHidden = 5;
+    const int tableX = 6;
+    const int tableY = 7;
+    const int tableZ = 8;
 
-				//get positions
-				while (std::getline(f, line)) {
-						if ((line.find("Positions") != std::string::npos)) {
-								break;
-						}
-				}
+    for (int i = 0; i < row; i++) {
+      bool found = false;
+      std::string label = tableView->model()->data(tableView->model()->index(i, tableLabel), Qt::DisplayRole).toString().toStdString();
+      std::transform(label.begin(), label.end(), label.begin(), ::tolower);
 
-				//load positions
-				for (int i = 0; i < nPositions; i++) {
-						std::getline(f, line);
-						std::istringstream iss(line);
+      bool tableViewBlockState;
+      if (i < row - 1) {
+        tableViewBlockState = tableView->model()->blockSignals(true);
+      }
 
-						std::string label = "";
-						std::string loaded;
-						float posX;
-						float posY;
-						float posZ;
+      for (auto v : positions) {
+        if ((label.compare(v.label)) == 0) {
+          std::cout << "trackmanager: " << v.label << " x" << v.x << " y" << v.y << " z" << v.z << "\n";
+          tableView->model()->setData(tableView->model()->index(i, tableX), v.x);
+          tableView->model()->setData(tableView->model()->index(i, tableY), v.y);
+          tableView->model()->setData(tableView->model()->index(i, tableZ), v.z);
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+        tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
 
-            int ll = 0;
-            while (++ll) {
-              iss >> loaded;
-
-              if (loaded == ":")
-                break;
-
-              if (ll > 1)
-                label.append(" ");
-
-              label.append(loaded);
-            }
-
-						iss >> posX >> posY >> posZ;
-
-						std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-
-						positions.push_back(std::make_pair(label, QVector3D(posX, posY, posZ)));
-				}
-
-				int row = tableView->model()->rowCount();
-				int col = tableView->model()->columnCount();
-
-				const int tableLabel = 1;
-				const int tableHidden = 5;
-				const int tableX = 6;
-				const int tableY = 7;
-				const int tableZ = 8;
-
-				for (int i = 0; i < row; i++) {
-						bool found = false;
-						std::string label = tableView->model()->data(tableView->model()->index(i, tableLabel), Qt::DisplayRole).toString().toStdString();
-						std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-
-            bool tableViewBlockState;
-            if (i < row - 1) {
-              tableViewBlockState = tableView->model()->blockSignals(true);
-            }
-
-						for (auto v : positions) {
-								if ((label.compare(v.first)) == 0) {
-										tableView->model()->setData(tableView->model()->index(i, tableX), v.second.x());
-										tableView->model()->setData(tableView->model()->index(i, tableY), v.second.y());
-										tableView->model()->setData(tableView->model()->index(i, tableZ), v.second.z());
-										found = true;
-										break;
-								}
-						}
-						if (!found)
-								tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
-
-            if (i < row - 1) {
-              tableView->model()->blockSignals(tableViewBlockState);
-            }
-				}
-		}
-
-
+      if (i < row - 1) {
+        tableView->model()->blockSignals(tableViewBlockState);
+      }
+    }
+  }
+  else {
+    int ret = QMessageBox::critical(this, tr("Alenka"),
+      tr("Invalid structure of the file.\n"));
+  }
 }

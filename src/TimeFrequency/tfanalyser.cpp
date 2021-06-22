@@ -56,6 +56,8 @@ void TfAnalyser::changeFile(OpenDataFile *file) {
 				updateConnections();
 				updateSpectrum();
 
+        channelSpinBox->setRange(0, file->file->getChannelCount());
+
         tfModel->frequency = file->file->getSamplingFrequency() / 2;
         visualizer->setFrequency(tfModel->frequency);
         visualizer->setMinFrequency(0);
@@ -192,7 +194,7 @@ QLayout* TfAnalyser::createChannelTimeMenu() {
 
   channelSpinBox = new QSpinBox();
   //TODO: set max pos channel from file
-  channelSpinBox->setRange(0, 180);
+  channelSpinBox->setRange(0, 0);
   connect(channelSpinBox, SIGNAL(valueChanged(int)), this,
     SLOT(setChannelToDisplay(int)));
 

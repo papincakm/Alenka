@@ -91,6 +91,7 @@ set(SRC
   include/AlenkaFile/datamodel.h
   include/AlenkaFile/edf.h
   include/AlenkaFile/eep.h
+  include/AlenkaFile/elc.h
   include/AlenkaFile/gdf2.h
   include/AlenkaFile/mat.h
   src/datafile.cpp
@@ -99,6 +100,7 @@ set(SRC
   src/edflib_extended.cpp
   src/edflib_extended.h
   src/eep.cpp
+  src/elc.cpp
   src/gdf2.cpp
   src/mat.cpp
 )

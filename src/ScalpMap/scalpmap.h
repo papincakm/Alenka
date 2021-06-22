@@ -24,8 +24,6 @@ class ScalpMap : public QWidget {
   OpenDataFile *file = nullptr;
   ScalpCanvas *scalpCanvas = nullptr;
   ScalpModel model;
-  //std::unique_ptr<ScalpCanvas> scalpCanvas;
-  int selectedTrack = -1;
   float voltageMin = 0.0f;
   float voltageMax = 0.0f;
   bool parentVisible = true;

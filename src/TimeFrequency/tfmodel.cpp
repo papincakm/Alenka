@@ -52,8 +52,8 @@ std::vector<float> TfModel::getStftValues() {
 
   freqBins = zeroPaddedFrameSize / 2 + 1;
 
-  std::cout << "freqBins: " << freqBins << "\n";
-  std::cout << "specbins: " << spectrum.size() / (float) frameCount << "\n";
+  //std::cout << "freqBins: " << freqBins << "\n";
+  //std::cout << "specbins: " << spectrum.size() / (float) frameCount << "\n";
 
   //get magnitudes and filter undesired frequencies
   std::vector<float> processedValues;
