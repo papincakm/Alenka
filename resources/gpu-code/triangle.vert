@@ -14,14 +14,12 @@ attribute vec2 currentPosition;
 attribute float frequency;
 #else
 in vec2 currentPosition;
-in float frequency;
+in float amplitude;
 #endif
-out float oFrequency;
+out float oAmplitude;
 
 void main()
 {
   gl_Position.xy = currentPosition;
-  gl_Position.z = 0.0;
-  gl_Position.w = 1.0;
-  oFrequency = frequency;
+  oAmplitude = amplitude;
 }

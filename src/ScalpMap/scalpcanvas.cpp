@@ -114,11 +114,11 @@ void ScalpCanvas::initializeGL() {
 	triangleVertFile.open(QIODevice::ReadOnly);
 	string triangleVert = triangleVertFile.readAll().toStdString();
 
-	QFile channelFragFile(":/channel.frag");
-	channelFragFile.open(QIODevice::ReadOnly);
-	string channelFrag = channelFragFile.readAll().toStdString();
+	QFile triangleFragFile(":/triangle.frag");
+	triangleFragFile.open(QIODevice::ReadOnly);
+	string triangleFrag = triangleFragFile.readAll().toStdString();
 
-	channelProgram = make_unique<OpenGLProgram>(triangleVert, channelFrag);
+	channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
 
   gl()->glUseProgram(channelProgram->getGLProgram());
 	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
@@ -387,10 +387,8 @@ GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
   //TODO: should this be here? corrupts text
   //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, colormap.size() / 4, 0, GL_RGBA, GL_FLOAT, colormap.data());
+  gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, colormap.size() / 3, 0, GL_RGB, GL_FLOAT, colormap.data());
 
-  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -401,7 +399,7 @@ GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
 }
 
 void ScalpCanvas::updateColormapTexture() {
-  gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 4, GL_RGBA, GL_FLOAT, colormap.get().data());
+  gl()->glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colormap.get().size() / 3, GL_RGB, GL_FLOAT, colormap.get().data());
   colormap.changed = false;
 }
 
@@ -473,10 +471,11 @@ void ScalpCanvas::paintGL() {
       gl()->glDrawArrays(GL_POINTS, 0, channelBufferData.size());
       gl()->glDisableVertexAttribArray(0);
 
-      gl()->glFlush();
-      gl()->glFinish();
       gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
       gl()->glDeleteBuffers(1, &posBuffer);
+
+      gl()->glFlush();
+      gl()->glFinish();
     }
 
 

@@ -5,13 +5,13 @@
 #include <algorithm>
 #include <QMenu>
 
+#define COLOR_PARTITIONS 150
+
 namespace graphics{
 
 enum ColorPallete { Jet, Rainbow, CoolWarmSmooth };
 
 class Colormap {
-
-  int partitionCount = 150;
   int center = 0.0f;
   //TODO: temp solution,
   //possible better sol would be creating graphics widget as parent of tfvis and scalpcanvas
@@ -24,8 +24,6 @@ public:
 
   Colormap();
   Colormap(ColorPallete colpal);
-  //TODO: temp sol
-  void setPartitionCount(int count);
   void changeColorPallete(ColorPallete colorPallete);
   void change(float contrast, float brightness);
   void reset();

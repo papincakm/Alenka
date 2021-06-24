@@ -9,6 +9,5 @@
 		<file>zoom_in_vertical.png</file>
 		<file>zoom_out_horizontal.png</file>
 		<file>zoom_out_vertical.png</file>
-		<file>eeg_head.jpg</file>
 	</qresource>
 </RCC>

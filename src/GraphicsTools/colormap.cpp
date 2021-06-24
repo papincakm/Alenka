@@ -137,7 +137,7 @@ void Colormap::change(float contrast, float brightness) {
   center = brightness;
   createTextureBR();
 
-  for (int i = 0; i < colormapTextureBuffer.size(); i += 4) {
+  for (int i = 0; i < colormapTextureBuffer.size(); i += 3) {
     colormapTextureBuffer[i] = truncate<float>(defaultColormapTextureBuffer[i] * contrast, 0, 1.0f);
     colormapTextureBuffer[i + 1] = truncate<float>(defaultColormapTextureBuffer[i + 1] * contrast, 0, 1.0f);
     colormapTextureBuffer[i + 2] = truncate<float>(defaultColormapTextureBuffer[i + 2] * contrast, 0, 1.0f);
@@ -151,10 +151,6 @@ void Colormap::reset() {
   createTextureBR();
 
   changed = true;
-}
-
-void Colormap::setPartitionCount(int count) {
-  partitionCount = count;
 }
 
 std::vector<float> Colormap::getColorTemplate(ColorPallete colpal) {
@@ -179,26 +175,20 @@ void Colormap::createTextureBR() {
   std::vector<int> colorPosition(colorCnt);
   colorPosition[0] = 0;
   for (int i = 1; i < colorCnt; i++) {
-    colorPosition[i] = i * partitionCount / (interpolationRegions) - 1;
+    colorPosition[i] = i * COLOR_PARTITIONS / (interpolationRegions) - 1;
   }
 
   //movable center
   for (int i = 1; i < colorCnt - 1; i++) {
-    colorPosition[i] = truncate<float>(colorPosition[i] + center, 1, partitionCount - 1);
+    colorPosition[i] = truncate<float>(colorPosition[i] + center, 1, COLOR_PARTITIONS - 1);
   }
 
   int red = 0;
   int green = 1;
   int blue = 2;
-
-  /*std::cout << "colorPos: ";
-  for (auto a : colorPosition) {
-    std::cout << a << " ";
-  }
-  std::cout << "\n";*/
-
+  int partitionSize = 3;
   //TODO: is rgba required or is rgb sufficient? 
-  std::vector<float> colormap(partitionCount * 4, 0);
+  std::vector<float> colormap(COLOR_PARTITIONS * partitionSize, 0);
 
   //interpolate with next color
   for (int i = 0; i < interpolationRegions; i++) {
@@ -214,11 +204,10 @@ void Colormap::createTextureBR() {
       float blueC = (parts - j) / parts * colorTemplate[firstColor + blue] + j /
         parts * colorTemplate[secondColor + blue];
 
-      int pos = colorPosition[i] * 4 + j * 4;
+      int pos = colorPosition[i] * partitionSize + j * partitionSize;
       colormap[pos + red] = redC;
       colormap[pos + green] = greenC;
       colormap[pos + blue] = blueC;
-      colormap[pos + 3] = 1.0f;
     }
   }
   

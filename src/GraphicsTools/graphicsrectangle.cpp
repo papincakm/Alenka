@@ -15,12 +15,6 @@ void Rectangle::renderFull() {
 
   painter.setPen(pen);
 
-  /*painter.setRenderHint(
-    QPainter::Antialiasing);*/
-
-  //painter.setWindow(QRect(-1, -1, 1, 1));
-  //painter.drawLine(realBotx - 0.6f, realBoty, realBotx - 0.6f, realTopy);
-  //painter.drawLine(realTopx + 1.5f, realBoty, realTopx + 1.5f, realTopy);
   painter.drawRect(QRectF(xleftReal, ytopReal, widthReal, heightReal));
 }
 

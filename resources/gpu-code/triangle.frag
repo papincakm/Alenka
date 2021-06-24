@@ -1,8 +1,8 @@
 /**
- * @brief Source code of the fragment shader used for all the drawing modes.
+ * @brief Source code of the fragment shader used for spectrogram and scalp map.
  *
  * @file
- * @include color.frag
+ * @include triangle.frag
  */
 /// @cond
 
@@ -16,7 +16,7 @@ out vec4  outColor;
 #extension GL_EXT_gpu_shader4 : enable
 attribute vec3 oBarCoords;
 #else
-in float oFrequency;
+in float oAmplitude;
 #endif
 
 
@@ -63,13 +63,13 @@ void main() {
 	for (float i = 0; i < bins; i++) {
 		float f = i / bins;
 
-		if (f > oFrequency) {
+		if (f > oAmplitude) {
 			color = vec4(getColorGrad(f), 1);
 			break;
 		}
 	}
 #else
-	vec4 color = texture(colormap, oFrequency).rgba;
+	vec4 color = vec4(texture(colormap, oAmplitude).rgb, 1.0f);
 #endif
 #ifdef GLSL_110
     gl_FragColor = color;
