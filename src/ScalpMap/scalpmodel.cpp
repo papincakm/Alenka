@@ -77,22 +77,22 @@ QVector3D ScalpModel::projectPoint(const QVector3D& point, const QVector3D& sphe
 * @brief Returned empty vector indicates that positions cant be projected.
 */
 std::vector<QVector2D> ScalpModel::getPositionsProjected(const std::vector<QVector3D>& positions) {
-  std::vector<QVector2D> positionsProjected;
+  std::vector<QVector2D> resultPositions;
   QVector3D sphereCenter = { 0, 0, 0 };
   float radius = 0;
 
   if (!fitSpehere(positions, sphereCenter, radius)) {
-    return positionsProjected;
+    return resultPositions;
   }
 
-  QVector3D projectSphere(sphereCenter.x() / -2.0f, sphereCenter.y() / -2.0f, sphereCenter.z() / -2.0f);
+  QVector3D fittedSphere = sphereCenter / -2.0f;
 
   float r = std::sqrt((sphereCenter.x() * sphereCenter.x() + sphereCenter.y() * sphereCenter.y() +
     sphereCenter.z() * sphereCenter.z()) / 4.0f - radius * 2);
 
   std::vector<QVector3D> positionsProjectedOnSphere;
   for (size_t i = 0; i < positions.size(); i++) {
-    positionsProjectedOnSphere.push_back(projectPoint(positions[i], projectSphere, r));
+    positionsProjectedOnSphere.push_back(projectPoint(positions[i], fittedSphere, r));
   }
 
   for (size_t i = 0; i < positions.size(); i++) {
@@ -107,15 +107,15 @@ std::vector<QVector2D> ScalpModel::getPositionsProjected(const std::vector<QVect
       newVec.setY(positionsProjectedOnSphere[i].y());
     }
 
-    positionsProjected.push_back(newVec);
+    resultPositions.push_back(newVec);
   }
 
-  scaleProjected(positionsProjected);
+  normalize(resultPositions);
 
-  return positionsProjected;
+  return resultPositions;
 }
 
-void ScalpModel::scaleProjected(std::vector<QVector2D>& points) {
+void ScalpModel::normalize(std::vector<QVector2D>& points) {
   float maxX = FLT_MIN;
   float maxY = FLT_MIN;
   float minX = FLT_MAX;

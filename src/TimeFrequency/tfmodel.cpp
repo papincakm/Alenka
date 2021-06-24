@@ -100,6 +100,7 @@ void TfModel::applyWindowFunction(std::vector<float>& data) {
 }
 
 std::vector<float> TfModel::loadSamples() {
+  //std::cout << "file->file->getSamplingFrequency() : " << file->file->getSamplingFrequency() << "\n";
   const int samplesToUse =
     secondsToDisplay * static_cast<int>(file->file->getSamplingFrequency());
 

@@ -22,7 +22,7 @@ public:
 private:
   bool fitSpehere(std::vector<QVector3D> points, QVector3D& center, float& radius);
   QVector3D projectPoint(const QVector3D& point, const QVector3D& sphereCenter, const float radius);
-  void scaleProjected(std::vector<QVector2D>& points);
+  void normalize(std::vector<QVector2D>& points);
 };
 
 #endif // SCALPMODEL_H

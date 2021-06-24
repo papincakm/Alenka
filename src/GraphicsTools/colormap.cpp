@@ -94,7 +94,6 @@ std::vector<float> Colormap::getJetPallete() {
   };
 }
 
-//TODO: opengl prints flipped colormap
 std::vector<float> Colormap::getCoolWarmSmoothPallete() {
   return
   {
@@ -135,8 +134,6 @@ T truncate(T value, T min, T max)
 }
 
 void Colormap::change(float contrast, float brightness) {
-  //std::cout << "changeSat\n";
-
   center = brightness;
   createTextureBR();
 
@@ -145,8 +142,6 @@ void Colormap::change(float contrast, float brightness) {
     colormapTextureBuffer[i + 1] = truncate<float>(defaultColormapTextureBuffer[i + 1] * contrast, 0, 1.0f);
     colormapTextureBuffer[i + 2] = truncate<float>(defaultColormapTextureBuffer[i + 2] * contrast, 0, 1.0f);
   }
-
-  //std::cout << "changeSatEND factor is\n";
 
   changed = true;
 }

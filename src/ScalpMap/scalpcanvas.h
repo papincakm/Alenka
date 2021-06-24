@@ -80,22 +80,21 @@ public:
 
 class ScalpCanvas : public QOpenGLWidget {
   Q_OBJECT
-	
   std::unique_ptr<OpenGLProgram> labelProgram;
   std::unique_ptr<OpenGLProgram> channelProgram;
   std::vector<QString> labels;
-  //TODO: should be pair of floats probably or custom class
-	//TODO: mby move to scalpmap
   std::vector<ElectrodePosition> originalPositions;
-  //TODO: replace with single struct
-  std::vector<ElectrodePosition> triangulatedPositions;
   std::vector<GLfloat> scalpMesh;
+  std::vector<GLuint> scalpIndices;
+  int uniqueIndiceCount = 0;
   std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
   GLuint posBuffer;
-	QAction *setChannelDrawing;
+  GLuint indexBuffer;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
   std::unique_ptr<graphics::Gradient> gradient;
+
+  QAction *setChannelDrawing;
 
   float minVoltage = 0;
   float maxVoltage = 0;
@@ -137,11 +136,6 @@ protected:
 
 
 private:
-  //! Multiply by this to convert virtual position to sample position.
-  float virtualRatio();
-  //! Returns the sample position of the left screen edge.
-  float leftEdgePosition();
-
   void logLastGLMessage();
 
   /**
@@ -154,10 +148,11 @@ private:
 
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 
-	std::vector<ElectrodePosition> generateTriangulatedPositions(const std::vector<ElectrodePosition>& channels);
-  std::vector<GLfloat> generateScalpTriangleArray();
+	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
+  std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
   std::vector<GLfloat> generateGradient();
-  std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
+  std::vector<ElectrodePosition> splitTriangles(const std::vector<ElectrodePosition>& triangulatedPositions);
+  //std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
   void calculateVoltages(std::vector<GLfloat>& points);
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();
@@ -166,8 +161,8 @@ private:
   void updateColormapTexture();
   void setupScalpMesh();
   void checkGLMessages();
-  std::vector<GLfloat> generateTriangulatedGrid(const std::vector<float> xAxis,
-    const std::vector<float> yAxis, const std::vector<float>& values);
+  void genBuffers();
+  void deleteBuffers();
 
   //menu
   void renderPopupMenu(const QPoint& pos);

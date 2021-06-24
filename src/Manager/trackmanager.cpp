@@ -34,7 +34,6 @@ bool TrackManager::insertRowBack() {
   return false;
 }
 
-//TODO: move this to separate file and refactor
 //TODO: treat errors
 void TrackManager::loadCoordinates() {
   QString fileName = QFileDialog::getOpenFileName(this, tr("Load Electrode Locations"), "/", "Electrode location files (*.elc)");

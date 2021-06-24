@@ -104,8 +104,6 @@ protected:
   void mouseReleaseEvent(QMouseEvent * event) override;
 
 private:
-  void createContext();
-  void logLastGLMessage();
   void generateTriangulatedGrid(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices,
     const std::vector<float> xAxis, const std::vector<float> yAxis, const std::vector<float>& values);
   GLuint setupColormapTexture(std::vector<float> colormap);
@@ -114,6 +112,10 @@ private:
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);
   std::vector<float> generateAxis(int pointCount);
+
+  void genBuffers();
+  void deleteBuffers();
+
   /**
    * @brief This method is used to skip some code that would break if no file is
    * open and/or the current montage is empty.

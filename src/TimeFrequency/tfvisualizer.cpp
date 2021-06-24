@@ -65,7 +65,6 @@ void TfVisualizer::cleanup() {
 
 		channelProgram.reset();
 
-		logLastGLMessage();
 		OPENGL_INTERFACE->checkGLErrors();
 
 		doneCurrent();
@@ -125,8 +124,6 @@ void TfVisualizer::initializeGL() {
   gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
 
   gl()->glFlush();
-
-	createContext();
 }
 
 void TfVisualizer::resizeGL(int /*w*/, int /*h*/) {
@@ -303,16 +300,9 @@ void TfVisualizer::paintGL() {
     if (colormap.changed) {
       updateColormapTexture();
     }
-    
-    QPainter painter(this);
-    painter.beginNativePainting();
     gl()->glUseProgram(channelProgram->getGLProgram());
 
-    gl()->glGenBuffers(1, &indexBuffer);
-    gl()->glGenBuffers(1, &posBuffer);
-
-    gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    genBuffers();
 
     //TODO: static or dynamic draw?
     gl()->glBufferData(GL_ARRAY_BUFFER, paintVertices.size() * sizeof(GLfloat), &paintVertices[0], GL_STATIC_DRAW);
@@ -332,34 +322,33 @@ void TfVisualizer::paintGL() {
     for (int i = 0; i < 2; i++) {
       gl()->glDisableVertexAttribArray(i);
     }
-
-    gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-    gl()->glDeleteBuffers(1, &posBuffer);
-
-    gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    gl()->glDeleteBuffers(1, &indexBuffer);
+    
+    deleteBuffers();
 
     gl()->glFlush();
 
     gl()->glFinish();
-
-    painter.endNativePainting();
   }
 }
 
+void TfVisualizer::genBuffers() {
+  gl()->glGenBuffers(1, &indexBuffer);
+  gl()->glGenBuffers(1, &posBuffer);
+
+  gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
+  gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+}
+
+void TfVisualizer::deleteBuffers() {
+  gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
+  gl()->glDeleteBuffers(1, &posBuffer);
+
+  gl()->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  gl()->glDeleteBuffers(1, &indexBuffer);
+}
 
 bool TfVisualizer::ready() {
   return paintVertices.size();
-}
-
-
-void TfVisualizer::createContext() {
-
-}
-
-
-void TfVisualizer::logLastGLMessage() {
-
 }
 
 //TODO: dont call this when only freq gets changed, needs to be called when frameSize,
