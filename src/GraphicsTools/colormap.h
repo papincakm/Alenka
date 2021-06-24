@@ -5,7 +5,11 @@
 #include <algorithm>
 #include <QMenu>
 
+#define BRIGHTNESS_MAX 149.0f
+#define BRIGHTNESS_MIN -149.0f
 #define COLOR_PARTITIONS 150
+#define CONTRAST_MAX 100.0f
+#define CONTRAST_MIN 1.0f
 
 namespace graphics{
 

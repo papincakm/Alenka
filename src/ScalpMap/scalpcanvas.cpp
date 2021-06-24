@@ -45,7 +45,7 @@ using namespace AlenkaSignal;
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
   gradient = std::make_unique<graphics::Gradient>(
-    graphics::Gradient(gradientX, gradientX + 0.05f, gradientBotY, gradientTopY, this));
+    graphics::Gradient(0.85f, 0.88f, -0.9f, -0.4f, this));
 }
 
 ScalpCanvas::~ScalpCanvas() {
@@ -75,17 +75,7 @@ void ScalpCanvas::clear() {
 		update();
 }
 
-void bindArray(GLuint array, GLuint buffer) {
-	if (programOption<bool>("gl20")) {
-		gl()->glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	}
-	else {
-		gl3()->glBindVertexArray(array);
-	}
-}
-
 void ScalpCanvas::initializeGL() {
-  //std::cout << "scalpcanvas initialized\n";
   glInitialized = true;
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
 
@@ -96,9 +86,6 @@ void ScalpCanvas::initializeGL() {
 
 	gl()->glEnable(GL_PROGRAM_POINT_SIZE);
 	gl()->glEnable(GL_POINT_SPRITE);
-	
-	//circle version
-	//TODO: rename shaders to something more meaningful
 
 	QFile pointVertFile(":/single.vert");
 	pointVertFile.open(QIODevice::ReadOnly);
@@ -121,7 +108,6 @@ void ScalpCanvas::initializeGL() {
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
 
   gl()->glUseProgram(channelProgram->getGLProgram());
-	//gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
 
   colormapTextureId = setupColormapTexture(colormap.get());
 
@@ -157,8 +143,8 @@ void ScalpCanvas::setupScalpMesh() {
   calculateSpatialCoefficients(scalpMesh);
   calculateVoltages(scalpMesh);
 
-  std::vector<GLfloat> gradient = generateGradient();
-  scalpMesh.insert(std::end(scalpMesh), std::begin(gradient), std::end(gradient));
+  gradient->generateGradientMesh(scalpMesh, indices);
+  int uniqueIndiceCount = scalpMesh.size();
 }
 
 void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
@@ -167,7 +153,7 @@ void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPosit
 
   for (auto v : channelPositions) {
     //transform positions to better fit the window
-    originalPositions.push_back(ElectrodePosition(-1 * v.y() - 0.17f, v.x()));
+    originalPositions.push_back(ElectrodePosition(-1 * v.y() - 0.05f, v.x()));
   }
 
   setupScalpMesh();
@@ -202,7 +188,6 @@ void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
   gradient->update();
 }
 
-//TODO: testing, refactor in future, use less data containers
 std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedGrid(
   const std::vector<ElectrodePosition>& channels) {
 	std::vector<double> coords;
@@ -280,7 +265,7 @@ void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
 
 std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
   const std::vector<ElectrodePosition>& triangulatedPositions) {
-  scalpIndices.clear();
+  indices.clear();
   uniqueIndiceCount = 0;
   std::vector<ElectrodePosition> positions;
 
@@ -290,19 +275,13 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
     for (int j = 0; j < i; j++) {
       if (triangulatedPositions[i] == triangulatedPositions[j]) {
         duplicate = true;
-        //std::cout << "(triangulatedPositions[i] == triangulatedPositions[j]) " << 
-        //  triangulatedPositions[i].x << " " << triangulatedPositions[i].y << triangulatedPositions[j].x << " " <<
-        //  triangulatedPositions[j].y;
-
-        //std::cout << "  --- scalpIndices.push_back(scalpIndices[j]) " << scalpIndices[j] << "\n";
-        scalpIndices.push_back(scalpIndices[j]);
+        indices.push_back(indices[j]);
         break;
       }
     }
     if (!duplicate) {
-      scalpIndices.push_back(uniqueIndiceCount++);
+      indices.push_back(uniqueIndiceCount++);
       positions.push_back(triangulatedPositions[i]);
-      //std::cout << "  --- scalpIndices.push_back(scalpIndices[j]) " << scalpIndices[uniqueIndiceCount - 1] << "\n";
     }
 	}
   
@@ -323,52 +302,17 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
 	return finalTriangles;
 }
 
-//TODO: might want to separate frequencies and vertices
-std::vector<GLfloat> ScalpCanvas::generateGradient() {
-	std::vector<GLfloat> triangles;
-
-	float gradientWidth = 0.05f;
-
-	//1. triangle
-	triangles.push_back(gradientX);
-	triangles.push_back(gradientBotY);
-	triangles.push_back(0.01f);
-
-	triangles.push_back(gradientX + gradientWidth);
-	triangles.push_back(gradientBotY);
-	triangles.push_back(0.01f);
-
-	triangles.push_back(gradientX);
-	triangles.push_back(gradientTopY);
-	triangles.push_back(1);
-
-	//2. triangle
-	triangles.push_back(gradientX + gradientWidth);
-	triangles.push_back(gradientBotY);
-	triangles.push_back(0.01f);
-
-	triangles.push_back(gradientX + gradientWidth);
-	triangles.push_back(gradientTopY);
-	triangles.push_back(1);
-
-	triangles.push_back(gradientX);
-	triangles.push_back(gradientTopY);
-	triangles.push_back(1);
-
-	return triangles;
-}
-
 void ScalpCanvas::renderGradientText() {
   QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
 	
-	float maxMinusMinY = gradientTopY - gradientBotY;
-	float maxMinusMinFreq = maxVoltage - minVoltage;
+	float maxMinusMinY = gradient->getYtop() - gradient->getYbot();
+	float maxMinusMinAmp = maxVoltage - minVoltage;
 
 	float binY = maxMinusMinY / 4;
-	float binFreq = maxMinusMinFreq / 4;
+	float binFreq = maxMinusMinAmp / 4;
 
 	float freqToDisplay = minVoltage;
-	float yPos = gradientBotY;
+	float yPos = gradient->getYbot();
 
 	for (int i = 0; i < 5; i += 1) {
 		//TODO: tie this to font height somehow
@@ -434,8 +378,8 @@ void ScalpCanvas::paintGL() {
     gl()->glEnableVertexAttribArray(1);
     gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * OPENGL_VERTEX_SIZE, (char*)(sizeof(GLfloat) * 2));
 
-    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, scalpIndices.size() * sizeof(GLuint), &scalpIndices[0], GL_STATIC_DRAW);
-    gl()->glDrawElements(GL_TRIANGLES, scalpIndices.size(), GL_UNSIGNED_INT, nullptr);
+    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+    gl()->glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 
     for (int i = 0; i < 2; i++) {
       gl()->glDisableVertexAttribArray(i);
@@ -488,7 +432,14 @@ void ScalpCanvas::paintGL() {
     }
 
     //QPainter part
-    renderGradientText();
+    //renderGradientText();
+    auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+      graphics::NumberRange(gradient->getXright() + 0.01f, gradient->getXright() + 0.10f, gradient->getYbot() + 0.04f,
+        gradient->getYtop() + 0.04f, this, 3, minVoltage, maxVoltage, 2, QColor(255, 255, 255), QColor(0, 0, 0),
+        graphics::Orientation::Vertical)
+    );
+    gradAxisNumbers->render();
+
   }
 
 	if (errorMsg != "")
@@ -725,41 +676,41 @@ QMenu* ScalpCanvas::setupProjectionMenu(QMenu* menu) {
 
 std::vector<ElectrodePosition> ScalpCanvas::splitTriangles(const std::vector<ElectrodePosition>& triangles) {
   std::vector<ElectrodePosition> splitTriangles(triangles);
-  std::vector<GLuint> indices;
+  std::vector<GLuint> resultIndices;
 
-  int oldIndicesSize = scalpIndices.size();
+  int oldIndicesSize = indices.size();
 
   for (int i = 0; i < oldIndicesSize; i += 3) {
     const int second = i + 1;
     const int third = i + 2;
     //TODO: points on mid edges are have duplicates, add check
     //1. vertex, 2. vertex
-    float midPointAx = 0.5f * triangles[scalpIndices[i]].x + 0.5f * triangles[scalpIndices[second]].x;
-    float midPointAy = 0.5f * triangles[scalpIndices[i]].y + 0.5f * triangles[scalpIndices[second]].y;
-    float midPointAfreq = 0.5f * triangles[scalpIndices[i]].voltage + 0.5f * triangles[scalpIndices[second]].voltage;
+    float midPointAx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[second]].x;
+    float midPointAy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[second]].y;
+    float midPointAfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[second]].voltage;
     splitTriangles.push_back(ElectrodePosition(midPointAx, midPointAy, midPointAfreq));
     int indiceA = uniqueIndiceCount;
-    scalpIndices.push_back(uniqueIndiceCount++);
+    indices.push_back(uniqueIndiceCount++);
 
     //1. vertex, 3. vertex
-    float midPointBx = 0.5f * triangles[scalpIndices[i]].x + 0.5f * triangles[scalpIndices[third]].x;
-    float midPointBy = 0.5f * triangles[scalpIndices[i]].y + 0.5f * triangles[scalpIndices[third]].y;
-    float midPointBfreq = 0.5f * triangles[scalpIndices[i]].voltage + 0.5f * triangles[scalpIndices[third]].voltage;
+    float midPointBx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[third]].x;
+    float midPointBy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[third]].y;
+    float midPointBfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[third]].voltage;
     splitTriangles.push_back(ElectrodePosition(midPointBx, midPointBy, midPointBfreq));
     int indiceB = uniqueIndiceCount;
-    scalpIndices.push_back(uniqueIndiceCount++);
+    indices.push_back(uniqueIndiceCount++);
 
     //2. vertex, 3. vertex
-    float midPointCx = 0.5f * triangles[scalpIndices[second]].x + 0.5f * triangles[scalpIndices[third]].x;
-    float midPointCy = 0.5f * triangles[scalpIndices[second]].y + 0.5f * triangles[scalpIndices[third]].y;
-    float midPointCfreq = 0.5f * triangles[scalpIndices[second]].voltage + 0.5f * triangles[scalpIndices[third]].voltage;
+    float midPointCx = 0.5f * triangles[indices[second]].x + 0.5f * triangles[indices[third]].x;
+    float midPointCy = 0.5f * triangles[indices[second]].y + 0.5f * triangles[indices[third]].y;
+    float midPointCfreq = 0.5f * triangles[indices[second]].voltage + 0.5f * triangles[indices[third]].voltage;
     splitTriangles.push_back(ElectrodePosition(midPointCx, midPointCy, midPointCfreq));
     int indiceC = uniqueIndiceCount;
-    scalpIndices.push_back(uniqueIndiceCount++);
+    indices.push_back(uniqueIndiceCount++);
 
     //1. triangle
     //1. vertex
-    indices.push_back(scalpIndices[i]);
+    indices.push_back(indices[i]);
     
     //A
     indices.push_back(indiceA);
@@ -779,7 +730,7 @@ std::vector<ElectrodePosition> ScalpCanvas::splitTriangles(const std::vector<Ele
 
     //3. triangle
     //2. vertex
-    indices.push_back(scalpIndices[second]);
+    indices.push_back(indices[second]);
 
     //A
     indices.push_back(indiceA);
@@ -788,7 +739,7 @@ std::vector<ElectrodePosition> ScalpCanvas::splitTriangles(const std::vector<Ele
     indices.push_back(indiceC);
 
     //4. triangle
-    indices.push_back(scalpIndices[third]);
+    indices.push_back(indices[third]);
 
     //B
     indices.push_back(indiceB);
@@ -798,7 +749,7 @@ std::vector<ElectrodePosition> ScalpCanvas::splitTriangles(const std::vector<Ele
 
   }
 
-  scalpIndices = indices;
+  resultIndices = indices;
 
   return splitTriangles;
 }

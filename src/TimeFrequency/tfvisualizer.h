@@ -10,12 +10,10 @@
 #include <CL/cl_gl.h>
 #endif
 
-#include <QOpenGLWidget>
 #include <cassert>
 #include <memory>
 #include <string>
 #include <vector>
-#include <QPainter>
 #include <iostream>
 
 namespace AlenkaSignal {
@@ -107,7 +105,6 @@ private:
   void generateTriangulatedGrid(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices,
     const std::vector<float> xAxis, const std::vector<float> yAxis, const std::vector<float>& values);
   GLuint setupColormapTexture(std::vector<float> colormap);
-  void generateGradient(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices);
   void renderPopupMenu(const QPoint& pos);
 
   void convertToRange(std::vector<float>& values, float newMin, float newMax);

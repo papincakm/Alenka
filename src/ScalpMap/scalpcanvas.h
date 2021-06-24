@@ -16,8 +16,6 @@
 #include "float.h"
 #endif
 
-#include <QOpenGLWidget>
-#include <QPainter>
 #include <QString>
 #include <QFont>
 #include <QVector2D>
@@ -85,7 +83,7 @@ class ScalpCanvas : public QOpenGLWidget {
   std::vector<QString> labels;
   std::vector<ElectrodePosition> originalPositions;
   std::vector<GLfloat> scalpMesh;
-  std::vector<GLuint> scalpIndices;
+  std::vector<GLuint> indices;
   int uniqueIndiceCount = 0;
   std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
   GLuint posBuffer;
@@ -99,9 +97,7 @@ class ScalpCanvas : public QOpenGLWidget {
   float minVoltage = 0;
   float maxVoltage = 0;
 
-  const float gradientX = 0.9f;
-  const float gradientBotY = -0.9f;
-  const float gradientTopY = 0.7f;
+
 	QString errorMsg;
 
 	bool shouldDrawChannels = false;
@@ -150,7 +146,6 @@ private:
 
 	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
-  std::vector<GLfloat> generateGradient();
   std::vector<ElectrodePosition> splitTriangles(const std::vector<ElectrodePosition>& triangulatedPositions);
   //std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
   void calculateVoltages(std::vector<GLfloat>& points);

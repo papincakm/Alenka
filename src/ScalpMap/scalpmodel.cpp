@@ -143,7 +143,7 @@ void ScalpModel::normalize(std::vector<QVector2D>& points) {
     v.setY(v.y() - ((maxY + minY) / 2.0f));
 
     //rescale
-    v.setX(v.x() / scale * 1.6f);
-    v.setY(v.y() / scale * 1.6f);
+    v.setX(v.x() / scale * 1.7f);
+    v.setY(v.y() / scale * 1.7f);
   });
 }

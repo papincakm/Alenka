@@ -8,6 +8,7 @@
 #include <QString>
 #include <memory>
 #include <cmath>
+#include <QOpenGLWidget>
 
 //TODO: delete later
 #include <iostream>
@@ -177,11 +178,24 @@ public:
       Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment), font(font), textColor(textColor),
       text(text), textOrientation(textOrientation) {};
 
+  RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QString font,
+    QColor textColor, QColor backgroundColor, QString text, Orientation orientation = Orientation::Horizontal,
+    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
+    Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
+    text(text), textOrientation(textOrientation) {};
+
   RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
     QString font, QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
     Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
     Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
     text(text), textOrientation(textOrientation) {};
+
+  RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
+    QString font, QColor textColor, QColor backgroundColor, QString text, Orientation orientation = Orientation::Horizontal,
+    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
+    Rectangle(xleft, xright, ybot, ytop, boundRect, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
+    text(text), textOrientation(textOrientation) {
+  };
 
   void setText(const QString& newText) { text = newText; };
 protected:
@@ -202,6 +216,11 @@ public:
   RectangleChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
     Orientation orientation = Vertical, Orientation childOrientation = Horizontal) : 
     Rectangle(xleft, xright, ybot, ytop, widget, orientation), objectCount(objectCount), childOrientation(childOrientation) {};
+
+  RectangleChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor backgroundColor, int objectCount,
+    Orientation orientation = Vertical, Orientation childOrientation = Horizontal) :
+    Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation), objectCount(objectCount),
+    childOrientation(childOrientation) {};
 
   void render();
   void constructObjects();
@@ -251,6 +270,7 @@ public:
 class NumberRange : public RectangleChain {
   float fromNumber = 0.0f;
   float toNumber = 0.0f;
+  float precision = 0;
   float length;
 
   //TODO: make this changable in program options
@@ -259,15 +279,23 @@ class NumberRange : public RectangleChain {
 
 public:
   NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
-    float from, float to, QColor color, Orientation orientation = Vertical, Orientation childOrientation = Vertical)
-    : RectangleChain(xleft, xright, ybot, ytop, widget, objectCount, orientation, childOrientation), fromNumber(from), toNumber(to),
-      textColor(color), length(std::fabs(to - from)) {};
+    float from, float to, int precision, QColor textColor, Orientation orientation = Vertical, 
+    Orientation childOrientation = Vertical) : RectangleChain(xleft, xright, ybot, ytop, widget, objectCount,
+      orientation, childOrientation), fromNumber(from), toNumber(to), precision(precision), textColor(textColor),
+      length(std::fabs(to - from)) {};
+
+  NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
+    float from, float to, int precision, QColor textColor, QColor backgroundColor, Orientation orientation = Vertical,
+    Orientation childOrientation = Vertical) :
+    RectangleChain(xleft, xright, ybot, ytop, widget, backgroundColor, objectCount, orientation,
+      childOrientation), fromNumber(from), toNumber(to),
+      precision(precision), textColor(textColor), length(std::fabs(to - from)) {};
+
 protected:
   void createObject(int position, float xleft, float xright, float ybot, float ytop, Orientation objectOrientation,
     Alignment alignment);
 };
 
-//TODO: should inherit from class above rectangle, only needs coordinates not rendering, this is rendered later with opengl
 class Gradient : public Rectangle {
 public:
   Gradient(float xleft, float xright, float ybot, float ytop, QWidget* widget,
@@ -278,6 +306,7 @@ public:
   bool contains(const QPoint& p);
   void clicked(const QPoint& p);
   void released();
+  void generateGradientMesh(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices);
 
   bool isClicked = false;
 
