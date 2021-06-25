@@ -45,7 +45,7 @@ using namespace AlenkaSignal;
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
   gradient = std::make_unique<graphics::Gradient>(
-    graphics::Gradient(0.85f, 0.88f, -0.9f, -0.4f, this));
+    graphics::Gradient(0.85f, 0.88f, -0.9f, -0.4f, this, QColor(255, 255, 255), QColor(0, 0, 0)));
 }
 
 ScalpCanvas::~ScalpCanvas() {
@@ -349,6 +349,7 @@ void ScalpCanvas::updateColormapTexture() {
 
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
+  std::cout << "scalpCanvas paint start\n";
 	using namespace chrono;
 
 #ifndef NDEBUG
@@ -440,6 +441,8 @@ void ScalpCanvas::paintGL() {
     );
     gradAxisNumbers->render();
 
+    gradient->render();
+
   }
 
 	if (errorMsg != "")
@@ -450,6 +453,7 @@ void ScalpCanvas::paintGL() {
 #ifndef NDEBUG
 	logToFile("Painting finished.");
 #endif
+  std::cout << "scalpCanvas paint end\n";
 }
 
 void ScalpCanvas::genBuffers() {

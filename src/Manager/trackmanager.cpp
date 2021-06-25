@@ -62,7 +62,6 @@ void TrackManager::loadCoordinates() {
 
       for (auto v : positions) {
         if ((label.compare(v.label)) == 0) {
-          std::cout << "trackmanager: " << v.label << " x" << v.x << " y" << v.y << " z" << v.z << "\n";
           tableView->model()->setData(tableView->model()->index(i, tableX), v.x);
           tableView->model()->setData(tableView->model()->index(i, tableY), v.y);
           tableView->model()->setData(tableView->model()->index(i, tableZ), v.z);

@@ -101,10 +101,11 @@ void TfModel::applyWindowFunction(std::vector<float>& data) {
 
 std::vector<float> TfModel::loadSamples() {
   //std::cout << "file->file->getSamplingFrequency() : " << file->file->getSamplingFrequency() << "\n";
-  const int samplesToUse =
+  int samplesToUse =
     secondsToDisplay * static_cast<int>(file->file->getSamplingFrequency());
 
   frameCount = (samplesToUse - frameSize) / hopSize + 1;
+  samplesToUse = frameSize * frameCount;
 
   const int position = OpenDataFile::infoTable.getPosition();
 

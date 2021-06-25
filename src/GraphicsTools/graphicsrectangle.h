@@ -109,7 +109,13 @@ public:
     Orientation orientation = Orientation::Vertical, Alignment alignment = Alignment::None) :
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
     backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
-    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
+  };
+
+  Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor drawingColor,
+    QColor backgroundColor, Orientation orientation = Orientation::Vertical,
+    Alignment alignment = Alignment::None) :
+    QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
+    drawingColor(drawingColor), backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
   };
 
   Rectangle(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
@@ -148,6 +154,7 @@ protected:
   Orientation orientation;
   Alignment alignment;
   QColor backgroundColor;
+  QColor drawingColor;
   QtObject boundRect;
 
   virtual void renderTop() { std::cout << "renderTOP\n"; };
@@ -300,6 +307,9 @@ class Gradient : public Rectangle {
 public:
   Gradient(float xleft, float xright, float ybot, float ytop, QWidget* widget,
     Orientation orientation = Vertical, Alignment alignment = None);
+
+  Gradient(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor borderColor,
+    QColor backgroundColor, Orientation orientation = Vertical, Alignment alignment = None);
 
   //TODO: mby move this to colormap
   void change(Colormap& colormap, const QPoint& newPoint);

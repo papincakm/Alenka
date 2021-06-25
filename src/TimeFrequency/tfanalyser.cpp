@@ -89,7 +89,6 @@ void TfAnalyser::updateConnections() {
 }
 
 bool TfAnalyser::ready() {
-  //TODO: widget is visible when tabbed into different widget
   if (!tfModel->file || tfModel->secondsToDisplay == 0 || !this->isVisible() || !parentVisible ||
     tfModel->frameSize <= 1 || tfModel->hopSize <= 0 || freeze || tfModel->frameSize < tfModel->hopSize)
     return false;
@@ -110,6 +109,7 @@ void TfAnalyser::updateSpectrum() {
 void TfAnalyser::setFrameSize() {
   tfModel->frameSize = frameLine->text().toInt();
 
+  hopLine->setValidator(new QIntValidator(MIN_HOP_SIZE, tfModel->frameSize + 1, hopLine));
   tfModel->maxFreqBinDraw = std::min(tfModel->maxFreqBinDraw, tfModel->freqBins);
   tfModel->minFreqBinDraw = std::min(tfModel->minFreqBinDraw, tfModel->freqBins);
 
@@ -140,15 +140,14 @@ void TfAnalyser::setMaxFreqDraw() {
     maxFreqLine->setText(QString::number(visualizer->getMaxFrequency()));
     return;
   }
-
   visualizer->setMaxFrequency(maxFreqLine->text().toInt());
   float maxFreqRatio = maxFreqLine->text().toFloat() / tfModel->frequency;
+
   //QtValidator doesn't take care of values below Hz size of 1 freqBin
   tfModel->maxFreqBinDraw = std::max(1, static_cast<int>(std::ceil(maxFreqRatio * tfModel->freqBins)));
   updateSpectrum();
 }
 
-//TODO: rework to set by channel label
 void TfAnalyser::setChannelToDisplay(int ch) {
   tfModel->channelToDisplay = ch;
   updateSpectrum();
@@ -233,7 +232,7 @@ QGroupBox* TfAnalyser::createResolutionMenu() {
 
   frameLine = new QLineEdit();
   //TODO: what should be the max value here?
-  frameLine->setValidator(new QIntValidator(0, 2048, frameLine));
+  frameLine->setValidator(new QIntValidator(MIN_FRAME_SIZE, MAX_FRAME_SIZE, frameLine));
   connect(frameLine, SIGNAL(editingFinished()), this,
     SLOT(setFrameSize()));
   frameLine->insert(QString::number(tfModel->frameSize));
@@ -249,7 +248,7 @@ QGroupBox* TfAnalyser::createResolutionMenu() {
   hopLabel->setToolTip("Gap between successive short-time fourier transforms.");
 
   hopLine = new QLineEdit();
-  hopLine->setValidator(new QIntValidator(0, tfModel->frameSize + 1, hopLine));
+  hopLine->setValidator(new QIntValidator(MIN_HOP_SIZE, tfModel->frameSize + 1, hopLine));
   connect(hopLine, SIGNAL(editingFinished()), this,
     SLOT(setHopSize()));
   hopLine->insert(QString::number(tfModel->hopSize));

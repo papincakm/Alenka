@@ -14,6 +14,18 @@ QMenu* Colormap::getColormapMenu(QWidget* widget) {
   return menu;
 }
 
+QAction* Colormap::getColormapAction(QWidget* widget, QString colorS, ColorPallete colorP) {
+  QAction* colorAction = new QAction(colorS, widget);
+
+  widget->connect(colorAction, &QAction::triggered, [this, widget, colorP]() {
+    this->changeColorPallete(colorP);
+    widget->update();
+  });
+  colorAction->setCheckable(true);
+
+  return colorAction;
+}
+
 QMenu* Colormap::getPalleteMenu(QWidget* widget) {
   QMenu* menu = new QMenu("Color Pallete", widget);
   auto* palleteGroup = new QActionGroup(widget);
@@ -21,40 +33,36 @@ QMenu* Colormap::getPalleteMenu(QWidget* widget) {
 
   //TODO: lots of copied code, mby find how to do list of qactions
   //set color jet
-  QAction* setColorJet = new QAction("Jet", widget);
-
-  widget->connect(setColorJet, &QAction::triggered, [this, widget]() {
-    this->changeColorPallete(ColorPallete::Jet);
-    widget->update();
-  });
-  setColorJet->setCheckable(true);
-
+  QAction* setColorJet = getColormapAction(widget, "Jet", ColorPallete::Jet);
   menu->addAction(setColorJet);
   palleteGroup->addAction(setColorJet);
 
   //set color rainbow
-  QAction* setColorRainbow = new QAction("Rainbow", widget);
-
-  widget->connect(setColorRainbow, &QAction::triggered, [this, widget]() {
-    this->changeColorPallete(ColorPallete::Rainbow);
-    widget->update();
-  });
-  setColorRainbow->setCheckable(true);
-
+  QAction* setColorRainbow = getColormapAction(widget, "Rainbow", ColorPallete::Rainbow);
   menu->addAction(setColorRainbow);
   palleteGroup->addAction(setColorRainbow);
 
   //set color cool warm smooth
-  QAction* setColorCoolWarmSmooth = new QAction("Coolwarm", widget);
-
-  widget->connect(setColorCoolWarmSmooth, &QAction::triggered, [this, widget]() {
-    this->changeColorPallete(ColorPallete::CoolWarmSmooth);
-    widget->update();
-  });
-  setColorCoolWarmSmooth->setCheckable(true);
-
+  QAction* setColorCoolWarmSmooth = getColormapAction(widget, "Coolwarm", ColorPallete::CoolWarmSmooth);
   menu->addAction(setColorCoolWarmSmooth);
   palleteGroup->addAction(setColorCoolWarmSmooth);
+
+  //set color inferno
+  QAction* setColorInferno = getColormapAction(widget, "Inferno", ColorPallete::Inferno);
+  menu->addAction(setColorInferno);
+  palleteGroup->addAction(setColorInferno);
+
+  //set color Kindlmann
+  QAction* setColorKindlmann = getColormapAction(widget, "Kindlmann", ColorPallete::Kindlmann);
+  menu->addAction(setColorKindlmann);
+  palleteGroup->addAction(setColorKindlmann);
+
+  //set color ExtendedKindlmann
+  QAction* setColorExtendedKindlmann = getColormapAction(widget, "ExtendedKindlmann",
+    ColorPallete::ExtendedKindlmann);
+  menu->addAction(setColorExtendedKindlmann);
+  palleteGroup->addAction(setColorExtendedKindlmann);
+
 
   switch (currentPallete) {
   case ColorPallete::Jet:
@@ -65,6 +73,15 @@ QMenu* Colormap::getPalleteMenu(QWidget* widget) {
     break;
   case ColorPallete::CoolWarmSmooth:
     setColorCoolWarmSmooth->setChecked(true);
+    break;
+  case ColorPallete::Inferno:
+    setColorInferno->setChecked(true);
+    break;
+  case ColorPallete::Kindlmann:
+    setColorInferno->setChecked(true);
+    break;
+  case ColorPallete::ExtendedKindlmann:
+    setColorInferno->setChecked(true);
     break;
   }
 
@@ -102,6 +119,61 @@ std::vector<float> Colormap::getCoolWarmSmoothPallete() {
     180.0f / 255.0f, 4.0f / 255.0f, 38.0f / 255.0f
   };
 }
+
+std::vector<float> Colormap::getInfernoPallete() {
+  return
+  {
+    0.0f, 0.0f, 4.0f / 255.0f,
+    40.0f / 255.0f, 11.0f / 255.0f, 84.0f / 255.0f,
+    101.0f / 255.0f, 21.0f / 255.0f, 110.0f / 255.0f,
+    159.0f / 255.0f, 42.0f / 255.0f, 99.0f / 255.0f,
+    212.0f / 255.0f, 72.0f / 255.0f, 66.0f / 255.0f,
+    245.0f / 255.0f, 125.0f / 255.0f, 21.0f / 255.0f,
+    250.0f / 255.0f, 193.0f / 255.0f, 39.0f / 255.0f,
+    252.0f / 255.0f, 255.0f / 255.0f, 164.0f / 255.0f,
+  };
+}
+
+std::vector<float> Colormap::getKindlmannPallete() {
+  return
+  {
+    0.0f, 0.0f, 0.0f,
+    39.0f / 255.0f, 4.0f / 255.0f, 82.0f / 255.0f,
+    24.0f / 255.0f, 8.0f / 255.0f, 163.0f / 255.0f,
+    7.0f / 255.0f, 69.0f / 255.0f, 142.0f / 255.0f,
+    5.0f / 255.0f, 105.0f / 255.0f, 105.0f / 255.0f,
+    7.0f / 255.0f, 137.0f / 255.0f, 66.0f / 255.0f,
+    15.0f / 255.0f, 168.0f / 255.0f, 8.0f / 255.0f,
+    97.0f / 255.0f, 193.0f / 255.0f, 9.0f / 255.0f,
+    205.0f / 255.0f, 205.0f / 255.0f, 10.0f / 255.0f,
+    251.0f / 255.0f, 210.0f / 255.0f, 163.0f / 255.0f,
+    253.0f / 255.0f, 232.0f / 255.0f, 223.0f / 255.0f,
+    255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f
+  };
+}
+
+std::vector<float> Colormap::getExtendedKindlmannPallete() {
+  return
+  {
+    0.0f, 0.0f, 0.0f,
+    29.0f / 255.0f, 3.0f / 255.0f, 65.0f / 255.0f,
+    8.0f / 255.0f, 6.0f / 255.0f, 119.0f / 255.0f,
+    4.0f / 255.0f, 49.0f / 255.0f, 87.0f / 255.0f,
+    3.0f / 255.0f, 72.0f / 255.0f, 61.0f / 255.0f,
+    4.0f / 255.0f, 92.0f / 255.0f, 26.0f / 255.0f,
+    22.0f / 255.0f, 110.0f / 255.0f, 5.0f / 255.0f,
+    88.0f / 255.0f, 121.0f / 255.0f, 6.0f / 255.0f,
+    165.0f / 255.0f, 120.0f / 255.0f, 8.0f / 255.0f,
+    246.0f / 255.0f, 98.0f / 255.0f, 58.0f / 255.0f,
+    249.0f / 255.0f, 125.0f / 255.0f, 135.0f / 255.0f,
+    250.0f / 255.0f, 144.0f / 255.0f, 225.0f / 255.0f,
+    225.0f / 255.0f, 182.0f / 255.0f, 251.0f / 255.0f,
+    227.0f / 255.0f, 209.0f / 255.0f, 253.0f / 255.0f,
+    233.0f / 255.0f, 234.0f / 255.0f, 254.0f / 255.0f,
+    255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f,
+  };
+}
+
 
 Colormap::Colormap() {
   createTextureBR();
@@ -163,6 +235,16 @@ std::vector<float> Colormap::getColorTemplate(ColorPallete colpal) {
     break;
   case CoolWarmSmooth:
     return getCoolWarmSmoothPallete();
+    break;
+  case Inferno:
+    return getInfernoPallete();
+    break;
+  case Kindlmann:
+    return getKindlmannPallete();
+    break;
+  case ExtendedKindlmann:
+    return getExtendedKindlmannPallete();
+    break;
   }
 }
 

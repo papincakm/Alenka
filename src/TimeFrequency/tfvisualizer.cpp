@@ -129,7 +129,6 @@ void TfVisualizer::resizeGL(int /*w*/, int /*h*/) {
   gradient->update();
 }
 
-//TODO: copy this to util class, and use it in scalpcanvas
 //converts array to range while keeping the same ratio between elements
 void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, float newMax) {
   float minVal = FLT_MAX;
@@ -146,7 +145,6 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
   for (int i = 0; i < values.size(); i++) {
     values[i] = (values[i] - minVal) * newRange / oldRange + newMin;
   }
-  //std::cout << "CONVERTED VALUES: " << values[0] << "\n";
 }
 
 void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float yCount) {
@@ -154,13 +152,11 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   int xVertices = xCount + 1;
   int yVertices = yCount + 1;
 
-  //std::cout << "setting data to draw\n";
   minGradVal = *std::min_element(values.begin(), values.end());
   maxGradVal = *std::max_element(values.begin(), values.end());
 
   convertToRange(values, 0.0f, 1.0f);
 
-  //TODO: refactor this
   if (specMesh.rows != yVertices || specMesh.columns != xVertices) {
     paintVertices.clear();
     paintIndices.clear();
@@ -253,7 +249,6 @@ void TfVisualizer::paintGL() {
   gradAxisNumbers->render();
 
   //frequency
-  //TODO: specmesh getYbot seems off (or rotated text drawing is off)
   float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
   auto frequencyAxisLabel = graphics::RectangleText(-0.99f, -0.92f,
     specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
@@ -303,8 +298,7 @@ void TfVisualizer::paintGL() {
 
     genBuffers();
 
-    //TODO: static or dynamic draw?
-    gl()->glBufferData(GL_ARRAY_BUFFER, paintVertices.size() * sizeof(GLfloat), &paintVertices[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ARRAY_BUFFER, paintVertices.size() * sizeof(GLfloat), &paintVertices[0], GL_DYNAMIC_DRAW);
 
     // 1st attribute buffer : vertices
     //current position
@@ -314,7 +308,7 @@ void TfVisualizer::paintGL() {
     gl()->glEnableVertexAttribArray(1);
     gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (char*)(sizeof(GLfloat) * 2));
 
-    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, paintIndices.size() * sizeof(GLuint), &paintIndices[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, paintIndices.size() * sizeof(GLuint), &paintIndices[0], GL_DYNAMIC_DRAW);
 
     gl()->glDrawElements(GL_TRIANGLES, paintIndices.size(), GL_UNSIGNED_INT, nullptr);
 
@@ -370,12 +364,11 @@ void TfVisualizer::generateTriangulatedGrid(std::vector<GLfloat>& triangles,
   for (int i = 0; i < xAxis.size() - 1; i++) {
     for (int j = 0; j < yAxis.size() - 1; j++) {
       int valueIt = i * (yAxis.size() - 1) + j;
-      GLuint squarePos = i * (yAxis.size() - 1) * 4 + j* 4;
+      GLuint squarePos = i * (yAxis.size() - 1) * 4 + j * 4;
       //create rectangle from 2 triangles
       //first triangle, left bot vertex
       triangles.push_back(xAxis[i]);
       triangles.push_back(yAxis[j]);
-      //std::cout << "i: " << i << " j: " << j << " valueit: " << valueIt << " value size" << values.size() << "\n";
       triangles.push_back(values[valueIt]);
       indices.push_back(squarePos);
 

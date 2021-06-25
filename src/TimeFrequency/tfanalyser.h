@@ -15,6 +15,10 @@
 
 #include <vector>
 
+#define MAX_FRAME_SIZE 2048
+#define MIN_FRAME_SIZE 1
+#define MIN_HOP_SIZE 1
+
 class TfVisualizer;
 
 namespace AlenkaSignal {

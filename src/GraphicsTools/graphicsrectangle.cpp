@@ -7,7 +7,7 @@ using namespace graphics;
 void Rectangle::renderFull() {
 
   QPainter painter(widget);
-  QPen pen;  // creates a default pen
+  QPen pen(drawingColor);  // creates a default pen
 
   pen.setWidth(1);
   pen.setJoinStyle(Qt::MiterJoin);
@@ -235,6 +235,17 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
 Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget,
   Orientation orientation, Alignment alignment) :
   Rectangle(botx, topx, boty, topy, widget, orientation, alignment) {
+
+  changeRangeY = std::min(heightReal, 300.0f) / 3.0f;
+  changeRangeX = std::min(widthReal, 50.0f) * 50;
+
+  newContrast = contrast;
+  newBrightness = brightness;
+}
+
+Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget, QColor borderColor,
+  QColor backgroundColor, Orientation orientation, Alignment alignment) :
+  Rectangle(botx, topx, boty, topy, widget, borderColor, backgroundColor, orientation, alignment) {
 
   changeRangeY = std::min(heightReal, 300.0f) / 3.0f;
   changeRangeX = std::min(widthReal, 50.0f) * 50;

@@ -538,6 +538,7 @@ void Canvas::resizeGL(int /*w*/, int /*h*/) {
 }
 
 void Canvas::paintGL() {
+  std::cout << "Canvas paint start\n";
   using namespace chrono;
 
   if (paintingDisabled)
@@ -690,6 +691,7 @@ void Canvas::paintGL() {
   if (ready()) {
     storeCurrentPositionSample();
   }
+  std::cout << "Canvas paint end\n";
 }
 
 void Canvas::wheelEvent(QWheelEvent *event) {

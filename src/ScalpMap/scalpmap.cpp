@@ -191,6 +191,7 @@ void ScalpMap::updateLabels() {
 
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
+  std::cout << "updateSpec start\n";
   if (!enabled())
     return;
 
@@ -213,6 +214,7 @@ void ScalpMap::updateSpectrum() {
   scalpCanvas->setPositionVoltages(samples, voltageMin, voltageMax);
   scalpCanvas->allowDraw();
   scalpCanvas->update();
+  std::cout << "updateSpec end\n";
 }
 
 void ScalpMap::updateToExtremaLocal() {
