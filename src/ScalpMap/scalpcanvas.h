@@ -63,6 +63,7 @@ public:
 	GLfloat x = 0;
 	GLfloat y = 0;
 	GLfloat voltage = 0;
+  GLuint indice = 0;
 };
 
 /**
@@ -146,7 +147,9 @@ private:
 
 	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
-  std::vector<ElectrodePosition> splitTriangles(const std::vector<ElectrodePosition>& triangulatedPositions);
+  void splitTriangles(std::vector<ElectrodePosition>& triangulatedPositions, std::vector<GLuint>& indices);
+  GLuint addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangles,
+    std::vector<GLuint>& splitIndices, ElectrodePosition candidate);
   //std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
   void calculateVoltages(std::vector<GLfloat>& points);
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);

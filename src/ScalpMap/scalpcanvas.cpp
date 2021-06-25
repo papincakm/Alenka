@@ -287,8 +287,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
   
   std::vector<ElectrodePosition> splitPositions = std::move(positions);
   for (int i = 0; i < TRIANGLE_SPLIT_COUNT; i++) {
-    auto split = splitTriangles(splitPositions);
-    splitPositions = split;
+    splitTriangles(splitPositions, indices);
   }
 
   //transform ElectrodePositions into GLFloats
@@ -678,82 +677,102 @@ QMenu* ScalpCanvas::setupProjectionMenu(QMenu* menu) {
   return projectionMenu;
 }
 
-std::vector<ElectrodePosition> ScalpCanvas::splitTriangles(const std::vector<ElectrodePosition>& triangles) {
-  std::vector<ElectrodePosition> splitTriangles(triangles);
-  std::vector<GLuint> resultIndices;
+GLuint ScalpCanvas::addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangles,
+  std::vector<GLuint>& splitIndices, ElectrodePosition candidate) {
+  GLuint indice = 0;
+  bool duplicate = false;
+  for (int j = 0; j < splitTriangles.size(); j++) {
+    if (candidate == splitTriangles[j]) {
+      duplicate = true;
+      indice = splitTriangles[j].indice;
+      splitIndices.push_back(indice);
+      break;
+    }
+  }
+  if (!duplicate) {
+    indice = uniqueIndiceCount;
+    candidate.indice = indice;
+    splitIndices.push_back(uniqueIndiceCount++);
+    splitTriangles.push_back(candidate);
+  }
+
+  return indice;
+}
+
+void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangles,
+  std::vector<GLuint>& indices) {
+  std::vector<ElectrodePosition> splitTriangles;
+  std::vector<GLuint> splitIndices;
 
   int oldIndicesSize = indices.size();
 
   for (int i = 0; i < oldIndicesSize; i += 3) {
     const int second = i + 1;
     const int third = i + 2;
-    //TODO: points on mid edges are have duplicates, add check
+    //1. triangle
     //1. vertex, 2. vertex
     float midPointAx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[second]].x;
     float midPointAy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[second]].y;
     float midPointAfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[second]].voltage;
-    splitTriangles.push_back(ElectrodePosition(midPointAx, midPointAy, midPointAfreq));
-    int indiceA = uniqueIndiceCount;
-    indices.push_back(uniqueIndiceCount++);
+    //indices
+    auto indiceA = addMidEdgePoint(splitTriangles, splitIndices,
+      ElectrodePosition(midPointAx, midPointAy, midPointAfreq));
 
     //1. vertex, 3. vertex
     float midPointBx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[third]].x;
     float midPointBy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[third]].y;
     float midPointBfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[third]].voltage;
-    splitTriangles.push_back(ElectrodePosition(midPointBx, midPointBy, midPointBfreq));
-    int indiceB = uniqueIndiceCount;
-    indices.push_back(uniqueIndiceCount++);
+    auto indiceB = addMidEdgePoint(splitTriangles, splitIndices,
+      ElectrodePosition(midPointBx, midPointBy, midPointBfreq));
 
     //2. vertex, 3. vertex
     float midPointCx = 0.5f * triangles[indices[second]].x + 0.5f * triangles[indices[third]].x;
     float midPointCy = 0.5f * triangles[indices[second]].y + 0.5f * triangles[indices[third]].y;
     float midPointCfreq = 0.5f * triangles[indices[second]].voltage + 0.5f * triangles[indices[third]].voltage;
-    splitTriangles.push_back(ElectrodePosition(midPointCx, midPointCy, midPointCfreq));
-    int indiceC = uniqueIndiceCount;
-    indices.push_back(uniqueIndiceCount++);
+    auto indiceC = addMidEdgePoint(splitTriangles, splitIndices,
+      ElectrodePosition(midPointCx, midPointCy, midPointCfreq));
 
-    //1. triangle
+    //2. triangle
     //1. vertex
-    indices.push_back(indices[i]);
-    
+    splitIndices.push_back(indices[i]);
+
     //A
-    indices.push_back(indiceA);
+    splitIndices.push_back(indiceA);
 
     //B
-    indices.push_back(indiceB);
+    splitIndices.push_back(indiceB);
 
     //2. triangle
     //A
-    indices.push_back(indiceA);
+    /*indices.push_back(indiceA);
 
     //B
     indices.push_back(indiceB);
 
     //C
-    indices.push_back(indiceC);
+    indices.push_back(indiceC);*/
 
     //3. triangle
     //2. vertex
-    indices.push_back(indices[second]);
+    splitIndices.push_back(indices[second]);
 
     //A
-    indices.push_back(indiceA);
-    
+    splitIndices.push_back(indiceA);
+
     //C
-    indices.push_back(indiceC);
+    splitIndices.push_back(indiceC);
 
     //4. triangle
-    indices.push_back(indices[third]);
+    splitIndices.push_back(indices[third]);
 
     //B
-    indices.push_back(indiceB);
+    splitIndices.push_back(indiceB);
 
     //C
-    indices.push_back(indiceC);
+    splitIndices.push_back(indiceC);
 
   }
 
-  resultIndices = indices;
-
-  return splitTriangles;
+  triangles.insert(triangles.end(), splitTriangles.begin(), splitTriangles.end());
+  indices.insert(indices.end(), splitIndices.begin(), splitIndices.end());
 }
