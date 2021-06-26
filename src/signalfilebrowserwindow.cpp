@@ -174,15 +174,16 @@ SignalFileBrowserWindow::SignalFileBrowserWindow(QWidget *parent)
   videoPlayer = new VideoPlayer(this);
   videoPlayerDockWidget->setWidget(videoPlayer);
 
-  auto scalpMapDockWidget = new QDockWidget("Scalp Map", this);
+  scalpMapDockWidget = new QDockWidget("Scalp Map", this);
   scalpMapDockWidget->setObjectName("Scalp Map QDockWidget");
   scalpMap = new ScalpMap(scalpMapDockWidget);
   scalpMapDockWidget->setWidget(scalpMap);
 
-	auto tfAnalyserDockWidget = new QDockWidget("Time-frequency Analysis", this);
+	tfAnalyserDockWidget = new QDockWidget("Time-frequency Analysis", this);
 	tfAnalyserDockWidget->setObjectName("Time-frequency Analysis QDockWidget");
   tfAnalyser = new TfAnalyser(tfAnalyserDockWidget);
-	tfAnalyserDockWidget->setWidget(tfAnalyser);
+  tfAnalyserDockWidget->setWidget(tfAnalyser);
+
 
   addDockWidget(Qt::RightDockWidgetArea, trackManagerDockWidget);
   tabifyDockWidget(trackManagerDockWidget, eventManagerDockWidget);
@@ -849,6 +850,10 @@ void SignalFileBrowserWindow::openCommandLineFile() {
 
 void SignalFileBrowserWindow::closeEvent(QCloseEvent *const event) {
   if (closeFile()) {
+    //OpenGL widgets crash if they start as floating and they get redocked
+    tfAnalyserDockWidget->setFloating(false);
+    scalpMapDockWidget->setFloating(false);
+
     if (windowState.isEmpty())
       windowState = saveState();
 

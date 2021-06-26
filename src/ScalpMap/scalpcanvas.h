@@ -105,6 +105,7 @@ class ScalpCanvas : public QOpenGLWidget {
 	bool shouldDrawLabels = false;
 	bool dataReadyToDraw = false;
   bool glInitialized = false;
+  bool printTiming = false;
 
   std::string lastGLMessage;
   int lastGLMessageCount = 0;

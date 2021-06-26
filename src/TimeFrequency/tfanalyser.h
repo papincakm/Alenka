@@ -33,6 +33,7 @@ class TfAnalyser : public QWidget {
 
   bool freeze = true;
   bool parentVisible = true;
+  bool printTiming = false;
 
   TfVisualizer* visualizer;
   std::vector<QMetaObject::Connection> connections;

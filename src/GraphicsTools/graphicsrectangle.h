@@ -311,7 +311,6 @@ public:
   Gradient(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor borderColor,
     QColor backgroundColor, Orientation orientation = Vertical, Alignment alignment = None);
 
-  //TODO: mby move this to colormap
   void change(Colormap& colormap, const QPoint& newPoint);
   bool contains(const QPoint& p);
   void clicked(const QPoint& p);

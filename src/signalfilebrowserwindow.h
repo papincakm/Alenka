@@ -82,6 +82,8 @@ class SignalFileBrowserWindow : public QMainWindow {
   QComboBox *eventTypeComboBox;
   QComboBox *resolutionComboBox;
   QComboBox *unitsComboBox;
+  QDockWidget *scalpMapDockWidget;
+  QDockWidget *tfAnalyserDockWidget;
   QActionGroup *timeModeActionGroup;
   QActionGroup *timeLineIntervalActionGroup;
   QAction *setTimeLineIntervalAction;

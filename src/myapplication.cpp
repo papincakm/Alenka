@@ -166,3 +166,7 @@ QDir MyApplication::makeSubdir(const QString &path,
 }
 
 unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);
+
+//TODO: find better place for this,
+//used for benchmarking, accessed from several objects when printTiming program option is true
+chrono::nanoseconds currentBenchTimeGlobal;

@@ -3,6 +3,8 @@
 #include "../Alenka-File/include/AlenkaFile/datafile.h"
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
+#include "../options.h"
+#include "../myapplication.h"
 #include "scalpcanvas.h"
 #include <elidedlabel.h>
 #include <helplink.h>
@@ -23,7 +25,7 @@ using namespace std;
 ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
   connect(parent, SIGNAL(visibilityChanged(bool)),
     SLOT(parentVisibilityChanged(bool)));
-
+  printTiming = isProgramOptionSet("printTiming");
   setupCanvas();
 }
 
@@ -112,7 +114,6 @@ bool ScalpMap::positionsValid(const std::vector<QVector3D>& positions) {
     return false;
 
   for (auto p : positions) {
-    //std::cout << "POSITION x: " << p.x << "y: " << p.y << std::endl;
     int same = 0;
     for (auto cp : positions) {
       if (cp == p)
@@ -174,8 +175,6 @@ void ScalpMap::updateLabels() {
     scalpCanvas->forbidDraw("Electrode positions are invalid(A sphere cant be fitted to the coordinates,"\
     "scalpmap cant be generated).Change the coordinates or disable the invalid electrodes.");
 
-    std::cout << "posProjected empty\n";
-
     return;
   }
 
@@ -191,9 +190,14 @@ void ScalpMap::updateLabels() {
 
 //TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
-  std::cout << "updateSpec start\n";
   if (!enabled())
     return;
+  
+  // benchmark
+  decltype(chrono::high_resolution_clock::now()) start;
+  if (printTiming) {  
+    start = chrono::high_resolution_clock::now();
+  }
 
   const AbstractTrackTable *trackTable =
     file->dataModel->montageTable()->trackTable(
@@ -212,9 +216,14 @@ void ScalpMap::updateSpectrum() {
   }
 
   scalpCanvas->setPositionVoltages(samples, voltageMin, voltageMax);
+
+  if (printTiming) {
+    const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+    currentBenchTimeGlobal += time;
+    //std::cout << "scalp map updateSpec paint end\n";
+  }
   scalpCanvas->allowDraw();
   scalpCanvas->update();
-  std::cout << "updateSpec end\n";
 }
 
 void ScalpMap::updateToExtremaLocal() {

@@ -74,6 +74,7 @@ Q_OBJECT
   int maxFreqDraw = 0;
   bool gradClicked = false;
   bool glInitialized = false;
+  bool printTiming = false;
 
   std::unique_ptr<graphics::Gradient> gradient;
 

@@ -538,7 +538,6 @@ void Canvas::resizeGL(int /*w*/, int /*h*/) {
 }
 
 void Canvas::paintGL() {
-  std::cout << "Canvas paint start\n";
   using namespace chrono;
 
   if (paintingDisabled)
@@ -553,6 +552,9 @@ void Canvas::paintGL() {
   if (ready()) {
     decltype(high_resolution_clock::now()) start;
     if (printTiming) {
+      cerr << static_cast<double>(currentBenchTimeGlobal.count()) / 1000 / 1000 / 1000
+        << "\n";
+      currentBenchTimeGlobal = steady_clock::duration::zero();
       start = high_resolution_clock::now();
     }
 
@@ -674,9 +676,10 @@ void Canvas::paintGL() {
 
     if (printTiming) {
       const nanoseconds time = high_resolution_clock::now() - start;
-      cerr << "Frame " << lastSample - firstSample << " samples long took "
+      currentBenchTimeGlobal += time;
+      /*cerr << "Frame " << lastSample - firstSample << " samples long took "
            << static_cast<double>(time.count()) / 1000 / 1000 / 1000
-           << " s to redraw\n";
+           << " s to redraw\n";*/
     }
   }
   //gl()->glFlush();
@@ -691,7 +694,6 @@ void Canvas::paintGL() {
   if (ready()) {
     storeCurrentPositionSample();
   }
-  std::cout << "Canvas paint end\n";
 }
 
 void Canvas::wheelEvent(QWheelEvent *event) {

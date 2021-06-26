@@ -5,6 +5,7 @@
 #include "../error.h"
 #include "../openglprogram.h"
 #include "../options.h"
+#include "../myapplication.h"
 
 #include <QCursor>
 #include <QKeyEvent>
@@ -38,7 +39,9 @@ using namespace AlenkaFile;
 using namespace AlenkaSignal;
 
 TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
-  //TODO: initiate all rectangles here and update later in paint
+  printTiming = isProgramOptionSet("printTiming");
+
+  //TODO: minor, initiate all rectangles here and update later in paint
   specMesh = graphics::SquareMesh(-0.8f, 0.7f, -0.7f, 0.8f);
   
   gradient = std::make_unique<graphics::Gradient>(
@@ -74,8 +77,7 @@ GLuint TfVisualizer::setupColormapTexture(std::vector<float> colormap) {
   GLuint texId;
   gl()->glGenTextures(1, &texId);
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
-  //TODO: should this be here? corrupts text
-  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
   gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, colormap.size() / 3, 0, GL_RGB, GL_FLOAT, colormap.data());
 
 
@@ -148,6 +150,11 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
 }
 
 void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float yCount) {
+  decltype(std::chrono::high_resolution_clock::now()) start;
+  if (printTiming) {
+    start = std::chrono::high_resolution_clock::now();
+  }
+  
   //drawing points as squares in grid
   int xVertices = xCount + 1;
   int yVertices = yCount + 1;
@@ -156,6 +163,12 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   maxGradVal = *std::max_element(values.begin(), values.end());
 
   convertToRange(values, 0.0f, 1.0f);
+
+  if (printTiming) {
+    const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+    currentBenchTimeGlobal += time;
+    //std::cout << "TFA set data to draw end first part\n";
+  }
 
   if (specMesh.rows != yVertices || specMesh.columns != xVertices) {
     paintVertices.clear();
@@ -176,6 +189,10 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
     gradient->generateGradientMesh(paintVertices, paintIndices);
   }
   else {
+    if (printTiming) {
+      start = std::chrono::high_resolution_clock::now();
+    }
+
     //update values in posBuffer
     for (int i = 0; i < xCount; i++) {
       for (int j = 0; j < yCount; j++) {
@@ -186,6 +203,13 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
           valuePos += 3;
         }
       }
+    }
+
+    if (printTiming) {
+      const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+      currentBenchTimeGlobal += time;
+
+      //std::cout << "TFA set data to draw end update\n";
     }
   }
 }
@@ -215,10 +239,13 @@ int TfVisualizer::getMaxFrequency() {
 }
 
 void TfVisualizer::paintGL() {
-  using namespace chrono;
-
   if (paintingDisabled)
     return;
+
+  decltype(chrono::high_resolution_clock::now()) start;
+  if (printTiming) {
+    start = chrono::high_resolution_clock::now();
+  }
 
 #ifndef NDEBUG
   logToFile("Painting started.");
@@ -322,6 +349,12 @@ void TfVisualizer::paintGL() {
 
     gl()->glFinish();
   }
+
+  if (printTiming) {
+    const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+    currentBenchTimeGlobal += time;
+    //std::cout << "TfVisualizer paint end\n";
+  }
 }
 
 void TfVisualizer::genBuffers() {
@@ -343,9 +376,6 @@ void TfVisualizer::deleteBuffers() {
 bool TfVisualizer::ready() {
   return paintVertices.size();
 }
-
-//TODO: dont call this when only freq gets changed, needs to be called when frameSize,
-//      time and sampleCount(investigate how this changes with position change) is changed
 
 std::vector<float> TfVisualizer::generateAxis(int pointCount) {
   std::vector<float> axis;

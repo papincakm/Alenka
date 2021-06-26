@@ -27,7 +27,7 @@ class ScalpMap : public QWidget {
   float voltageMin = 0.0f;
   float voltageMax = 0.0f;
   bool parentVisible = true;
-  //TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
+  bool printTiming = false;
   //which will be referenced in here and trackLabelBar
   std::vector<QMetaObject::Connection> trackTableConnections;
   std::vector<QMetaObject::Connection> fileInfoConnections;

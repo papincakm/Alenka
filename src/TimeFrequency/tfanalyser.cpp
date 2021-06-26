@@ -3,6 +3,8 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/vitnessdatamodel.h"
 #include "tfvisualizer.h"
+#include "../myapplication.h"
+#include "../options.h"
 
 #include <elidedlabel.h>
 #include <helplink.h>
@@ -38,6 +40,8 @@ TfAnalyser::TfAnalyser(QWidget *parent) : QWidget(parent) {
 }
 
 void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {
+  printTiming = isProgramOptionSet("printTiming");
+
   visualizer = new TfVisualizer(this);
   auto vizBox = new QVBoxLayout();
   vizBox->addWidget(visualizer);
@@ -98,11 +102,24 @@ bool TfAnalyser::ready() {
 void TfAnalyser::updateSpectrum() {
   if (!ready())
     return;
-
+  
+  //benchmarking
+  decltype(std::chrono::high_resolution_clock::now()) start;
+  if (printTiming) {
+    start = std::chrono::high_resolution_clock::now();
+  }
   std::vector<float> processedValues = tfModel->getStftValues();
 
   visualizer->setSeconds(tfModel->secondsToDisplay);
+
+  if (printTiming) {
+    const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+    currentBenchTimeGlobal += time;
+    //std::cout << "TFA updateSpectrum\n";
+  }
+
   visualizer->setDataToDraw(processedValues, tfModel->frameCount, tfModel->freqBinsUsed);
+
   visualizer->update();
 }
 

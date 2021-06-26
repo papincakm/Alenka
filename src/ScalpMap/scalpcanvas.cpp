@@ -44,6 +44,8 @@ using namespace AlenkaFile;
 using namespace AlenkaSignal;
 
 ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
+  printTiming = isProgramOptionSet("printTiming");
+
   gradient = std::make_unique<graphics::Gradient>(
     graphics::Gradient(0.85f, 0.88f, -0.9f, -0.4f, this, QColor(255, 255, 255), QColor(0, 0, 0)));
 }
@@ -348,13 +350,15 @@ void ScalpCanvas::updateColormapTexture() {
 
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
-  std::cout << "scalpCanvas paint start\n";
-	using namespace chrono;
-
 #ifndef NDEBUG
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
+    decltype(chrono::high_resolution_clock::now()) start;
+    if (printTiming) {
+      start = chrono::high_resolution_clock::now();
+    }
+
     //setup
     if (colormap.changed) {
       updateColormapTexture();
@@ -442,17 +446,21 @@ void ScalpCanvas::paintGL() {
 
     gradient->render();
 
+    if (printTiming) {
+      const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+      currentBenchTimeGlobal += time;
+      //std::cout << "scalpCanvas paint end\n";
+    }
+
+    if (errorMsg != "")
+      renderErrorMsg();
+
+    checkGLMessages();
   }
-
-	if (errorMsg != "")
-			renderErrorMsg();
-
-  checkGLMessages();
 
 #ifndef NDEBUG
 	logToFile("Painting finished.");
 #endif
-  std::cout << "scalpCanvas paint end\n";
 }
 
 void ScalpCanvas::genBuffers() {
@@ -483,8 +491,6 @@ void ScalpCanvas::logLastGLMessage() {
 }
 
 bool ScalpCanvas::ready() {
-	//TODO: think this through
-  //std::cout << "should draw" << dataReadyToDraw << "triangulatedPos size: " << triangulatedPositions.size() << "\n";
   return dataReadyToDraw && scalpMesh.size() > 0;
 }
 
@@ -492,12 +498,8 @@ void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& 
 	int realX = width() / 2 + (width() / 2) * x;
 	int realY = height() / 2 + (height() / 2) * y * -1;
 
-  //text is corrupted if this is not called
-  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
 	QPainter painter(this);
 	painter.setBackgroundMode(Qt::OpaqueMode);
-  //painter.setRenderHints(QPainter::TextAntialiasing);
 	painter.setBackground(QBrush(QColor(0, 0, 0)));
 	painter.setPen(fontColor);
 	painter.setBrush(fontColor);

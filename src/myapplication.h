@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <chrono>
 
 #include <array>
 #include <memory>
@@ -64,5 +65,7 @@ public:
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;
+
+extern std::chrono::nanoseconds currentBenchTimeGlobal;
 
 #endif // MYAPPLICATION_H
