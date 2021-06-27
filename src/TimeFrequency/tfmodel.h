@@ -27,7 +27,7 @@ namespace AlenkaSignal {
 } // namespace AlenkaSignal
 
 /**
-* @brief Time frequency model.
+* @brief Calculates the STFT.
 */
 class TfModel {
 
@@ -62,6 +62,10 @@ public:
 
 private:
   void applyWindowFunction(std::vector<float>& data);
+  /**
+  * @brief Loads samples from a data file.
+  * The amount is calculated from secondsToDisplay, frame size and hop size
+  */
   std::vector<float> loadSamples();
 };
 

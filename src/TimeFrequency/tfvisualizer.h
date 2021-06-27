@@ -14,7 +14,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace AlenkaSignal {
 class OpenCLContext;
@@ -45,11 +44,6 @@ struct GraphicsNumberRange : GraphicsRectangle {
 
 /**
  * @brief This class implements a visualizer for time-frequency analysis.
- *
- * Every time this control gets updated the whole surface gets repainted.
- *
- * This class also handles user keyboard and mouse input. Scrolling related
- * events are skipped and handled by the parent.
  */
 class TfVisualizer : public QOpenGLWidget {
 Q_OBJECT
@@ -64,8 +58,6 @@ Q_OBJECT
 
   //spectogram
   graphics::SquareMesh specMesh;
-  //graphics::SquareMesh gradientMesh;
-  //TODO: move this to separate class
   float maxGradVal = 0.0f;
   float minGradVal = 0.0f;
   int seconds = 0;

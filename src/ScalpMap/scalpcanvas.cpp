@@ -121,7 +121,6 @@ void ScalpCanvas::initializeGL() {
   checkGLMessages();
 }
 
-//TODO: use indices for painting
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
@@ -172,7 +171,6 @@ void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffe
 	minVoltage = min;
 	maxVoltage = max;
 
-  //TODO: if i set custom minmax to 1000 and 1500 (or -1000 2500) then some triangles are blue and should be red
 	float maxMinusMin = maxVoltage - minVoltage;
 
 	int size = std::min(originalPositions.size(), channelDataBuffer.size());
@@ -186,7 +184,6 @@ void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffe
 }
 
 void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
-  // checkGLMessages();
   gradient->update();
 }
 
@@ -449,7 +446,6 @@ void ScalpCanvas::paintGL() {
     if (printTiming) {
       const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
       currentBenchTimeGlobal += time;
-      //std::cout << "scalpCanvas paint end\n";
     }
 
     if (errorMsg != "")

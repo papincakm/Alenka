@@ -25,9 +25,10 @@ namespace AlenkaSignal {
   class FftProcessor;
 } // namespace AlenkaSignal
 
-/**
-* @brief Implements 2D scalp map.
-*/
+  /**
+  * @brief Recieves signals from global Qt contexts.
+  * Controls the TfModel and TfVisualizer to draw a spectrogram.
+  */
 class TfAnalyser : public QWidget {
 	Q_OBJECT
 
@@ -65,6 +66,9 @@ private:
   QWidget* createFreezeMenu();
   QLayout* createChannelTimeMenu();
 private slots:
+  /**
+  * @brief Calls FftProcessor to compute FFT and updates the data in TfVisualizer.
+  */
 	void updateSpectrum();
   void setFrameSize();
   void setHopSize();

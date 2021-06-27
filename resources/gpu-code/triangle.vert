@@ -21,5 +21,6 @@ out float oAmplitude;
 void main()
 {
   gl_Position.xy = currentPosition;
+  gl_Position.w = 1.0;
   oAmplitude = amplitude;
 }

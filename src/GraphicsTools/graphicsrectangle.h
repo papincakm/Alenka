@@ -10,9 +10,6 @@
 #include <cmath>
 #include <QOpenGLWidget>
 
-//TODO: delete later
-#include <iostream>
-
 /**
 * @brief Provides grahics utility for native opengl painting and functions to construct objects using qpainter.
 */
@@ -123,7 +120,6 @@ public:
     Alignment alignment = Alignment::None) :
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), backgroundColor(backgroundColor),
     orientation(orientation), alignment(alignment) {
-    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
   Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget,
@@ -131,7 +127,6 @@ public:
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
     orientation(orientation), alignment(alignment) {
     backgroundColor = widget->palette().color(QPalette::Window);
-    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
   Rectangle(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
@@ -139,7 +134,6 @@ public:
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(boundRect), orientation(orientation),
     alignment(alignment) {
     backgroundColor = widget->palette().color(QPalette::Window);
-    //std::cout << "Rectangle realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
   Rectangle(const GObject& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
@@ -157,7 +151,7 @@ protected:
   QColor drawingColor;
   QtObject boundRect;
 
-  virtual void renderTop() { std::cout << "renderTOP\n"; };
+  virtual void renderTop() {};
   virtual void renderBot() {};
   virtual void renderCenter() {};
   virtual void renderFull();
@@ -168,7 +162,6 @@ public:
   Line(float xleft, float xright, float ybot, float ytop, QWidget* widget,
     Orientation orientation = Vertical, Alignment alignment = None) :
     Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment) {
-    //std::cout << "Line realBotx: " << realBotx << " realTopx: " << realTopx << " realBoty: " << realBoty << " realTopy: " << realTopy << "\n";
   };
 
 protected:
@@ -211,13 +204,15 @@ protected:
   QColor textColor;
   Orientation textOrientation;
 
-  //TODO: refactor text drawing
   void renderFull() override;
   void renderBot() override;
   void renderTop() override;
   void drawText(float x, float y);
 };
 
+/**
+* @brief Draws a chain of Rectangle objects.
+*/
 class RectangleChain : public Rectangle {
 public:
   RectangleChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
@@ -233,7 +228,6 @@ public:
   void constructObjects();
 protected:
   int objectCount = 0;
-  //TODO: mby use better system for converting (scale or smthng), not storing stuff everywhere
   float objectWidth = 0;
   float objectHeight = 0;
   float objectWidthReal = 0;
@@ -242,7 +236,6 @@ protected:
   graphics::Orientation childOrientation;
   std::vector<std::shared_ptr<Rectangle>> objects;
   
-  //think this through
   virtual void createObject(int position, float xleft, float xright, float ybot, float ytop, Orientation objectOrientation,
     Alignment alignment) = 0;
   void constructVertical();
@@ -250,6 +243,9 @@ protected:
 
 };
 
+/**
+* @brief Draws a chain of Line objects.
+*/
 class LineChain : public RectangleChain {
 public:
   LineChain(float xleft, float xright, float ybot, float ytop, QWidget* widget, int repeats,
@@ -261,7 +257,6 @@ protected:
     Alignment alignment);
 };
 
-//TODO: rethink, right now whole t is copied to make
 template <class T>
 class RectangleChainFactory {
 public:
@@ -272,7 +267,7 @@ public:
 };
 
 /**
-* @brief This class uses QPaint to render number row.
+* @brief This class uses QPaint to render a number row.
 */
 class NumberRange : public RectangleChain {
   float fromNumber = 0.0f;
@@ -280,7 +275,6 @@ class NumberRange : public RectangleChain {
   float precision = 0;
   float length;
 
-  //TODO: make this changable in program options
   QString font = "Arial";
   QColor textColor;
 

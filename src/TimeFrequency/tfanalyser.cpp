@@ -9,10 +9,6 @@
 #include <elidedlabel.h>
 #include <helplink.h>
 #include <QVBoxLayout>
-//TODO: delete later
-#include <iostream>
-#include <string>
-
 
 #include <sstream>
 
@@ -115,7 +111,6 @@ void TfAnalyser::updateSpectrum() {
   if (printTiming) {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
-    //std::cout << "TFA updateSpectrum\n";
   }
 
   visualizer->setDataToDraw(processedValues, tfModel->frameCount, tfModel->freqBinsUsed);

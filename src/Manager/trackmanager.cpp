@@ -34,7 +34,6 @@ bool TrackManager::insertRowBack() {
   return false;
 }
 
-//TODO: treat errors
 void TrackManager::loadCoordinates() {
   QString fileName = QFileDialog::getOpenFileName(this, tr("Load Electrode Locations"), "/", "Electrode location files (*.elc)");
   std::vector<ElcPosition> positions = ElcFileReader::read(fileName.toStdString());

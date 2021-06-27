@@ -167,7 +167,6 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   if (printTiming) {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
-    //std::cout << "TFA set data to draw end first part\n";
   }
 
   if (specMesh.rows != yVertices || specMesh.columns != xVertices) {
@@ -208,8 +207,6 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
     if (printTiming) {
       const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
       currentBenchTimeGlobal += time;
-
-      //std::cout << "TFA set data to draw end update\n";
     }
   }
 }
@@ -353,7 +350,6 @@ void TfVisualizer::paintGL() {
   if (printTiming) {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
-    //std::cout << "TfVisualizer paint end\n";
   }
 }
 

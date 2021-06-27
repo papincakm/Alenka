@@ -1229,7 +1229,6 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
   eventTypeManager->changeFile(openDataFile.get());
   montageManager->changeFile(openDataFile.get());
   filterManager->changeFile(openDataFile.get());
-  //TODO: (papi) video error here
   videoPlayer->changeFile(openDataFile.get());
   scalpMap->changeFile(openDataFile.get());
   syncDialog->changeFile(openDataFile.get());
@@ -1510,7 +1509,6 @@ void SignalFileBrowserWindow::openFile(const QString &fileName,
 // In this lines thre were add the connections
 connect(signalViewer->getCanvas(), SIGNAL(cursorPositionSampleChanged(int)), this, SLOT(UpadateCursorTimeInputBox())); // connection to update cursor position at combobox
 connect(&OpenDataFile::infoTable, SIGNAL(positionChanged(int, double)),this, SLOT(UpadatePositionTimeInputBox())); // connection to upadate the position on the position 
-connect(Position, SIGNAL(SetTimeGraphics(int newTimeGraphics)), this, SLOT(OpenTimeWindow()));
 this->Position->DefineFrequency(fileResources->file.get()->getSamplingFrequency());
 connect(Position, SIGNAL(ChangedBaseModel(int)), this, SLOT(ChangedTimeModel(int)));
 #pragma endregion

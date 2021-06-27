@@ -1,7 +1,5 @@
 #include "graphicsrectangle.h"
 
-#include <iostream>
-
 using namespace graphics;
 
 void Rectangle::renderFull() {
@@ -18,15 +16,13 @@ void Rectangle::renderFull() {
 }
 
 void QtObject::calculateWidgetProportions() {
-  //TODO: using brute correction to match opengl drawing
   xleftReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xleft - 0.5f;
   xrightReal = widget->width() / 2.0f + (widget->width() / 2.0f) * xright + 0.5f;
   ybotReal = widget->height() / 2.0f + (widget->height() / 2.0f) * ybot * -1 + 0.5f;
   ytopReal = widget->height() / 2.0f + (widget->height() / 2.0f) * ytop * -1 - 0.5f;
 
-  //1.0f is correction to match opengl
-  heightReal = abs(ytopReal - ybotReal);// +1.0f;
-  widthReal = abs(xrightReal - xleftReal);// +1.0f;
+  heightReal = abs(ytopReal - ybotReal);
+  widthReal = abs(xrightReal - xleftReal);
 }
 
 void Rectangle::render() {
@@ -123,7 +119,6 @@ void RectangleText::drawText(float x, float y) {
   painter.end();
 }
 
-//same as renderTop rn
 void RectangleText::renderFull() {
   if (textOrientation == Orientation::Vertical) {
     drawText(xleftReal, ytopReal);
@@ -303,7 +298,6 @@ void Gradient::generateGradientMesh(std::vector<GLfloat>& triangles, std::vector
   triangles.push_back(getXleft());
   triangles.push_back(getYbot());
   triangles.push_back(0.01f);
-  //TODO: refactor this
   indices.push_back(firstVertex);
 
   //right bot vertex

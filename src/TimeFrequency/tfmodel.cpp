@@ -4,7 +4,6 @@
 #include "../DataModel/infotable.h"
 
 #include <algorithm>
-#include <iostream>
 
 #ifndef __APPLE__
 #if defined WIN_BUILD
@@ -14,6 +13,7 @@
 #endif
 #endif
 
+using namespace std;
 using namespace AlenkaFile;
 
 std::vector<float> TfModel::getStftValues() {
@@ -51,9 +51,6 @@ std::vector<float> TfModel::getStftValues() {
     frameCount, zeroPaddedFrameSize);
 
   freqBins = zeroPaddedFrameSize / 2 + 1;
-
-  //std::cout << "freqBins: " << freqBins << "\n";
-  //std::cout << "specbins: " << spectrum.size() / (float) frameCount << "\n";
 
   //get magnitudes and filter undesired frequencies
   std::vector<float> processedValues;
@@ -100,7 +97,6 @@ void TfModel::applyWindowFunction(std::vector<float>& data) {
 }
 
 std::vector<float> TfModel::loadSamples() {
-  //std::cout << "file->file->getSamplingFrequency() : " << file->file->getSamplingFrequency() << "\n";
   int samplesToUse =
     secondsToDisplay * static_cast<int>(file->file->getSamplingFrequency());
 
@@ -110,7 +106,7 @@ std::vector<float> TfModel::loadSamples() {
   const int position = OpenDataFile::infoTable.getPosition();
 
   int startFileSample = max(0, position - samplesToUse / 2);
-  //TODO: there was startFileSample + samplesToUse - 1, is it ok?
+
   int endFileSample = min(static_cast<int>(file->file->getSamplesRecorded()), position + samplesToUse / 2);
 
   //read data

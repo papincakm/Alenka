@@ -60,7 +60,6 @@ std::vector<ElcPosition> ElcFileReader::read(std::string fileName) {
       iss >> position.x >> position.y >> position.z;
 
       std::transform(position.label.begin(), position.label.end(), position.label.begin(), ::tolower);
-      std::cout << position.label << " x" << position.x << " y" << position.y << " z" << position.z << "\n";
       positions.push_back(position);
     }
   }

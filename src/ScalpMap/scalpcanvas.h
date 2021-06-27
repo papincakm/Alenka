@@ -38,11 +38,8 @@ class OpenGLProgram;
  *
  * Every time this control gets updated the whole surface gets repainted.
  *
- * This class also handles user keyboard and mouse input. Scrolling related
- * events are skipped and handled by the parent.
- */
+**/
 
-//TODO: move to some utils class
 class ElectrodePosition {
 public:
 	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), voltage(frequency) { }
@@ -114,7 +111,6 @@ public:
   explicit ScalpCanvas(QWidget *parent = nullptr);
   ~ScalpCanvas() override;
 
-  //TODO: refactor, right now labels and positions are instanced twice, here and in scalpMap
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
 	void setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
@@ -136,12 +132,6 @@ protected:
 private:
   void logLastGLMessage();
 
-  /**
-   * @brief Tests whether SignalProcessor is ready to return blocks.
-   *
-   * This method is used to skip some code that would break if no file is
-   * open and/or the current montage is empty.
-   */
   bool ready();
 
   void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
@@ -151,7 +141,6 @@ private:
   void splitTriangles(std::vector<ElectrodePosition>& triangulatedPositions, std::vector<GLuint>& indices);
   GLuint addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangles,
     std::vector<GLuint>& splitIndices, ElectrodePosition candidate);
-  //std::vector<GLfloat> splitTriangles(const std::vector<GLfloat>& triangles);
   void calculateVoltages(std::vector<GLfloat>& points);
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();

@@ -9,9 +9,7 @@
 #include <elidedlabel.h>
 #include <helplink.h>
 #include <QVBoxLayout>
-//TODO: delete later
-#include <iostream>
-#include <string>
+#include <cmath>
 
 
 #include <sstream>
@@ -220,7 +218,6 @@ void ScalpMap::updateSpectrum() {
   if (printTiming) {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
-    //std::cout << "scalp map updateSpec paint end\n";
   }
   scalpCanvas->allowDraw();
   scalpCanvas->update();

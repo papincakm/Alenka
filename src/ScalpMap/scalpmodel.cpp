@@ -1,5 +1,8 @@
 #include "scalpmodel.h"
 
+#include <cmath>
+#include <cfloat>
+
 //TODO: delete later
 #include <iostream>
 #include <string>

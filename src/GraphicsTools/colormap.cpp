@@ -256,6 +256,7 @@ void Colormap::createTextureBR() {
 
   std::vector<int> colorPosition(colorCnt);
   colorPosition[0] = 0;
+
   for (int i = 1; i < colorCnt; i++) {
     colorPosition[i] = i * COLOR_PARTITIONS / (interpolationRegions) - 1;
   }
@@ -269,7 +270,7 @@ void Colormap::createTextureBR() {
   int green = 1;
   int blue = 2;
   int partitionSize = 3;
-  //TODO: is rgba required or is rgb sufficient? 
+
   std::vector<float> colormap(COLOR_PARTITIONS * partitionSize, 0);
 
   //interpolate with next color

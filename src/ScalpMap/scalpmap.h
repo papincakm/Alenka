@@ -14,10 +14,10 @@
 class OpenDataFile;
 class ScalpCanvas;
 class InfoTable;
-//struct CanvasTrack;
 
 /**
-* @brief Implements 2D scalp map.
+* @brief Recieves signals from global Qt contexts.
+* Controls  the ScalpModel and Scalpcanvas to draw a scalp map.
 */
 class ScalpMap : public QWidget {
   Q_OBJECT
@@ -28,7 +28,7 @@ class ScalpMap : public QWidget {
   float voltageMax = 0.0f;
   bool parentVisible = true;
   bool printTiming = false;
-  //which will be referenced in here and trackLabelBar
+
   std::vector<QMetaObject::Connection> trackTableConnections;
   std::vector<QMetaObject::Connection> fileInfoConnections;
 
