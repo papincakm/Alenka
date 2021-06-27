@@ -2,7 +2,7 @@
 #### A Visualization System for Bio Signals
 ***
 
-See [wiki](https://github.com/papincakm/wiki) for more information.
+See [wiki](https://github.com/papincakm/Alenka/wiki) for more information and build instructions.
 
 ### Requirements
 * git
