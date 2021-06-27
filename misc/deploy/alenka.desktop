@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Alenka
+Comment=Visualize eeg data
+TryExec=Alenka
+Icon=default
+Exec=Alenka
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=Science;Qt;2DGraphics;
+X-AppImage-Version=0b39b40
