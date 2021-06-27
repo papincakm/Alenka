@@ -15,7 +15,7 @@ See [wiki](https://github.com/papincakm/wiki) for more information.
 
 If your device doesn't support OpenCL (e.g. when running a Linux guest in VirtualBox), use AMD APP SDK for a CPU implementation of OpenCL.
 
-Alenka 1.0 can be found on [GitHub](https://github.com/machta).
+Alenka 1.0 can be found on [GitHub](https://github.com/machta/Alenka).
 
 Alenka 2.0 can be found on [GitHub](https://github.com/MoronaCzech1991/Alenka-master).
 
