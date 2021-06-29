@@ -26,3 +26,6 @@
 [submodule "libraries/matio"]
 	path = libraries/matio
 	url = https://github.com/tbeu/matio.git
+[submodule "libraries/delaunator-cpp-0.4.0"]
+	path = libraries/delaunator-cpp-0.4.0
+	url = https://github.com/delfrrr/delaunator-cpp
