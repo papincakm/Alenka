@@ -21,8 +21,9 @@ MyApplication::MyApplication(int &argc, char **argv)
 
   try {
     // Set up the global options object.
+    std::cout << "before program options set\n";
     PROGRAM_OPTIONS = make_unique<Options>(argc, argv);
-
+    std::cout << "program options set\n";
     // Set up the log. This is a potential bug. TODO: Do it in a way doesn't
     // rely on a max length.
     const int maxLogFileNameLength = 1000;
@@ -85,6 +86,10 @@ MyApplication::MyApplication(int &argc, char **argv)
       AlenkaSignal::OpenCLContext::getDeviceInfo(platformIndex, deviceIndex) +
       "\n";
   logToFile(clInfoString);
+
+  if (isProgramOptionSet("appdir")) {
+    std::cout << "appdir set " << programOption<std::string>("appdir") << "\n";
+  }
 
   if (isProgramOptionSet("help")) { // Help should be always the first.
     cout << R"(Usage:
@@ -163,6 +168,17 @@ QDir MyApplication::makeSubdir(const QString &path,
   }
 
   return QDir(dirPath);
+}
+
+QDir MyApplication::makeAppSubdir(const std::vector<QString> &relPath) {
+  std::cout << "makeAppSubdir\n";
+
+  if (!programOption<std::string>("appdir").empty()) {
+    std::cout << programOption<std::string>("appdir") << "\n";
+    return makeSubdir(QString::fromStdString(programOption<std::string>("appdir")), relPath);
+  }
+
+  return makeSubdir(QApplication::applicationDirPath(), relPath);
 }
 
 unique_ptr<AlenkaSignal::OpenCLContext> globalContext(nullptr);

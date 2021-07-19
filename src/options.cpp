@@ -38,6 +38,7 @@ Options::Options(int argc, char **argv)
   options_description commandLineOnly("Command line options", LINE_WIDTH);
   commandLineOnly.add_options()
   ("help", "help message")
+  ("appdir", value<string>()->value_name("path"), "override default directory that the application is run in")
   ("config", value<string>()->value_name("path"), "override default config file path")
   ("spikedet", value<string>()->value_name("OUTPUT_FILE"), "Spikedet only mode")
   ("clInfo", "print OpenCL platform and device info")
@@ -185,9 +186,20 @@ void Options::parseConfigFile(const options_description &configuration) {
       logToFileAndConsole("Config file '" << configPath << "' not found.");
     }
   } else {
-    configPath = MyApplication::makeAppSubdir({"options.ini"})
-                     .absolutePath()
-                     .toStdString();
+    if (isSet("appdir")) {
+      configPath = MyApplication::makeSubdir(QString::fromStdString(get("appdir").as<std::string>()), { "options.ini" })
+        .absolutePath()
+        .toStdString();
+    }
+    else {
+      configPath = MyApplication::makeAppSubdir({ "options.ini" })
+        .absolutePath()
+        .toStdString();
+    }
+
+    //TODO: DELETE
+    std::cout << "configPath " << configPath << "\n";
+
     ifs.open(configPath);
 
     if (!ifs.good()) {
