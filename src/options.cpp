@@ -187,18 +187,15 @@ void Options::parseConfigFile(const options_description &configuration) {
     }
   } else {
     if (isSet("appdir")) {
-      configPath = MyApplication::makeSubdir(QString::fromStdString(get("appdir").as<std::string>()), { "options.ini" })
+      configPath = MyApplication::makeCustomAppSubdir(get("appdir").as<std::string>(), { "options.ini" })
         .absolutePath()
         .toStdString();
     }
     else {
-      configPath = MyApplication::makeAppSubdir({ "options.ini" })
+      configPath = MyApplication::makeQtAppSubdir({ "options.ini" })
         .absolutePath()
         .toStdString();
     }
-
-    //TODO: DELETE
-    std::cout << "configPath " << configPath << "\n";
 
     ifs.open(configPath);
 

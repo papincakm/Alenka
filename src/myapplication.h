@@ -59,7 +59,12 @@ public:
 
   static QDir makeSubdir(const QString &path,
                          const std::vector<QString> &relPath);
+
   static QDir makeAppSubdir(const std::vector<QString> &relPath);
+
+  static QDir makeQtAppSubdir(const std::vector<QString> &relPath);
+
+  static QDir makeCustomAppSubdir(const std::string& appdir, const std::vector<QString> &relPath);
 };
 
 extern std::unique_ptr<AlenkaSignal::OpenCLContext> globalContext;
