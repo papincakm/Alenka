@@ -54,10 +54,6 @@ ScalpCanvas::~ScalpCanvas() {
 	logToFile("Destructor in ScalpCanvas.");
 	if (glInitialized)
     cleanup();
-
-  channelProgram.reset();
-
-  labelProgram.reset();
 }
 
 void ScalpCanvas::forbidDraw(QString errorString) {
@@ -78,6 +74,7 @@ void ScalpCanvas::clear() {
 }
 
 void ScalpCanvas::initializeGL() {
+  logToFile("Initializing OpenGL in ScalpCanvas.");
   glInitialized = true;
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
 
@@ -112,9 +109,6 @@ void ScalpCanvas::initializeGL() {
   gl()->glUseProgram(channelProgram->getGLProgram());
 
   colormapTextureId = setupColormapTexture(colormap.get());
-
-  gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
-  gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
 
   gl()->glFlush();
 
@@ -335,7 +329,10 @@ GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   GLuint samplerLocation = gl()->glGetUniformLocation(channelProgram->getGLProgram(), "colormap");
-  gl()->glUniform1i(samplerLocation, texId);
+  gl()->glUniform1i(samplerLocation, 0);
+
+  gl()->glActiveTexture(GL_TEXTURE0);
+  gl()->glBindTexture(GL_TEXTURE_1D, texId);
 
   return texId;
 }

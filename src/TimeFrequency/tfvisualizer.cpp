@@ -51,8 +51,6 @@ TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
 TfVisualizer::~TfVisualizer() {
   if (glInitialized)
     cleanup();
-	// Release these three objects here explicitly to make sure the right GL
-	// context is bound by makeCurrent().
 }
 
 void TfVisualizer::deleteColormapTexture() {
@@ -62,15 +60,15 @@ void TfVisualizer::deleteColormapTexture() {
 }
 
 void TfVisualizer::cleanup() {
-		makeCurrent();
+  makeCurrent();
 
-    deleteColormapTexture();
+  deleteColormapTexture();
 
-		channelProgram.reset();
+  channelProgram.reset();
 
-		OPENGL_INTERFACE->checkGLErrors();
+  OPENGL_INTERFACE->checkGLErrors();
 
-		doneCurrent();
+  doneCurrent();
 }
 
 GLuint TfVisualizer::setupColormapTexture(std::vector<float> colormap) {
@@ -85,7 +83,10 @@ GLuint TfVisualizer::setupColormapTexture(std::vector<float> colormap) {
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
   GLuint samplerLocation = gl()->glGetUniformLocation(channelProgram->getGLProgram(), "colormap");
-  gl()->glUniform1i(samplerLocation, texId);
+  gl()->glUniform1i(samplerLocation, 0);
+
+  gl()->glActiveTexture(GL_TEXTURE0);
+  gl()->glBindTexture(GL_TEXTURE_1D, texId);
 
   return texId;
 }
@@ -97,32 +98,30 @@ void TfVisualizer::updateColormapTexture() {
 
 
 void TfVisualizer::initializeGL() {
-	logToFile("Initializing OpenGL in TfVisualizer.");
+  logToFile("Initializing OpenGL in TfVisualizer.");
   glInitialized = true;
 
-	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &TfVisualizer::cleanup);
-	if (!OPENGL_INTERFACE)
-	{
-			OPENGL_INTERFACE = make_unique<OpenGLInterface>();
-			OPENGL_INTERFACE->initializeOpenGLInterface();
-	}
+  connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &TfVisualizer::cleanup);
 
-	QFile triangleVertFile(":/triangle.vert");
-	triangleVertFile.open(QIODevice::ReadOnly);
-	string triangleVert = triangleVertFile.readAll().toStdString();
+  if (!OPENGL_INTERFACE)
+  {
+    OPENGL_INTERFACE = make_unique<OpenGLInterface>();
+    OPENGL_INTERFACE->initializeOpenGLInterface();
+  }
 
-	QFile triangleFragFile(":/triangle.frag");
-	triangleFragFile.open(QIODevice::ReadOnly);
-	string triangleFrag = triangleFragFile.readAll().toStdString();
+  QFile triangleVertFile(":/triangle.vert");
+  triangleVertFile.open(QIODevice::ReadOnly);
+  string triangleVert = triangleVertFile.readAll().toStdString();
 
-	channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
+  QFile triangleFragFile(":/triangle.frag");
+  triangleFragFile.open(QIODevice::ReadOnly);
+  string triangleFrag = triangleFragFile.readAll().toStdString();
+
+  channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
 
   gl()->glUseProgram(channelProgram->getGLProgram());
 
   colormapTextureId = setupColormapTexture(colormap.get());
-
-  gl()->glActiveTexture(GL_TEXTURE0 + colormapTextureId);
-  gl()->glBindTexture(GL_TEXTURE_1D, colormapTextureId);
 
   gl()->glFlush();
 }
@@ -351,6 +350,10 @@ void TfVisualizer::paintGL() {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
   }
+
+#ifndef NDEBUG
+  logToFile("Painting finished.");
+#endif
 }
 
 void TfVisualizer::genBuffers() {
