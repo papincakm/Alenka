@@ -11,7 +11,7 @@
 #include <QVBoxLayout>
 #include <cmath>
 
-
+#include <iostream>
 #include <sstream>
 
 #include <QtWidgets>
@@ -149,16 +149,25 @@ void ScalpMap::updateLabels() {
   std::vector<QVector3D> positions;
 
   const AbstractTrackTable *trackTable = getTrackTable(file);
-
+  int cnt = 0;
   for (int i = 0; i < trackTable->rowCount(); i++) {
     Track t = trackTable->row(i);
 
-    if (!t.hidden) {
+    if (!t.scalpMapHidden) {
+      cnt++;
       //TODO: labels and positions should be in one class and one vector
       labels.push_back(QString::fromStdString(t.label));
       positions.push_back(QVector3D(t.x, t.y, t.z));
     }
+
+    if (!t.scalpMapHidden && t.hidden)
+      std::cout << "!t.scalpMapHidden && t.hidden\n";
+
+    if (t.scalpMapHidden && !t.hidden)
+      std::cout << "t.scalpMapHidden && !t.hidden\n";
   }
+
+  std::cout << "nonHidden scalpmap " << cnt << "\n";
 
   if (!positionsValid(positions) || trackTable->rowCount() < 3) {
     scalpCanvas->forbidDraw("Electrode positions are invalid(Two positions can't have the same coordinates)."\
@@ -186,7 +195,6 @@ void ScalpMap::updateLabels() {
   scalpCanvas->allowDraw();
 }
 
-//TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
   if (!enabled())
     return;
@@ -207,6 +215,8 @@ void ScalpMap::updateSpectrum() {
   const int position = OpenDataFile::infoTable.getPosition();
 
   std::vector<float> samples = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
+
+  std::cout << "samples from scalpmap = " << samples.size() << "\n";
 
   if (OpenDataFile::infoTable.getScalpMapExtrema() == InfoTable::Extrema::local) {
     voltageMin = *std::min_element(std::begin(samples), std::end(samples));

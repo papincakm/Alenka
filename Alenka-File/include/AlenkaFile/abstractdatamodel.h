@@ -70,9 +70,10 @@ struct Track {
   std::array<int, 3> color;
   double amplitude;
   bool hidden;
+  bool scalpMapHidden;
   float x, y, z;
 
-  enum class Index { label, code, color, amplitude, hidden, x, y, z, size };
+  enum class Index { label, code, color, amplitude, hidden, scalpMapHidden, x, y, z, size };
 };
 
 class AbstractTrackTable : public AbstractTable<Track> {};

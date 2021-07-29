@@ -74,6 +74,7 @@ void appendTrack(xml_node node, const Track &t) {
       DataModel::colorArray2str(t.color).c_str());
   track.append_attribute("amplitude").set_value(t.amplitude);
   track.append_attribute("hidden").set_value(t.hidden);
+  track.append_attribute("scalpMapHidden").set_value(t.scalpMapHidden);
   track.append_attribute("x").set_value(t.x);
   track.append_attribute("y").set_value(t.y);
   track.append_attribute("z").set_value(t.z);
@@ -149,6 +150,7 @@ void loadTrack(xml_node node, AbstractTrackTable *tt) {
     t.color = DataModel::str2colorArray(node.attribute("color").as_string());
     t.amplitude = node.attribute("amplitude").as_double();
     t.hidden = node.attribute("hidden").as_bool();
+    t.scalpMapHidden = node.attribute("scalpMapHidden").as_bool();
     t.x = node.attribute("x").as_float();
     t.y = node.attribute("y").as_float();
     t.z = node.attribute("z").as_float();

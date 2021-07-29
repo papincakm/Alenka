@@ -2068,6 +2068,7 @@ void SignalFileBrowserWindow::UpdateTracksResult()
             tracker.amplitude = track.Amplitude;
             tracker.code = track.Code;
             tracker.hidden = track.Hidden;
+            tracker.scalpMapHidden = track.ScalpMapHidden;
             tracker.label = track.Label;
             tracker.color = DataModel::str2colorArray(track.Color.c_str());
             tracker.x = track.X;
@@ -2187,6 +2188,7 @@ void SignalFileBrowserWindow::UpdateTracksComparable()
             tracker.amplitude = track.Amplitude;
             tracker.code = track.Code;
             tracker.hidden = track.Hidden;
+            tracker.scalpMapHidden = track.ScalpMapHidden;
             tracker.label = track.Label;
             tracker.color = DataModel::str2colorArray(track.Color.c_str());
             tracker.x = track.X;

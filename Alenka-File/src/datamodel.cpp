@@ -38,6 +38,7 @@ Track TrackTable::defaultValue(int row) const {
   t.color[0] = t.color[1] = t.color[2] = 0;
   t.amplitude = 1;
   t.hidden = false;
+  t.scalpMapHidden = true;
   t.x = t.y = t.z = 0;
 
   return t;

@@ -13,6 +13,7 @@ public:
 	string Color;
 	double Amplitude;
 	bool Hidden;
+  bool ScalpMapHidden;
 	float X;
 	float Y;
 	float Z;

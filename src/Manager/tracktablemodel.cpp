@@ -237,6 +237,31 @@ public:
   }
 };
 
+class ScalpMapHidden : public TableColumn {
+public:
+  ScalpMapHidden(OpenDataFile *file) : TableColumn("ScalpMap", file) {}
+
+  QVariant data(int row, int role) const override {
+    if (role == Qt::DisplayRole || role == Qt::EditRole)
+      return currentTrackTable(file)->row(row).scalpMapHidden;
+
+    return QVariant();
+  }
+
+  bool setData(int row, const QVariant &value, int role) override {
+    if (role == Qt::EditRole) {
+      Track t = currentTrackTable(file)->row(row);
+      t.scalpMapHidden = value.toBool();
+      file->undoFactory->changeTrack(
+        OpenDataFile::infoTable.getSelectedMontage(), row, t,
+        "change ScalpMapHidden");
+      return true;
+    }
+
+    return false;
+  }
+};
+
 class X : public TableColumn {
 public:
   X(OpenDataFile *file) : TableColumn("X", file) {}
@@ -361,6 +386,7 @@ TrackTableModel::TrackTableModel(OpenDataFile *file, QObject *parent)
   columns.push_back(make_unique<Color>(file));
   columns.push_back(make_unique<Amplitude>(file));
   columns.push_back(make_unique<Hidden>(file));
+  columns.push_back(make_unique<ScalpMapHidden>(file));
   columns.push_back(make_unique<X>(file));
   columns.push_back(make_unique<Y>(file));
   columns.push_back(make_unique<Z>(file));

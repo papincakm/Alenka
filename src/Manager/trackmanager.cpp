@@ -44,10 +44,10 @@ void TrackManager::loadCoordinates() {
     int col = tableView->model()->columnCount();
 
     const int tableLabel = 1;
-    const int tableHidden = 5;
-    const int tableX = 6;
-    const int tableY = 7;
-    const int tableZ = 8;
+    const int tableHidden = 6;
+    const int tableX = 7;
+    const int tableY = 8;
+    const int tableZ = 9;
 
     for (int i = 0; i < row; i++) {
       bool found = false;

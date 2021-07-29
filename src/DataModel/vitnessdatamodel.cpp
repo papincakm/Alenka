@@ -78,6 +78,9 @@ void VitnessTrackTable::row(int i, const Track &value) {
   if (oldValue.hidden != value.hidden)
     emit vitnessObject->valueChanged(i, ec(Track::Index::hidden));
 
+  if (oldValue.scalpMapHidden != value.scalpMapHidden)
+    emit vitnessObject->valueChanged(i, ec(Track::Index::scalpMapHidden));
+
   if (oldValue.x != value.x)
     emit vitnessObject->valueChanged(i, ec(Track::Index::x));
 
