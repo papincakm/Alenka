@@ -31,6 +31,7 @@ class ScalpMap : public QWidget {
 
   std::vector<QMetaObject::Connection> trackTableConnections;
   std::vector<QMetaObject::Connection> fileInfoConnections;
+  std::vector<bool> allowedPositions;
 
 public:
   explicit ScalpMap(QWidget *parent = nullptr);

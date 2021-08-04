@@ -159,8 +159,8 @@ void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
 }
 
 void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
-	if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
-		return;
+	//if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
+		//return;
 	
 	minVoltage = min;
 	maxVoltage = max;

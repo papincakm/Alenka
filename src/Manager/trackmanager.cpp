@@ -5,6 +5,7 @@
 #include "../DataModel/opendatafile.h"
 #include "../DataModel/undocommandfactory.h"
 
+#include<math.h>
 #include<iostream>
 
 using namespace AlenkaFile;
@@ -68,8 +69,12 @@ void TrackManager::loadCoordinates() {
           break;
         }
       }
-      if (!found)
-        tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
+      if (!found) {
+        tableView->model()->setData(tableView->model()->index(i, tableX), NAN);
+        tableView->model()->setData(tableView->model()->index(i, tableY), NAN);
+        tableView->model()->setData(tableView->model()->index(i, tableZ), NAN); 
+        //tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
+      }
 
       if (i < row - 1) {
         tableView->model()->blockSignals(tableViewBlockState);

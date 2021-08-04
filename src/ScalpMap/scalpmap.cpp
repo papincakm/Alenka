@@ -12,6 +12,7 @@
 #include <cmath>
 
 
+#include <iostream>
 #include <sstream>
 
 #include <QtWidgets>
@@ -108,6 +109,7 @@ void ScalpMap::updateTrackTableConnections(int row) {
 
 //TODO: refactor
 bool ScalpMap::positionsValid(const std::vector<QVector3D>& positions) {
+  return true;
   if (positions.empty())
     return false;
 
@@ -152,12 +154,17 @@ void ScalpMap::updateLabels() {
 
   for (int i = 0; i < trackTable->rowCount(); i++) {
     Track t = trackTable->row(i);
+    if (t.hidden)
+      continue;
 
-    if (!t.hidden) {
-      //TODO: labels and positions should be in one class and one vector
-      labels.push_back(QString::fromStdString(t.label));
-      positions.push_back(QVector3D(t.x, t.y, t.z));
+    if (std::isnan(t.x) || std::isnan(t.y) || std::isnan(t.z)) {
+      allowedPositions.push_back(false);
+      continue;
     }
+
+    allowedPositions.push_back(true);
+    labels.push_back(QString::fromStdString(t.label));
+    positions.push_back(QVector3D(t.x, t.y, t.z));
   }
 
   if (!positionsValid(positions) || trackTable->rowCount() < 3) {
@@ -206,7 +213,13 @@ void ScalpMap::updateSpectrum() {
 
   const int position = OpenDataFile::infoTable.getPosition();
 
-  std::vector<float> samples = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
+  std::vector<float> samplesUnfiltered = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
+  std::vector<float> samples;
+
+  for (int i = 0; i < samplesUnfiltered.size(); i++) {
+    if (allowedPositions[i])
+      samples.push_back(samplesUnfiltered[i]);
+  }
 
   if (OpenDataFile::infoTable.getScalpMapExtrema() == InfoTable::Extrema::local) {
     voltageMin = *std::min_element(std::begin(samples), std::end(samples));
