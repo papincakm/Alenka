@@ -123,7 +123,7 @@ void TfVisualizer::initializeGL() {
 
   colormapTextureId = setupColormapTexture(colormap.get());
 
-  gl()->glFlush();
+  gl()->glFinish();
 }
 
 void TfVisualizer::resizeGL(int /*w*/, int /*h*/) {
@@ -246,6 +246,7 @@ void TfVisualizer::paintGL() {
 #ifndef NDEBUG
   logToFile("Painting started.");
 #endif
+  painter = new QPainter(this);
   GLfloat red = palette().color(QPalette::Window).redF();
   GLfloat green = palette().color(QPalette::Window).greenF();
   GLfloat blue = palette().color(QPalette::Window).blueF();
@@ -253,43 +254,43 @@ void TfVisualizer::paintGL() {
   gl()->glClearColor(red, green, blue, 1.0f);
 
   auto specWindow = graphics::Rectangle(specMesh, this);
-  specWindow.render();
+  specWindow.render(painter);
 
-  gradient->render();
+  gradient->render(painter);
 
   auto gradAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
     graphics::LineChain(gradient->getXright(), gradient->getXright() + 0.02f, specMesh.getYbot(), specMesh.getYtop() + 0.0024f, this, 5,
     graphics::Orientation::Vertical)
   );
 
-  gradAxisLines->render();
+  gradAxisLines->render(painter);
 
   auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
     graphics::NumberRange(gradient->getXright() + 0.05f, gradient->getXright() + 0.15f, specMesh.getYbot() + 0.04f,
     specMesh.getYtop() + 0.04f, this, 5, minGradVal, maxGradVal, 2, QColor(0, 0, 0),
     graphics::Orientation::Vertical)
   );
-  gradAxisNumbers->render();
+  gradAxisNumbers->render(painter);
 
   //frequency
   float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
   auto frequencyAxisLabel = graphics::RectangleText(-0.99f, -0.92f,
     specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
     graphics::Orientation::Vertical, graphics::Orientation::Vertical);
-  frequencyAxisLabel.render();
+  frequencyAxisLabel.render(painter);
 
   auto frequencyAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
     graphics::NumberRange(specMesh.getXleft() - 0.10f, specMesh.getXleft() - 0.05f, specMesh.getYbot() + 0.04f,
     specMesh.getYtop() + 0.04f, this, 5, minFreqDraw, maxFreqDraw, 0, QColor(0, 0, 0), graphics::Orientation::Vertical)
   );
-  frequencyAxisNumbers->render();
+  frequencyAxisNumbers->render(painter);
   
     auto frameAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
     graphics::LineChain(specMesh.getXleft() - 0.02f, specMesh.getXleft(), specMesh.getYbot(),
     specMesh.getYtop() + 0.0024f, this, 5, graphics::Orientation::Vertical)
   );
 
-  frameAxisLines->render();
+  frameAxisLines->render(painter);
   
   //time
   auto timeAxisLines = graphics::RectangleChainFactory<graphics::LineChain>().make(
@@ -297,23 +298,24 @@ void TfVisualizer::paintGL() {
     specMesh.getYbot(), this, 5, graphics::Orientation::Horizontal, graphics::Orientation::Vertical)
   );
 
-  timeAxisLines->render();
+  timeAxisLines->render(painter);
 
   auto timeAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
     graphics::NumberRange(specMesh.getXleft() - 0.03f, specMesh.getXright() - 0.03f, specMesh.getYbot() - 0.15f,
     specMesh.getYbot() - 0.05f, this, 5, -seconds / 2, seconds / 2, 1, QColor(0, 0, 0), graphics::Orientation::Horizontal,
     graphics::Orientation::Horizontal)
   );
-  timeAxisNumbers->render();
+  timeAxisNumbers->render(painter);
 
   float specXSize = std::abs(specMesh.getXleft() - specMesh.getXright());
   auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 2.4f,
     specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.18f,
     this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
     graphics::Orientation::Horizontal);
-  timeAxisLabel.render();
+  timeAxisLabel.render(painter);
 
   if (ready()) {
+    painter->beginNativePainting();
     if (colormap.changed) {
       updateColormapTexture();
     }
@@ -341,9 +343,7 @@ void TfVisualizer::paintGL() {
     
     deleteBuffers();
 
-    gl()->glFlush();
-
-    gl()->glFinish();
+    painter->endNativePainting();
   }
 
   if (printTiming) {
@@ -351,6 +351,7 @@ void TfVisualizer::paintGL() {
     currentBenchTimeGlobal += time;
   }
 
+  painter->end();
 #ifndef NDEBUG
   logToFile("Painting finished.");
 #endif

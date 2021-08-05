@@ -141,7 +141,7 @@ public:
     backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
   };
 
-  virtual void render();
+  virtual void render(QPainter* painter);
   void update();
 
 protected:
@@ -151,10 +151,10 @@ protected:
   QColor drawingColor;
   QtObject boundRect;
 
-  virtual void renderTop() {};
-  virtual void renderBot() {};
-  virtual void renderCenter() {};
-  virtual void renderFull();
+  virtual void renderTop(QPainter* painter) {};
+  virtual void renderBot(QPainter* painter) {};
+  virtual void renderCenter(QPainter* painter) {};
+  virtual void renderFull(QPainter* painter);
 };
 
 class Line : public Rectangle {
@@ -165,9 +165,9 @@ public:
   };
 
 protected:
-  void renderTop() override;
-  void renderBot() override;
-  void renderCenter() override;
+  void renderTop(QPainter* painter) override;
+  void renderBot(QPainter* painter) override;
+  void renderCenter(QPainter* painter) override;
 };
 
 class RectangleText : public Rectangle {
@@ -204,10 +204,10 @@ protected:
   QColor textColor;
   Orientation textOrientation;
 
-  void renderFull() override;
-  void renderBot() override;
-  void renderTop() override;
-  void drawText(float x, float y);
+  void renderFull(QPainter* painter) override;
+  void renderBot(QPainter* painter) override;
+  void renderTop(QPainter* painter) override;
+  void drawText(QPainter* painter, float x, float y);
 };
 
 /**
@@ -224,7 +224,7 @@ public:
     Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation), objectCount(objectCount),
     childOrientation(childOrientation) {};
 
-  void render();
+  void render(QPainter* painter);
   void constructObjects();
 protected:
   int objectCount = 0;

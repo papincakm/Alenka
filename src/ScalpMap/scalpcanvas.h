@@ -91,6 +91,7 @@ class ScalpCanvas : public QOpenGLWidget {
   std::unique_ptr<graphics::Gradient> gradient;
 
   QAction *setChannelDrawing;
+  QPainter* painter;
 
   float minVoltage = 0;
   float maxVoltage = 0;
@@ -134,7 +135,7 @@ private:
 
   bool ready();
 
-  void renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
+  void renderText(QPainter* painter, float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 
 	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
@@ -144,7 +145,6 @@ private:
   void calculateVoltages(std::vector<GLfloat>& points);
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
 	void renderErrorMsg();
-  void renderGradientText();
   GLuint setupColormapTexture(std::vector<float> colormap);
   void updateColormapTexture();
   void setupScalpMesh();

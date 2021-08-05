@@ -110,7 +110,7 @@ void ScalpCanvas::initializeGL() {
 
   colormapTextureId = setupColormapTexture(colormap.get());
 
-  gl()->glFlush();
+  gl()->glFinish();
 
   checkGLMessages();
 }
@@ -294,35 +294,11 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
 	return finalTriangles;
 }
 
-void ScalpCanvas::renderGradientText() {
-  QFont gradientNumberFont = QFont("Times", 15, QFont::Bold);
-	
-	float maxMinusMinY = gradient->getYtop() - gradient->getYbot();
-	float maxMinusMinAmp = maxVoltage - minVoltage;
-
-	float binY = maxMinusMinY / 4;
-	float binFreq = maxMinusMinAmp / 4;
-
-	float freqToDisplay = minVoltage;
-	float yPos = gradient->getYbot();
-
-	for (int i = 0; i < 5; i += 1) {
-		//TODO: tie this to font height somehow
-		if (i == 4)
-			yPos -= 0.065;
-
-		renderText(0.7f, yPos, QString::number(((int) freqToDisplay)), gradientNumberFont, QColor(255, 255, 255));
-		freqToDisplay += binFreq;
-		yPos += binY;
-	}
-}
-
 GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
   GLuint texId;
   gl()->glGenTextures(1, &texId);
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
-  //TODO: should this be here? corrupts text
-  //gl()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
   gl()->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, colormap.size() / 3, 0, GL_RGB, GL_FLOAT, colormap.data());
 
   gl()->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -333,6 +309,8 @@ GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
 
   gl()->glActiveTexture(GL_TEXTURE0);
   gl()->glBindTexture(GL_TEXTURE_1D, texId);
+
+  gl()->glFinish();
 
   return texId;
 }
@@ -348,6 +326,9 @@ void ScalpCanvas::paintGL() {
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
+    painter = new QPainter(this);
+    painter->beginNativePainting();
+
     decltype(chrono::high_resolution_clock::now()) start;
     if (printTiming) {
       start = chrono::high_resolution_clock::now();
@@ -376,7 +357,7 @@ void ScalpCanvas::paintGL() {
     gl()->glEnableVertexAttribArray(1);
     gl()->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * OPENGL_VERTEX_SIZE, (char*)(sizeof(GLfloat) * 2));
 
-    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+    gl()->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_DYNAMIC_DRAW);
     gl()->glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 
     for (int i = 0; i < 2; i++) {
@@ -385,15 +366,12 @@ void ScalpCanvas::paintGL() {
 
     deleteBuffers();
 
-    gl()->glFlush();
-
-    gl()->glFinish();
+    //gl()->glFinish();
     // draw channels TODO: refactor - dont use points, add to main channel
     // TODO!!!:draw once and set it to be top of screen so it cant be drawn over
     //
     //
     //POINTS
-    //TODO: use positions, triangulatedPositions are inflated, repeated draws
     if (shouldDrawChannels) {
       gl()->glPointSize(10.0f);
       std:vector<GLfloat> channelBufferData(originalPositions.size() * 2);
@@ -415,40 +393,39 @@ void ScalpCanvas::paintGL() {
 
       gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
       gl()->glDeleteBuffers(1, &posBuffer);
-
-      gl()->glFlush();
-      gl()->glFinish();
-    }
-
-
-    if (shouldDrawLabels) {
-      for (int i = 0; i < originalPositions.size(); i++) {
-        QFont labelFont = QFont("Times", 8, QFont::Bold);
-
-        renderText(originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
-      }
-    }
-
-    //QPainter part
-    //renderGradientText();
-    auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
-      graphics::NumberRange(gradient->getXright() + 0.01f, gradient->getXright() + 0.10f, gradient->getYbot() + 0.04f,
-        gradient->getYtop() + 0.04f, this, 3, minVoltage, maxVoltage, 2, QColor(255, 255, 255), QColor(0, 0, 0),
-        graphics::Orientation::Vertical)
-    );
-    gradAxisNumbers->render();
-
-    gradient->render();
-
-    if (printTiming) {
-      const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
-      currentBenchTimeGlobal += time;
     }
 
     if (errorMsg != "")
       renderErrorMsg();
 
     checkGLMessages();
+
+    painter->endNativePainting();
+
+    if (shouldDrawLabels) {
+      for (int i = 0; i < originalPositions.size(); i++) {
+        QFont labelFont = QFont("Times", 8, QFont::Bold);
+
+        renderText(painter, originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
+      }
+    }
+
+    //QPainter part
+    auto gradAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
+      graphics::NumberRange(gradient->getXright() + 0.01f, gradient->getXright() + 0.10f, gradient->getYbot() + 0.04f,
+        gradient->getYtop() + 0.04f, this, 3, minVoltage, maxVoltage, 2, QColor(255, 255, 255), QColor(0, 0, 0),
+        graphics::Orientation::Vertical)
+    );
+    gradAxisNumbers->render(painter);
+
+    gradient->render(painter);
+
+    if (printTiming) {
+      const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
+      currentBenchTimeGlobal += time;
+    }
+
+    painter->end();
   }
 
 #ifndef NDEBUG
@@ -474,7 +451,7 @@ void ScalpCanvas::deleteBuffers() {
 
 void ScalpCanvas::renderErrorMsg() {
 		auto errorFont = QFont("Times", 15, QFont::Bold);
-		renderText(-0.8f, 0, errorMsg, errorFont, QColor(255, 0, 0));
+		renderText(painter, -0.8f, 0, errorMsg, errorFont, QColor(255, 0, 0));
 }
 
 void ScalpCanvas::logLastGLMessage() {
@@ -487,18 +464,18 @@ bool ScalpCanvas::ready() {
   return dataReadyToDraw && scalpMesh.size() > 0;
 }
 
-void ScalpCanvas::renderText(float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
+void ScalpCanvas::renderText(QPainter* painter, float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
 	int realX = width() / 2 + (width() / 2) * x;
 	int realY = height() / 2 + (height() / 2) * y * -1;
 
-	QPainter painter(this);
-	painter.setBackgroundMode(Qt::OpaqueMode);
-	painter.setBackground(QBrush(QColor(0, 0, 0)));
-	painter.setPen(fontColor);
-	painter.setBrush(fontColor);
-	painter.setFont(font);
-	painter.drawText(realX, realY, str);
-  painter.end();
+  painter->save();
+	painter->setBackgroundMode(Qt::OpaqueMode);
+	painter->setBackground(QBrush(QColor(0, 0, 0)));
+	painter->setPen(fontColor);
+	painter->setBrush(fontColor);
+	painter->setFont(font);
+	painter->drawText(realX, realY, str);
+  painter->restore();
 }
 
 void ScalpCanvas::mousePressEvent(QMouseEvent* event) {

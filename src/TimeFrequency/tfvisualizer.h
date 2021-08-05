@@ -55,6 +55,7 @@ Q_OBJECT
   std::vector<GLuint> paintIndices;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
+  QPainter* painter;
 
   //spectogram
   graphics::SquareMesh specMesh;

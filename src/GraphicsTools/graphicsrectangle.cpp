@@ -2,17 +2,18 @@
 
 using namespace graphics;
 
-void Rectangle::renderFull() {
-
-  QPainter painter(widget);
+void Rectangle::renderFull(QPainter* painter) {
+  painter->save();
   QPen pen(drawingColor);  // creates a default pen
 
   pen.setWidth(1);
   pen.setJoinStyle(Qt::MiterJoin);
 
-  painter.setPen(pen);
+  painter->setPen(pen);
 
-  painter.drawRect(QRectF(xleftReal, ytopReal, widthReal, heightReal));
+  painter->drawRect(QRectF(xleftReal, ytopReal, widthReal, heightReal));
+
+  painter->restore();
 }
 
 void QtObject::calculateWidgetProportions() {
@@ -25,19 +26,19 @@ void QtObject::calculateWidgetProportions() {
   widthReal = abs(xrightReal - xleftReal);
 }
 
-void Rectangle::render() {
+void Rectangle::render(QPainter* painter) {
   switch (alignment) {
   case Alignment::Center:
-    renderCenter();
+    renderCenter(painter);
     break;
   case Alignment::Bot:
-    renderBot();
+    renderBot(painter);
     break;
   case Alignment::Top:
-    renderTop();
+    renderTop(painter);
     break;
   default:
-    renderFull();
+    renderFull(painter);
   }
 }
 
@@ -45,105 +46,99 @@ void Rectangle::update() {
   calculateWidgetProportions();
 }
 
-void Line::renderTop() {
-  QPainter painter(widget);
-
+void Line::renderTop(QPainter* painter) {
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(xrightReal, ytopReal, xrightReal, ybotReal));
+    painter->drawLine(QLineF(xrightReal, ytopReal, xrightReal, ybotReal));
   }
   else {
-    painter.drawLine(QLineF(xleftReal, ytopReal, xrightReal, ytopReal));
+    painter->drawLine(QLineF(xleftReal, ytopReal, xrightReal, ytopReal));
   }
 }
 
-void Line::renderBot() {
-  QPainter painter(widget);
-
+void Line::renderBot(QPainter* painter) {
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(xleftReal, ytopReal, xleftReal, ybotReal));
+    painter->drawLine(QLineF(xleftReal, ytopReal, xleftReal, ybotReal));
   }
   else {
-    painter.drawLine(QLineF(xleftReal, ybotReal, xrightReal, ybotReal));
+    painter->drawLine(QLineF(xleftReal, ybotReal, xrightReal, ybotReal));
   }
 }
 
-void Line::renderCenter() {
-  QPainter painter(widget);
-
+void Line::renderCenter(QPainter* painter) {
   if (orientation == Vertical) {
-    painter.drawLine(QLineF(xleftReal + (xrightReal - xleftReal) / 2.0f, ybotReal, ((xrightReal - xleftReal) / 2.0f), ytopReal));
+    painter->drawLine(QLineF(xleftReal + (xrightReal - xleftReal) / 2.0f, ybotReal, ((xrightReal - xleftReal) / 2.0f), ytopReal));
   }
   else {
-    painter.drawLine(QLineF(xleftReal, ybotReal + (ytopReal - ybotReal) / 2.0f, xrightReal, ybotReal + (ytopReal - ybotReal) / 2.0f));
+    painter->drawLine(QLineF(xleftReal, ybotReal + (ytopReal - ybotReal) / 2.0f, xrightReal, ybotReal + (ytopReal - ybotReal) / 2.0f));
   }
 }
 
-void RectangleText::drawText(float x, float y) {
-  QPainter painter(widget);
-  painter.setBackgroundMode(Qt::OpaqueMode);
-  painter.setBackground(backgroundColor);
-  painter.setPen(textColor);
-  painter.setBrush(textColor);
-  painter.setFont(QFont(font, 8));
+void RectangleText::drawText(QPainter* painter, float x, float y) {
+  painter->save();
+  painter->setBackgroundMode(Qt::OpaqueMode);
+  painter->setBackground(backgroundColor);
+  painter->setPen(textColor);
+  painter->setBrush(textColor);
+  painter->setFont(QFont(font, 8));
 
   if (textOrientation == Orientation::Vertical) {
     //set minimum height
     int textwidth = std::max(widthReal, 20.0f);
 
     //rotate
-    painter.translate(widget->width() / 2, widget->height() / 2);
-    painter.rotate(-90);
-    painter.translate(widget->height() / -2, widget->width() / -2);
+    painter->translate(widget->width() / 2, widget->height() / 2);
+    painter->rotate(-90);
+    painter->translate(widget->height() / -2, widget->width() / -2);
 
     //scale
     auto rect = QRectF(y, x, heightReal, textwidth);
-    QFontMetrics fm(painter.font());
+    QFontMetrics fm(painter->font());
     qreal sx = rect.width() * 1.0f / fm.width(text);
-    painter.translate(rect.center());
-    painter.scale(sx, 1);
-    painter.translate(-rect.center());
-    painter.drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
+    painter->translate(rect.center());
+    painter->scale(sx, 1);
+    painter->translate(-rect.center());
+    painter->drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
   }
   else {
     //set minimum height
     int textHeight = std::max(heightReal, 20.0f);
 
     const auto rect = QRectF(x, y, widthReal, textHeight);
-    QFontMetrics fm(painter.font());
+    QFontMetrics fm(painter->font());
     qreal sy = rect.height() * 1.0f / fm.height();
-    painter.translate(rect.center());
-    painter.scale(1, sy);
-    painter.translate(-rect.center());
-    painter.drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
+    painter->translate(rect.center());
+    painter->scale(1, sy);
+    painter->translate(-rect.center());
+    painter->drawText(rect, text, Qt::AlignHCenter | Qt::AlignVCenter);
   }
-  painter.end();
+  painter->restore();
 }
 
-void RectangleText::renderFull() {
+void RectangleText::renderFull(QPainter* painter) {
   if (textOrientation == Orientation::Vertical) {
-    drawText(xleftReal, ytopReal);
+    drawText(painter, xleftReal, ytopReal);
   }
   else {
-    drawText(xleftReal, ytopReal);
+    drawText(painter, xleftReal, ytopReal);
   }
 }
 
-void RectangleText::renderTop() {
+void RectangleText::renderTop(QPainter* painter) {
   if (orientation == Orientation::Vertical) {
-    drawText(xleftReal, boundRect.getYtopReal() - heightReal);
+    drawText(painter, xleftReal, boundRect.getYtopReal() - heightReal);
   }
   else {
-    drawText(boundRect.getXrightReal() - widthReal, ytopReal);
+    drawText(painter, boundRect.getXrightReal() - widthReal, ytopReal);
   }
 
 }
 
-void RectangleText::renderBot() {
+void RectangleText::renderBot(QPainter* painter) {
   if (orientation == Orientation::Vertical) {
-    drawText(xleftReal, ybotReal);
+    drawText(painter, xleftReal, ybotReal);
   }
   else {
-    drawText(xleftReal, ytopReal);
+    drawText(painter, xleftReal, ytopReal);
   }
 
 }
@@ -162,9 +157,9 @@ void RectangleChain::constructObjects() {
   }
 }
 
-void RectangleChain::render() {
+void RectangleChain::render(QPainter* painter) {
   for (auto o : objects) {
-    o->render();
+    o->render(painter);
   }
 }
 
