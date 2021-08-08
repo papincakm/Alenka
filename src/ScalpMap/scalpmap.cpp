@@ -136,6 +136,18 @@ void ScalpMap::setupCanvas() {
   box->addWidget(scalpCanvas);
   setMinimumHeight(100);
   setMinimumWidth(100);
+
+  // Set some OpenGL context details.
+  QSurfaceFormat format;
+
+  format.setVersion(2, 0);
+  format.setProfile(QSurfaceFormat::OpenGLContextProfile::CompatibilityProfile);
+
+#ifndef NDEBUG
+  format.setOption(QSurfaceFormat::DebugContext);
+#endif
+
+  scalpCanvas->setFormat(format);
 }
 
 const AbstractTrackTable* getTrackTable(OpenDataFile *file) {

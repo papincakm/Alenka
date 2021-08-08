@@ -82,10 +82,6 @@ void ScalpCanvas::initializeGL() {
 		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
 		OPENGL_INTERFACE->initializeOpenGLInterface();
 	}
-
-	gl()->glEnable(GL_PROGRAM_POINT_SIZE);
-	gl()->glEnable(GL_POINT_SPRITE);
-
 	QFile pointVertFile(":/single.vert");
 	pointVertFile.open(QIODevice::ReadOnly);
 	string pointVert = pointVertFile.readAll().toStdString();
@@ -106,21 +102,12 @@ void ScalpCanvas::initializeGL() {
 
 	channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
 
-  gl()->glUseProgram(channelProgram->getGLProgram());
-
-  colormapTextureId = setupColormapTexture(colormap.get());
-
-  gl()->glFinish();
-
   checkGLMessages();
 }
 
 void ScalpCanvas::cleanup() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
-
-  gl()->glDeleteTextures(1, &colormapTextureId);
-  gl()->glBindTexture(GL_TEXTURE_1D, 0);
 
 	channelProgram.reset();
 
@@ -326,24 +313,24 @@ void ScalpCanvas::paintGL() {
 	logToFile("Painting started.");
 #endif
 	if (ready()) {
-    painter = new QPainter(this);
-    painter->beginNativePainting();
-
     decltype(chrono::high_resolution_clock::now()) start;
     if (printTiming) {
       start = chrono::high_resolution_clock::now();
     }
 
-    //setup
-    if (colormap.changed) {
-      updateColormapTexture();
-    }
+    painter = new QPainter(this);
+    painter->beginNativePainting();
 
     if (scalpMesh.empty()) {
       setupScalpMesh();
     }
 
+    gl()->glEnable(GL_PROGRAM_POINT_SIZE);
+    gl()->glEnable(GL_POINT_SPRITE);
+
     gl()->glUseProgram(channelProgram->getGLProgram());
+
+    colormapTextureId = setupColormapTexture(colormap.get());
 
     genBuffers();
 
@@ -363,7 +350,7 @@ void ScalpCanvas::paintGL() {
     for (int i = 0; i < 2; i++) {
       gl()->glDisableVertexAttribArray(i);
     }
-
+    checkGLMessages();
     deleteBuffers();
 
     //gl()->glFinish();
@@ -380,20 +367,24 @@ void ScalpCanvas::paintGL() {
         channelBufferData.push_back(originalPositions[i].y);
       }
       gl()->glUseProgram(labelProgram->getGLProgram());
-      gl()->glGenBuffers(1, &posBuffer);
-      gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
-
+      gl()->glGenBuffers(1, &pointBuffer);
+      gl()->glBindBuffer(GL_ARRAY_BUFFER, pointBuffer);
       gl()->glBufferData(GL_ARRAY_BUFFER, channelBufferData.size() * sizeof(GLfloat), &channelBufferData[0], GL_DYNAMIC_DRAW);
 
       gl()->glEnableVertexAttribArray(0);
-      gl()->glBindBuffer(GL_ARRAY_BUFFER, posBuffer);
       gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
       gl()->glDrawArrays(GL_POINTS, 0, channelBufferData.size());
       gl()->glDisableVertexAttribArray(0);
 
       gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
-      gl()->glDeleteBuffers(1, &posBuffer);
+      gl()->glDeleteBuffers(1, &pointBuffer);
     }
+    gl()->glBindTexture(GL_TEXTURE_1D, 0);
+    gl()->glDeleteTextures(1, &colormapTextureId);
+
+    gl()->glDisable(GL_PROGRAM_POINT_SIZE);
+    gl()->glDisable(GL_POINT_SPRITE);
 
     if (errorMsg != "")
       renderErrorMsg();

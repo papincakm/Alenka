@@ -112,10 +112,10 @@ MyApplication::MyApplication(int &argc, char **argv)
   AlenkaSignal::OpenCLContext::clfftInit();
 
   // Set some OpenGL context details.
-  QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+  QSurfaceFormat format;
 
   format.setVersion(2, 0);
-  format.setProfile(QSurfaceFormat::NoProfile);
+  format.setProfile(QSurfaceFormat::OpenGLContextProfile::CompatibilityProfile);
 
 #ifndef NDEBUG
   format.setOption(QSurfaceFormat::DebugContext);

@@ -85,6 +85,7 @@ class ScalpCanvas : public QOpenGLWidget {
   int uniqueIndiceCount = 0;
   std::vector<std::vector<PointSpatialCoefficient>> pointSpatialCoefficients;
   GLuint posBuffer;
+  GLuint pointBuffer;
   GLuint indexBuffer;
   graphics::Colormap colormap;
   GLuint colormapTextureId;
@@ -95,7 +96,6 @@ class ScalpCanvas : public QOpenGLWidget {
 
   float minVoltage = 0;
   float maxVoltage = 0;
-
 
 	QString errorMsg;
 

@@ -62,8 +62,6 @@ void TfVisualizer::deleteColormapTexture() {
 void TfVisualizer::cleanup() {
   makeCurrent();
 
-  deleteColormapTexture();
-
   channelProgram.reset();
 
   OPENGL_INTERFACE->checkGLErrors();
@@ -118,12 +116,6 @@ void TfVisualizer::initializeGL() {
   string triangleFrag = triangleFragFile.readAll().toStdString();
 
   channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
-
-  gl()->glUseProgram(channelProgram->getGLProgram());
-
-  colormapTextureId = setupColormapTexture(colormap.get());
-
-  gl()->glFinish();
 }
 
 void TfVisualizer::resizeGL(int /*w*/, int /*h*/) {
@@ -247,11 +239,6 @@ void TfVisualizer::paintGL() {
   logToFile("Painting started.");
 #endif
   painter = new QPainter(this);
-  GLfloat red = palette().color(QPalette::Window).redF();
-  GLfloat green = palette().color(QPalette::Window).greenF();
-  GLfloat blue = palette().color(QPalette::Window).blueF();
-
-  gl()->glClearColor(red, green, blue, 1.0f);
 
   auto specWindow = graphics::Rectangle(specMesh, this);
   specWindow.render(painter);
@@ -316,9 +303,15 @@ void TfVisualizer::paintGL() {
 
   if (ready()) {
     painter->beginNativePainting();
-    if (colormap.changed) {
-      updateColormapTexture();
-    }
+
+    GLfloat red = palette().color(QPalette::Window).redF();
+    GLfloat green = palette().color(QPalette::Window).greenF();
+    GLfloat blue = palette().color(QPalette::Window).blueF();
+
+    gl()->glClearColor(red, green, blue, 1.0f);
+
+    colormapTextureId = setupColormapTexture(colormap.get());
+
     gl()->glUseProgram(channelProgram->getGLProgram());
 
     genBuffers();
@@ -342,6 +335,7 @@ void TfVisualizer::paintGL() {
     }
     
     deleteBuffers();
+    deleteColormapTexture();
 
     painter->endNativePainting();
   }
