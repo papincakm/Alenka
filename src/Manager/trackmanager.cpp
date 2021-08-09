@@ -40,7 +40,6 @@ void TrackManager::loadCoordinates() {
   std::vector<ElcPosition> positions = ElcFileReader::read(fileName.toStdString());
 
   if (!positions.empty()) {
-
     int row = tableView->model()->rowCount();
     int col = tableView->model()->columnCount();
 
@@ -50,20 +49,25 @@ void TrackManager::loadCoordinates() {
     const int tableY = 7;
     const int tableZ = 8;
 
+    bool vitnessBlockState;
+    if (trackTable) {
+      vitnessBlockState = VitnessTrackTable::vitness(trackTable)->blockSignals(true);
+    }
+
     for (int i = 0; i < row; i++) {
       bool found = false;
       std::string label = tableView->model()->data(tableView->model()->index(i, tableLabel), Qt::DisplayRole).toString().toStdString();
       std::transform(label.begin(), label.end(), label.begin(), ::tolower);
 
-      bool tableViewBlockState;
-      if (i < row - 1) {
-        tableViewBlockState = tableView->model()->blockSignals(true);
-      }
-
       for (auto v : positions) {
         if ((label.compare(v.label)) == 0) {
           tableView->model()->setData(tableView->model()->index(i, tableX), v.x);
           tableView->model()->setData(tableView->model()->index(i, tableY), v.y);
+
+          if (i == row - 1 && trackTable) {
+            VitnessTrackTable::vitness(trackTable)->blockSignals(vitnessBlockState);
+          }
+
           tableView->model()->setData(tableView->model()->index(i, tableZ), v.z);
           found = true;
           break;
@@ -72,12 +76,12 @@ void TrackManager::loadCoordinates() {
       if (!found) {
         tableView->model()->setData(tableView->model()->index(i, tableX), NAN);
         tableView->model()->setData(tableView->model()->index(i, tableY), NAN);
-        tableView->model()->setData(tableView->model()->index(i, tableZ), NAN); 
-        //tableView->model()->setData(tableView->model()->index(i, tableHidden), true);
-      }
 
-      if (i < row - 1) {
-        tableView->model()->blockSignals(tableViewBlockState);
+        if (i == row - 1 && trackTable) {
+          VitnessTrackTable::vitness(trackTable)->blockSignals(vitnessBlockState);
+        }
+
+        tableView->model()->setData(tableView->model()->index(i, tableZ), NAN);
       }
     }
   }

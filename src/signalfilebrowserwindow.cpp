@@ -1707,6 +1707,7 @@ void SignalFileBrowserWindow::updateManagers(int value) {
     auto cc = connectVitness(VitnessTrackTable::vitness(mt->trackTable(value)),
                              [this]() { signalViewer->updateSignalViewer(); });
     managersConnections.insert(managersConnections.end(), cc.begin(), cc.end());
+    trackManager->setTrackTable(mt->trackTable(value));
 
     cc = connectVitness(VitnessEventTable::vitness(mt->eventTable(value)),
         [this]() { signalViewer->updateSignalViewer(); });

@@ -10,7 +10,6 @@ class DataModelVitness : public QObject {
 
 public:
   explicit DataModelVitness(QObject *parent = nullptr) : QObject(parent) {}
-
 signals:
   void valueChanged(int row, int col);
   void rowsInserted(int row, int col);
@@ -32,7 +31,7 @@ public:
     }
   }
 
-  static const DataModelVitness *vitness(const BaseBase *table) {
+  static DataModelVitness *vitness(const BaseBase *table) {
     return dynamic_cast<const VitnessTable *>(table)->vitnessObject.get();
   }
 

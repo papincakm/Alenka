@@ -56,21 +56,21 @@ ScalpCanvas::~ScalpCanvas() {
     cleanup();
 }
 
-void ScalpCanvas::forbidDraw(QString errorString) {
-		errorMsg = errorString;
-		dataReadyToDraw = false;
+void ScalpCanvas::forbidDraw(const QString& errorString) {
+  errorMsg = errorString;
+  dataReadyToDraw = false;
 }
 
 void ScalpCanvas::allowDraw() {
-		errorMsg = "";
-		dataReadyToDraw = true;
+  errorMsg = "";
+  dataReadyToDraw = true;
 }
 
 void ScalpCanvas::clear() {
-		originalPositions.clear();
-    scalpMesh.clear();
+  originalPositions.clear();
+  scalpMesh.clear();
 
-		update();
+  update();
 }
 
 void ScalpCanvas::initializeGL() {
@@ -160,7 +160,6 @@ void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffe
     float newVoltage = (channelDataBuffer[i] - minVoltage) / (maxMinusMin);
 		originalPositions[i].voltage = newVoltage < 0 ? 0 : (newVoltage > 1 ? 1 : newVoltage);
 	}
-
   calculateVoltages(scalpMesh);
 }
 
@@ -178,16 +177,21 @@ std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedGrid(
 		coords.push_back(ch.y);
 	}
 
-	delaunator::Delaunator d(coords);
-	
-	for (std::size_t i = 0; i < d.triangles.size(); i+=3) {
-		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i]],
-											  d.coords[2 * d.triangles[i] + 1]));
-		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 1]],
-											  d.coords[2 * d.triangles[i + 1] + 1]));
-		triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 2]],
-											  d.coords[2 * d.triangles[i + 2] + 1]));
-	}
+  try {
+    delaunator::Delaunator d(coords);
+
+    for (std::size_t i = 0; i < d.triangles.size(); i += 3) {
+      triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i]],
+        d.coords[2 * d.triangles[i] + 1]));
+      triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 1]],
+        d.coords[2 * d.triangles[i + 1] + 1]));
+      triangles.push_back(ElectrodePosition(d.coords[2 * d.triangles[i + 2]],
+        d.coords[2 * d.triangles[i + 2] + 1]));
+    }
+  }
+  catch (...) {
+    forbidDraw("Can't compute triangulation of the input coordinates.");
+  }
 
 	return triangles;
 }
@@ -353,11 +357,6 @@ void ScalpCanvas::paintGL() {
     checkGLMessages();
     deleteBuffers();
 
-    //gl()->glFinish();
-    // draw channels TODO: refactor - dont use points, add to main channel
-    // TODO!!!:draw once and set it to be top of screen so it cant be drawn over
-    //
-    //
     //POINTS
     if (shouldDrawChannels) {
       gl()->glPointSize(10.0f);
@@ -385,9 +384,6 @@ void ScalpCanvas::paintGL() {
 
     gl()->glDisable(GL_PROGRAM_POINT_SIZE);
     gl()->glDisable(GL_POINT_SPRITE);
-
-    if (errorMsg != "")
-      renderErrorMsg();
 
     checkGLMessages();
 
@@ -418,6 +414,12 @@ void ScalpCanvas::paintGL() {
 
     painter->end();
   }
+  else {
+    painter = new QPainter(this);
+    renderErrorMsg();
+
+    painter->end();
+  }
 
 #ifndef NDEBUG
 	logToFile("Painting finished.");
@@ -441,8 +443,14 @@ void ScalpCanvas::deleteBuffers() {
 }
 
 void ScalpCanvas::renderErrorMsg() {
-		auto errorFont = QFont("Times", 15, QFont::Bold);
-		renderText(painter, -0.8f, 0, errorMsg, errorFont, QColor(255, 0, 0));
+  auto errorFont = QFont("Times", 15, QFont::Bold);
+  painter->save();
+  painter->setBackground(QBrush(QColor(0, 0, 0)));
+  painter->setPen(QColor(255, 0, 0));
+  painter->setBrush(QColor(255, 0, 0));
+  painter->setFont(errorFont);
+  painter->drawText(this->rect(), Qt::AlignCenter, errorMsg);
+  painter->restore();
 }
 
 void ScalpCanvas::logLastGLMessage() {

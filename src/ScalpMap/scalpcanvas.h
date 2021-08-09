@@ -97,7 +97,7 @@ class ScalpCanvas : public QOpenGLWidget {
   float minVoltage = 0;
   float maxVoltage = 0;
 
-	QString errorMsg;
+	QString errorMsg = "Enter valid electrode positions.";
 
 	bool shouldDrawChannels = false;
 	bool shouldDrawLabels = false;
@@ -115,7 +115,7 @@ public:
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
 	void setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
-	void forbidDraw(QString errorString);
+	void forbidDraw(const QString& errorString);
 	void allowDraw();
 	void clear();
 

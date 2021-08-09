@@ -11,10 +11,6 @@
 #include <QVBoxLayout>
 #include <cmath>
 
-
-#include <iostream>
-#include <sstream>
-
 #include <QtWidgets>
 
 using namespace AlenkaFile;
@@ -28,18 +24,24 @@ ScalpMap::ScalpMap(QWidget *parent) : QWidget(parent) {
   setupCanvas();
 }
 
+const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
+  return file->dataModel->montageTable()->trackTable(
+    OpenDataFile::infoTable.getSelectedMontage());
+}
+
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
   if (file) {
     model.useStereographicProjection = file->infoTable.getScalpMapProjection();
 
     updateFileInfoConnections();
+    updateTrackTableConnections();
     updateLabels();
   }
 }
 
 bool ScalpMap::enabled() {
-  return (file && isVisible() && parentVisible);
+  return (isVisible() && parentVisible && posValid);
 }
 
 void ScalpMap::deleteFileInfoConnections() {
@@ -72,9 +74,6 @@ void ScalpMap::updateFileInfoConnections() {
   c = connect(&file->infoTable, SIGNAL(scalpMapProjectionChanged(bool)),
     this, SLOT(setScalpMapProjection(bool)));
   fileInfoConnections.push_back(c);
-
-  c = connect(&OpenDataFile::infoTable, SIGNAL(selectedMontageChanged(int)), this,
-    SLOT(updateTrackTableConnections(int)));
 }
 
 void ScalpMap::parentVisibilityChanged(bool vis) {
@@ -83,18 +82,16 @@ void ScalpMap::parentVisibilityChanged(bool vis) {
     updateSpectrum();
 }
 
-//TODO: this is a copy from tracklabel, might want to make a new class trackLabelModel
-//which will be referenced in here and trackLabelBar
-void ScalpMap::updateTrackTableConnections(int row) {
+void ScalpMap::updateTrackTableConnections() {
   if (!file)
     return;
 
   deleteTrackTableConnections();
 
-  const AbstractMontageTable *mt = file->dataModel->montageTable();
+  const AbstractTrackTable *trackTable = getTrackTable(file);
 
-  if (0 <= row && row < mt->rowCount()) {
-    auto vitness = VitnessTrackTable::vitness(mt->trackTable(row));
+  if (0 < trackTable->rowCount()) {
+    auto vitness = VitnessTrackTable::vitness(trackTable);
 
     auto c = connect(vitness, SIGNAL(valueChanged(int, int)), this, SLOT(updateLabels()));
     trackTableConnections.push_back(c);
@@ -109,7 +106,6 @@ void ScalpMap::updateTrackTableConnections(int row) {
 
 //TODO: refactor
 bool ScalpMap::positionsValid(const std::vector<QVector3D>& positions) {
-  return true;
   if (positions.empty())
     return false;
 
@@ -150,15 +146,11 @@ void ScalpMap::setupCanvas() {
   scalpCanvas->setFormat(format);
 }
 
-const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
-  return file->dataModel->montageTable()->trackTable(
-    OpenDataFile::infoTable.getSelectedMontage());
-}
-
 void ScalpMap::updateLabels() {
   if (!file || file->dataModel->montageTable()->rowCount() <= 0)
     return;
 
+  allowedPositions.clear();
   std::vector<QString> labels;
   std::vector<QVector3D> positions;
 
@@ -179,9 +171,10 @@ void ScalpMap::updateLabels() {
     positions.push_back(QVector3D(t.x, t.y, t.z));
   }
 
-  if (!positionsValid(positions) || trackTable->rowCount() < 3) {
-    scalpCanvas->forbidDraw("Electrode positions are invalid(Two positions can't have the same coordinates)."\
+  if (!positionsValid(positions) || positions.size() <= 3) {
+    scalpCanvas->forbidDraw("Electrode positions are invalid\n(Two positions can't have the same coordinates).\n"\
       "Change the coordinates or disable the invalid electrodes.");
+    posValid = false;
     return;
   }
 
@@ -189,12 +182,14 @@ void ScalpMap::updateLabels() {
   positionsProjected = model.getPositionsProjected(positions);
 
   if (positionsProjected.empty()) {
-    scalpCanvas->forbidDraw("Electrode positions are invalid(A sphere cant be fitted to the coordinates,"\
-    "scalpmap cant be generated).Change the coordinates or disable the invalid electrodes.");
-
+    scalpCanvas->forbidDraw("Electrode positions are invalid\n(A sphere cant be fitted to the coordinates,"\
+    "scalpmap cant be generated).\nChange the coordinates or disable the invalid electrodes.");
+    posValid = false;
     return;
   }
 
+  posValid = true;
+  posValidCnt = positionsProjected.size();
 
   scalpCanvas->setChannelLabels(labels);
   scalpCanvas->setChannelPositions(positionsProjected);
@@ -205,11 +200,10 @@ void ScalpMap::updateLabels() {
   scalpCanvas->allowDraw();
 }
 
-//TODO: investigate where freq are stored if canvas cant draw
 void ScalpMap::updateSpectrum() {
-  if (!enabled())
+  if (!file || file->dataModel->montageTable()->rowCount() <= 0 || posValidCnt <= 3)
     return;
-  
+
   // benchmark
   decltype(chrono::high_resolution_clock::now()) start;
   if (printTiming) {  
@@ -244,6 +238,10 @@ void ScalpMap::updateSpectrum() {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;
     currentBenchTimeGlobal += time;
   }
+
+  if (!enabled())
+    return;
+
   scalpCanvas->allowDraw();
   scalpCanvas->update();
 }
