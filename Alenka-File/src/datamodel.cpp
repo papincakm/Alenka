@@ -1,4 +1,5 @@
 #include "../include/AlenkaFile/datamodel.h"
+#include <math.h>
 
 using namespace std;
 
