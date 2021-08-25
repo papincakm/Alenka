@@ -4,4 +4,4 @@ export LD_LIBRARY_PATH=${HERE}/usr/lib/:${HERE}/usr/lib/x86_64-linux-gnu/:$LD_LI
 export GST_PLUGIN_PATH_1_0=${HERE}/usr/lib/x86_64-linux-gnu/gstreamer-1.0/:${HERE}/usr/lib/x86_64-linux-gnu/:$GST_PLUGIN_PATH_1_0
 export GST_PLUGIN_SYSTEM_PATH_1_0=${HERE}/usr/lib/x86_64-linux-gnu/:${HERE}/usr/lib/x86_64-linux-gnu/gstreamer-1.0/:$GST_PLUGIN_SYSTEM_PATH_1_0
 export GST_PLUGIN_SCANNER_1_0=${HERE}/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner:$GST_PLUGIN_SCANNER_1_0
-exec "${HERE}/usr/bin/Alenka" "$@"
+exec "${HERE}/usr/bin/Alenka" "$@" --appdir="$(dirname "$APPIMAGE")"
