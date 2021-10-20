@@ -104,7 +104,6 @@ void ScalpMap::updateTrackTableConnections() {
   }
 }
 
-//TODO: refactor
 bool ScalpMap::positionsValid(const std::vector<QVector3D>& positions) {
   if (positions.empty())
     return false;
@@ -290,8 +289,6 @@ void ScalpMap::updateToExtremaCustom() {
     voltageMax = maxVolLine->text().toFloat();
     dialog->close();
     updateSpectrum();
-    //TODO: check if min is lesser than max
-
   });
 
   connect(buttonBox, &QDialogButtonBox::rejected, [this, dialog]() {

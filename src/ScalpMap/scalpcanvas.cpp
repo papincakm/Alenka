@@ -597,8 +597,6 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
     break;
   }
 
-  //return extremaMenu;
-
   menu->addMenu(extremaMenu);
   menu->addSeparator();
 
@@ -670,7 +668,10 @@ GLuint ScalpCanvas::addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangl
   return indice;
 }
 
-void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangles,
+// splits each triangle into 4 smaller triangles with the middle points of their edges as the new vertices,
+// adds the new vertices at the end of the vertice array
+// adds all indices and the end of indice array
+void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangleVertices,
   std::vector<GLuint>& indices) {
   std::vector<ElectrodePosition> splitTriangles;
   std::vector<GLuint> splitIndices;
@@ -682,26 +683,26 @@ void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangles,
     const int third = i + 2;
     //1. triangle
     //1. vertex, 2. vertex
-    float midPointAx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[second]].x;
-    float midPointAy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[second]].y;
-    float midPointAfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[second]].voltage;
+    float midPointAx = 0.5f * triangleVertices[indices[i]].x + 0.5f * triangleVertices[indices[second]].x;
+    float midPointAy = 0.5f * triangleVertices[indices[i]].y + 0.5f * triangleVertices[indices[second]].y;
+    float midPointAVol = 0.5f * triangleVertices[indices[i]].voltage + 0.5f * triangleVertices[indices[second]].voltage;
     //indices
     auto indiceA = addMidEdgePoint(splitTriangles, splitIndices,
-      ElectrodePosition(midPointAx, midPointAy, midPointAfreq));
+      ElectrodePosition(midPointAx, midPointAy, midPointAVol));
 
     //1. vertex, 3. vertex
-    float midPointBx = 0.5f * triangles[indices[i]].x + 0.5f * triangles[indices[third]].x;
-    float midPointBy = 0.5f * triangles[indices[i]].y + 0.5f * triangles[indices[third]].y;
-    float midPointBfreq = 0.5f * triangles[indices[i]].voltage + 0.5f * triangles[indices[third]].voltage;
+    float midPointBx = 0.5f * triangleVertices[indices[i]].x + 0.5f * triangleVertices[indices[third]].x;
+    float midPointBy = 0.5f * triangleVertices[indices[i]].y + 0.5f * triangleVertices[indices[third]].y;
+    float midPointBVol = 0.5f * triangleVertices[indices[i]].voltage + 0.5f * triangleVertices[indices[third]].voltage;
     auto indiceB = addMidEdgePoint(splitTriangles, splitIndices,
-      ElectrodePosition(midPointBx, midPointBy, midPointBfreq));
+      ElectrodePosition(midPointBx, midPointBy, midPointBVol));
 
     //2. vertex, 3. vertex
-    float midPointCx = 0.5f * triangles[indices[second]].x + 0.5f * triangles[indices[third]].x;
-    float midPointCy = 0.5f * triangles[indices[second]].y + 0.5f * triangles[indices[third]].y;
-    float midPointCfreq = 0.5f * triangles[indices[second]].voltage + 0.5f * triangles[indices[third]].voltage;
+    float midPointCx = 0.5f * triangleVertices[indices[second]].x + 0.5f * triangleVertices[indices[third]].x;
+    float midPointCy = 0.5f * triangleVertices[indices[second]].y + 0.5f * triangleVertices[indices[third]].y;
+    float midPointCVol = 0.5f * triangleVertices[indices[second]].voltage + 0.5f * triangleVertices[indices[third]].voltage;
     auto indiceC = addMidEdgePoint(splitTriangles, splitIndices,
-      ElectrodePosition(midPointCx, midPointCy, midPointCfreq));
+      ElectrodePosition(midPointCx, midPointCy, midPointCVol));
 
     //2. triangle
     //1. vertex
@@ -712,16 +713,6 @@ void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangles,
 
     //B
     splitIndices.push_back(indiceB);
-
-    //2. triangle
-    //A
-    /*indices.push_back(indiceA);
-
-    //B
-    indices.push_back(indiceB);
-
-    //C
-    indices.push_back(indiceC);*/
 
     //3. triangle
     //2. vertex
@@ -744,6 +735,6 @@ void ScalpCanvas::splitTriangles(std::vector<ElectrodePosition>& triangles,
 
   }
 
-  triangles.insert(triangles.end(), splitTriangles.begin(), splitTriangles.end());
+  triangleVertices.insert(triangleVertices.end(), splitTriangles.begin(), splitTriangles.end());
   indices.insert(indices.end(), splitIndices.begin(), splitIndices.end());
 }

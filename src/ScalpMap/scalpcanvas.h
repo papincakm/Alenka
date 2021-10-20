@@ -139,7 +139,7 @@ private:
 
 	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
-  void splitTriangles(std::vector<ElectrodePosition>& triangulatedPositions, std::vector<GLuint>& indices);
+  void splitTriangles(std::vector<ElectrodePosition>& triangleVertices, std::vector<GLuint>& indices);
   GLuint addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangles,
     std::vector<GLuint>& splitIndices, ElectrodePosition candidate);
   void calculateVoltages(std::vector<GLfloat>& points);
