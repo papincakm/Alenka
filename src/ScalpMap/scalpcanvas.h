@@ -120,7 +120,7 @@ public:
 	void clear();
 
 protected:
-	void cleanup();
+	void cleanupGL();
   void initializeGL() override;
 	void paintGL() override;
   void resizeGL(int w, int h) override;

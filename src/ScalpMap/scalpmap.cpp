@@ -29,9 +29,16 @@ const AbstractTrackTable* getTrackTable(OpenDataFile *file) {
     OpenDataFile::infoTable.getSelectedMontage());
 }
 
+void ScalpMap::reset() {
+  posValidCnt = 0;
+  allowedPositions.clear();
+}
+
 void ScalpMap::changeFile(OpenDataFile *file) {
   this->file = file;
   if (file) {
+    reset();
+
     model.useStereographicProjection = file->infoTable.getScalpMapProjection();
 
     updateFileInfoConnections();
@@ -41,7 +48,7 @@ void ScalpMap::changeFile(OpenDataFile *file) {
 }
 
 bool ScalpMap::enabled() {
-  return (isVisible() && parentVisible && posValid);
+  return (isVisible() && parentVisible && posValidCnt >= 3);
 }
 
 void ScalpMap::deleteFileInfoConnections() {
@@ -150,6 +157,7 @@ void ScalpMap::updateLabels() {
     return;
 
   allowedPositions.clear();
+  posValidCnt = 0;
   std::vector<QString> labels;
   std::vector<QVector3D> positions;
 
@@ -166,14 +174,16 @@ void ScalpMap::updateLabels() {
     }
 
     allowedPositions.push_back(true);
+    posValidCnt++;
+
     labels.push_back(QString::fromStdString(t.label));
     positions.push_back(QVector3D(t.x, t.y, t.z));
   }
 
-  if (!positionsValid(positions) || positions.size() <= 3) {
+  if (!positionsValid(positions) || posValidCnt < 3) {
     scalpCanvas->forbidDraw("Electrode positions are invalid\n(Two positions can't have the same coordinates).\n"\
       "Change the coordinates or disable the invalid electrodes.");
-    posValid = false;
+    posValidCnt = 0;
     return;
   }
 
@@ -183,12 +193,9 @@ void ScalpMap::updateLabels() {
   if (positionsProjected.empty()) {
     scalpCanvas->forbidDraw("Electrode positions are invalid\n(A sphere cant be fitted to the coordinates,"\
     "scalpmap cant be generated).\nChange the coordinates or disable the invalid electrodes.");
-    posValid = false;
+    posValidCnt = 0;
     return;
   }
-
-  posValid = true;
-  posValidCnt = positionsProjected.size();
 
   scalpCanvas->setChannelLabels(labels);
   scalpCanvas->setChannelPositions(positionsProjected);
@@ -200,7 +207,7 @@ void ScalpMap::updateLabels() {
 }
 
 void ScalpMap::updateSpectrum() {
-  if (!file || file->dataModel->montageTable()->rowCount() <= 0 || posValidCnt <= 3)
+  if (!file || file->dataModel->montageTable()->rowCount() <= 0 || posValidCnt < 3)
     return;
 
   // benchmark

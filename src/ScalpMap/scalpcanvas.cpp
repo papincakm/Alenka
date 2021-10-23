@@ -53,7 +53,7 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 ScalpCanvas::~ScalpCanvas() {
 	logToFile("Destructor in ScalpCanvas.");
 	if (glInitialized)
-    cleanup();
+    cleanupGL();
 }
 
 void ScalpCanvas::forbidDraw(const QString& errorString) {
@@ -76,7 +76,7 @@ void ScalpCanvas::clear() {
 void ScalpCanvas::initializeGL() {
   logToFile("Initializing OpenGL in ScalpCanvas.");
   glInitialized = true;
-	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanup);
+	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanupGL);
 
 	if (!OPENGL_INTERFACE) {
 		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
@@ -105,7 +105,7 @@ void ScalpCanvas::initializeGL() {
   checkGLMessages();
 }
 
-void ScalpCanvas::cleanup() {
+void ScalpCanvas::cleanupGL() {
 	logToFile("Cleanup in ScalpCanvas.");
 	makeCurrent();
 
