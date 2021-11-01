@@ -263,7 +263,7 @@ void Colormap::createTextureBR() {
 
   //movable center
   for (int i = 1; i < colorCnt - 1; i++) {
-    colorPosition[i] = truncate<float>(colorPosition[i] + center, 1, COLOR_PARTITIONS - 1);
+    colorPosition[i] = truncate<float>(colorPosition[i] + center, 0, COLOR_PARTITIONS - 1);
   }
 
   int red = 0;
@@ -279,6 +279,9 @@ void Colormap::createTextureBR() {
     int secondColor = firstColor + 3;
 
     float parts = colorPosition[i + 1] - colorPosition[i];
+    if (parts == 0)
+      continue;
+
     for (int j = 0; j <= parts; j++) {
       float redC = (parts - j) / parts * colorTemplate[firstColor + red] + j /
         parts * colorTemplate[secondColor + red];

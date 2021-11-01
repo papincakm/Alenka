@@ -440,6 +440,7 @@ void TfVisualizer::mouseDoubleClickEvent(QMouseEvent* event)
   if (event->button() == Qt::MiddleButton && gradient->contains(event->pos()))
   {
     colormap.reset();
+    gradient->reset();
     update();
   }
 }

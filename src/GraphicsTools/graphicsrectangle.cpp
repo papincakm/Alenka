@@ -286,6 +286,13 @@ void Gradient::released() {
   contrast = newContrast;
 }
 
+void Gradient::reset() {
+  contrast = 1.0f;
+  brightness = 0.0f;
+  newContrast = 1.0f;
+  newBrightness = 0.0f;
+}
+
 void Gradient::generateGradientMesh(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices) {
   int firstVertex = triangles.size() / 3;
 

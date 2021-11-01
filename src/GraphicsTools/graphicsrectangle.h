@@ -310,6 +310,7 @@ public:
   void clicked(const QPoint& p);
   void released();
   void generateGradientMesh(std::vector<GLfloat>& triangles, std::vector<GLuint>& indices);
+  void reset();
 
   bool isClicked = false;
 
