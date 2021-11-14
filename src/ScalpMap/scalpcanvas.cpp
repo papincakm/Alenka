@@ -82,6 +82,8 @@ void ScalpCanvas::initializeGL() {
 		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
 		OPENGL_INTERFACE->initializeOpenGLInterface();
 	}
+
+  //TODO: rename to circle or point
 	QFile pointVertFile(":/single.vert");
 	pointVertFile.open(QIODevice::ReadOnly);
 	string pointVert = pointVertFile.readAll().toStdString();
@@ -158,8 +160,13 @@ void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffe
 
 	for (int i = 0; i < size; i++) {
     float newVoltage = (channelDataBuffer[i] - minVoltage) / (maxMinusMin);
-		originalPositions[i].voltage = newVoltage < 0 ? 0 : (newVoltage > 1 ? 1 : newVoltage);
+
+    //TODO: color of triangle with all three vertices at voltage=1 is bugged
+    // triangle is drawn as purple for GL_LINEAR and arbitrarily red/blue for GL_NEAREST
+    // thus the 0.9999f instead of 1
+    originalPositions[i].voltage = newVoltage < 0 ? 0 : (newVoltage >= 1 ? 0.9999f : newVoltage);
 	}
+
   calculateVoltages(scalpMesh);
 }
 
@@ -202,6 +209,7 @@ float getDistance(const float x1, const float y1, const float x2, const float y2
 }
 
 //takes triangulated positions, where each position is represented by 3 floats - x, y, z
+//calculates spatial coefficients for each point in the mesh, based on its k nearest neighbours
 void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& triangulatedPoints) {
   pointSpatialCoefficients.clear();
 
@@ -229,8 +237,9 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& trian
     pointSpatialCoefficients.push_back(singlePointSpatialCoefficients);
   }
 }
+
 void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
-  //points contain gradient as well, so theres more points than coefficients
+  //points contain gradient mesh as well
   assert(static_cast<int>(points.size() / OPENGL_VERTEX_SIZE) >= static_cast<int>(pointSpatialCoefficients.size()));
 
   for (int i = 0; i < pointSpatialCoefficients.size(); i ++) {

@@ -27,39 +27,39 @@
 #include <QVector3D>
 
 namespace AlenkaSignal {
-class OpenCLContext;
+  class OpenCLContext;
 }
 class OpenDataFile;
 class OpenGLProgram;
 
 /**
- * @brief This class implements a GUI control for rendering signal data and
- * events.
- *
- * Every time this control gets updated the whole surface gets repainted.
- *
+* @brief This class implements a GUI control for rendering signal data and
+* events.
+*
+* Every time this control gets updated the whole surface gets repainted.
+*
 **/
 
 class ElectrodePosition {
 public:
-	ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), voltage(frequency) { }
-	ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), voltage(0) { }
+  ElectrodePosition(GLfloat x, GLfloat y, GLfloat frequency) : x(x), y(y), voltage(frequency) { }
+  ElectrodePosition(GLfloat x, GLfloat y) : x(x), y(y), voltage(0) { }
 
-	bool operator == (const ElectrodePosition& position) const
-	{
-			return ((std::abs(position.x - x) < FLT_EPSILON && std::abs(position.y - y) <  FLT_EPSILON) ||
-					(std::abs(position.x - y) <  FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
-	}
+  bool operator == (const ElectrodePosition& position) const
+  {
+    return ((std::abs(position.x - x) < FLT_EPSILON && std::abs(position.y - y) < FLT_EPSILON) ||
+      (std::abs(position.x - y) < FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
+  }
 
-	bool operator != (const ElectrodePosition& position) const
-	{
-			return !((std::abs(position.x - x) <  FLT_EPSILON && std::abs(position.y - y) <  FLT_EPSILON) ||
-					(std::abs(position.x - y) <  FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
-	}
+  bool operator != (const ElectrodePosition& position) const
+  {
+    return !((std::abs(position.x - x) <  FLT_EPSILON && std::abs(position.y - y) <  FLT_EPSILON) ||
+      (std::abs(position.x - y) <  FLT_EPSILON && std::abs(position.y - x) <  FLT_EPSILON));
+  }
 
-	GLfloat x = 0;
-	GLfloat y = 0;
-	GLfloat voltage = 0;
+  GLfloat x = 0;
+  GLfloat y = 0;
+  GLfloat voltage = 0;
   GLuint indice = 0;
 };
 
@@ -76,7 +76,7 @@ public:
 
 class ScalpCanvas : public QOpenGLWidget {
   Q_OBJECT
-  std::unique_ptr<OpenGLProgram> labelProgram;
+    std::unique_ptr<OpenGLProgram> labelProgram;
   std::unique_ptr<OpenGLProgram> channelProgram;
   std::vector<QString> labels;
   std::vector<ElectrodePosition> originalPositions;
@@ -97,11 +97,11 @@ class ScalpCanvas : public QOpenGLWidget {
   float minVoltage = 0;
   float maxVoltage = 0;
 
-	QString errorMsg = "Enter valid electrode positions.";
+  QString errorMsg = "Enter valid electrode positions.";
 
-	bool shouldDrawChannels = false;
-	bool shouldDrawLabels = false;
-	bool dataReadyToDraw = false;
+  bool shouldDrawChannels = false;
+  bool shouldDrawLabels = false;
+  bool dataReadyToDraw = false;
   bool glInitialized = false;
   bool printTiming = false;
 
@@ -114,15 +114,15 @@ public:
 
   void setChannelLabels(const std::vector<QString>& channelLabels);
   void setChannelPositions(const std::vector<QVector2D>& channelPositions);
-	void setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
-	void forbidDraw(const QString& errorString);
-	void allowDraw();
-	void clear();
+  void setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max);
+  void forbidDraw(const QString& errorString);
+  void allowDraw();
+  void clear();
 
 protected:
-	void cleanupGL();
+  void cleanupGL();
   void initializeGL() override;
-	void paintGL() override;
+  void paintGL() override;
   void resizeGL(int w, int h) override;
   void mousePressEvent(QMouseEvent * event) override;
   void mouseMoveEvent(QMouseEvent * event) override;
@@ -137,14 +137,14 @@ private:
 
   void renderText(QPainter* painter, float x, float y, const QString& str, const QFont& font, const QColor& fontColor);
 
-	std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
+  std::vector<ElectrodePosition> generateTriangulatedGrid(const std::vector<ElectrodePosition>& channels);
   std::vector<GLfloat> generateScalpTriangleArray(const std::vector<ElectrodePosition>& triangulatedPositions);
   void splitTriangles(std::vector<ElectrodePosition>& triangleVertices, std::vector<GLuint>& indices);
   GLuint addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangles,
     std::vector<GLuint>& splitIndices, ElectrodePosition candidate);
   void calculateVoltages(std::vector<GLfloat>& points);
   void calculateSpatialCoefficients(const std::vector<GLfloat>& points);
-	void renderErrorMsg();
+  void renderErrorMsg();
   GLuint setupColormapTexture(std::vector<float> colormap);
   void updateColormapTexture();
   void setupScalpMesh();

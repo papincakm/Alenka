@@ -153,7 +153,10 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   minGradVal = *std::min_element(values.begin(), values.end());
   maxGradVal = *std::max_element(values.begin(), values.end());
 
-  convertToRange(values, 0.0f, 1.0f);
+  //TODO: color of triangle with all three vertices at voltage=1 is bugged
+  // triangle is drawn as purple for GL_LINEAR and arbitrarily red/blue for GL_NEAREST
+  // thus the 0.9999f instead of 1
+  convertToRange(values, 0.0f, 0.9999f);
 
   if (printTiming) {
     const std::chrono::nanoseconds time = std::chrono::high_resolution_clock::now() - start;

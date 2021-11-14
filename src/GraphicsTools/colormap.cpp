@@ -1,6 +1,5 @@
 #include "colormap.h"
 
-#include <iostream>
 #include <cmath>
 
 using namespace graphics;
@@ -291,12 +290,12 @@ void Colormap::createTextureBR() {
         parts * colorTemplate[secondColor + blue];
 
       int pos = colorPosition[i] * partitionSize + j * partitionSize;
+
       colormap[pos + red] = redC;
       colormap[pos + green] = greenC;
       colormap[pos + blue] = blueC;
     }
   }
-  
   colormapTextureBuffer = colormap;
   defaultColormapTextureBuffer = std::move(colormap);
 }
