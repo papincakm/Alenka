@@ -369,7 +369,7 @@ void ScalpCanvas::paintGL() {
     //POINTS
     if (shouldDrawChannels) {
       gl()->glPointSize(10.0f);
-      std:vector<GLfloat> channelBufferData(originalPositions.size() * 2);
+      std:vector<GLfloat> channelBufferData;
       for (int i = 0; i < originalPositions.size(); i++) {
         channelBufferData.push_back(originalPositions[i].x);
         channelBufferData.push_back(originalPositions[i].y);
@@ -382,7 +382,7 @@ void ScalpCanvas::paintGL() {
       gl()->glEnableVertexAttribArray(0);
       gl()->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-      gl()->glDrawArrays(GL_POINTS, 0, channelBufferData.size());
+      gl()->glDrawArrays(GL_POINTS, 0, channelBufferData.size() / 2);
       gl()->glDisableVertexAttribArray(0);
 
       gl()->glBindBuffer(GL_ARRAY_BUFFER, 0);
