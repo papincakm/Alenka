@@ -16,7 +16,7 @@
 #include <vector>
 
 namespace AlenkaSignal {
-class OpenCLContext;
+  class OpenCLContext;
 }
 class OpenDataFile;
 class OpenGLProgram;
@@ -43,11 +43,11 @@ struct GraphicsNumberRange : GraphicsRectangle {
 };
 
 /**
- * @brief This class implements a visualizer for time-frequency analysis.
- */
+* @brief This class implements a visualizer for time-frequency analysis.
+*/
 class TfVisualizer : public QOpenGLWidget {
-Q_OBJECT
-  std::unique_ptr<OpenGLProgram> channelProgram;
+  Q_OBJECT
+    std::unique_ptr<OpenGLProgram> channelProgram;
   bool paintingDisabled = false;
   GLuint posBuffer;
   GLuint indexBuffer;
@@ -72,23 +72,23 @@ Q_OBJECT
   std::unique_ptr<graphics::Gradient> gradient;
 
 public:
-		explicit TfVisualizer(QWidget *parent = nullptr);
-		~TfVisualizer() override;
-    void setDataToDraw(std::vector<float> values, float xCount, float yCount);
-    void setSeconds(int secs);
-    void setFrequency(int fs);
-    void setMinFrequency(int fs);
-    void setMaxFrequency(int fs);
-    void updateColormapTexture();
+  explicit TfVisualizer(QWidget *parent = nullptr);
+  ~TfVisualizer() override;
+  void setDataToDraw(std::vector<float> values, float xCount, float yCount);
+  void setSeconds(int secs);
+  void setFrequency(int fs);
+  void setMinFrequency(int fs);
+  void setMaxFrequency(int fs);
+  void updateColormapTexture();
 
-    int getMinFrequency();
-    int getMaxFrequency();
+  int getMinFrequency();
+  int getMaxFrequency();
 
 protected:
   void deleteColormapTexture();
-	void cleanup();
+  void cleanup();
   void initializeGL() override;
-	void paintGL() override;
+  void paintGL() override;
   void resizeGL(int w, int h) override;
   void mouseDoubleClickEvent(QMouseEvent* event) override;
   void mousePressEvent(QMouseEvent * event) override;
@@ -108,9 +108,9 @@ private:
   void deleteBuffers();
 
   /**
-   * @brief This method is used to skip some code that would break if no file is
-   * open and/or the current montage is empty.
-   */
+  * @brief This method is used to skip some code that would break if no file is
+  * open and/or the current montage is empty.
+  */
   bool ready();
 };
 

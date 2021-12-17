@@ -43,7 +43,7 @@ TfVisualizer::TfVisualizer(QWidget *parent) : QOpenGLWidget(parent) {
 
   //TODO: minor, initiate all rectangles here and update later in paint
   specMesh = graphics::SquareMesh(-0.8f, 0.7f, -0.7f, 0.8f);
-  
+
   gradient = std::make_unique<graphics::Gradient>(
     graphics::Gradient(0.75f, 0.8f, specMesh.getYbot(), specMesh.getYtop(), this));
 }
@@ -145,7 +145,7 @@ void TfVisualizer::setDataToDraw(std::vector<float> values, float xCount, float 
   if (printTiming) {
     start = std::chrono::high_resolution_clock::now();
   }
-  
+
   //drawing points as squares in grid
   int xVertices = xCount + 1;
   int yVertices = yCount + 1;
@@ -458,7 +458,8 @@ void TfVisualizer::mouseMoveEvent(QMouseEvent* event) {
 void TfVisualizer::mouseReleaseEvent(QMouseEvent* event) {
   if (gradient->isClicked) {
     gradient->released();
-  } else if (event->button() == Qt::RightButton)
+  }
+  else if (event->button() == Qt::RightButton)
   {
     renderPopupMenu(event->pos());
   }

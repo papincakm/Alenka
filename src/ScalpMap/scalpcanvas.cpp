@@ -51,8 +51,8 @@ ScalpCanvas::ScalpCanvas(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
 ScalpCanvas::~ScalpCanvas() {
-	logToFile("Destructor in ScalpCanvas.");
-	if (glInitialized)
+  logToFile("Destructor in ScalpCanvas.");
+  if (glInitialized)
     cleanupGL();
 }
 
@@ -76,49 +76,49 @@ void ScalpCanvas::clear() {
 void ScalpCanvas::initializeGL() {
   logToFile("Initializing OpenGL in ScalpCanvas.");
   glInitialized = true;
-	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanupGL);
+  connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &ScalpCanvas::cleanupGL);
 
-	if (!OPENGL_INTERFACE) {
-		OPENGL_INTERFACE = make_unique<OpenGLInterface>();
-		OPENGL_INTERFACE->initializeOpenGLInterface();
-	}
+  if (!OPENGL_INTERFACE) {
+    OPENGL_INTERFACE = make_unique<OpenGLInterface>();
+    OPENGL_INTERFACE->initializeOpenGLInterface();
+  }
 
   //TODO: rename to circle or point
-	QFile pointVertFile(":/single.vert");
-	pointVertFile.open(QIODevice::ReadOnly);
-	string pointVert = pointVertFile.readAll().toStdString();
+  QFile pointVertFile(":/single.vert");
+  pointVertFile.open(QIODevice::ReadOnly);
+  string pointVert = pointVertFile.readAll().toStdString();
 
-	QFile circleFragFile(":/circle.frag");
-	circleFragFile.open(QIODevice::ReadOnly);
-	string circleFrag = circleFragFile.readAll().toStdString();
+  QFile circleFragFile(":/circle.frag");
+  circleFragFile.open(QIODevice::ReadOnly);
+  string circleFrag = circleFragFile.readAll().toStdString();
 
-	labelProgram = make_unique<OpenGLProgram>(pointVert, circleFrag);
+  labelProgram = make_unique<OpenGLProgram>(pointVert, circleFrag);
 
-	QFile triangleVertFile(":/triangle.vert");
-	triangleVertFile.open(QIODevice::ReadOnly);
-	string triangleVert = triangleVertFile.readAll().toStdString();
+  QFile triangleVertFile(":/triangle.vert");
+  triangleVertFile.open(QIODevice::ReadOnly);
+  string triangleVert = triangleVertFile.readAll().toStdString();
 
-	QFile triangleFragFile(":/triangle.frag");
-	triangleFragFile.open(QIODevice::ReadOnly);
-	string triangleFrag = triangleFragFile.readAll().toStdString();
+  QFile triangleFragFile(":/triangle.frag");
+  triangleFragFile.open(QIODevice::ReadOnly);
+  string triangleFrag = triangleFragFile.readAll().toStdString();
 
-	channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
+  channelProgram = make_unique<OpenGLProgram>(triangleVert, triangleFrag);
 
   checkGLMessages();
 }
 
 void ScalpCanvas::cleanupGL() {
-	logToFile("Cleanup in ScalpCanvas.");
-	makeCurrent();
+  logToFile("Cleanup in ScalpCanvas.");
+  makeCurrent();
 
-	channelProgram.reset();
+  channelProgram.reset();
 
-	labelProgram.reset();
+  labelProgram.reset();
 
-	logLastGLMessage();
-	OPENGL_INTERFACE->checkGLErrors();
+  logLastGLMessage();
+  OPENGL_INTERFACE->checkGLErrors();
 
-	doneCurrent();
+  doneCurrent();
 }
 
 void ScalpCanvas::setupScalpMesh() {
@@ -148,24 +148,24 @@ void ScalpCanvas::setChannelLabels(const std::vector<QString>& channelLabels) {
 }
 
 void ScalpCanvas::setPositionVoltages(const std::vector<float>& channelDataBuffer, const float& min, const float& max) {
-	//if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
-		//return;
-	
-	minVoltage = min;
-	maxVoltage = max;
+  //if (static_cast<int>(originalPositions.size()) < static_cast<int>(channelDataBuffer.size()))
+  //return;
 
-	float maxMinusMin = maxVoltage - minVoltage;
+  minVoltage = min;
+  maxVoltage = max;
 
-	int size = std::min(originalPositions.size(), channelDataBuffer.size());
+  float maxMinusMin = maxVoltage - minVoltage;
 
-	for (int i = 0; i < size; i++) {
+  int size = std::min(originalPositions.size(), channelDataBuffer.size());
+
+  for (int i = 0; i < size; i++) {
     float newVoltage = (channelDataBuffer[i] - minVoltage) / (maxMinusMin);
 
     //TODO: color of triangle with all three vertices at voltage=1 is bugged
     // triangle is drawn as purple for GL_LINEAR and arbitrarily red/blue for GL_NEAREST
     // thus the 0.9999f instead of 1
     originalPositions[i].voltage = newVoltage < 0 ? 0 : (newVoltage >= 1 ? 0.9999f : newVoltage);
-	}
+  }
 
   calculateVoltages(scalpMesh);
 }
@@ -176,13 +176,13 @@ void ScalpCanvas::resizeGL(int /*w*/, int /*h*/) {
 
 std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedGrid(
   const std::vector<ElectrodePosition>& channels) {
-	std::vector<double> coords;
-	std::vector<ElectrodePosition> triangles;
-	
-	for (auto ch : channels) {
-		coords.push_back(ch.x);
-		coords.push_back(ch.y);
-	}
+  std::vector<double> coords;
+  std::vector<ElectrodePosition> triangles;
+
+  for (auto ch : channels) {
+    coords.push_back(ch.x);
+    coords.push_back(ch.y);
+  }
 
   try {
     delaunator::Delaunator d(coords);
@@ -200,12 +200,12 @@ std::vector<ElectrodePosition> ScalpCanvas::generateTriangulatedGrid(
     forbidDraw("Can't compute triangulation of the input coordinates.");
   }
 
-	return triangles;
+  return triangles;
 }
 
 float getDistance(const float x1, const float y1, const float x2, const float y2) {
   return std::sqrt((x1 - x2) * (x1 - x2) +
-    (y1 - y2) * (y1- y2));
+    (y1 - y2) * (y1 - y2));
 }
 
 //takes triangulated positions, where each position is represented by 3 floats - x, y, z
@@ -242,7 +242,7 @@ void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
   //points contain gradient mesh as well
   assert(static_cast<int>(points.size() / OPENGL_VERTEX_SIZE) >= static_cast<int>(pointSpatialCoefficients.size()));
 
-  for (int i = 0; i < pointSpatialCoefficients.size(); i ++) {
+  for (int i = 0; i < pointSpatialCoefficients.size(); i++) {
     float newVoltage = 0;
     float sumCoefficient = 0;
     for (int j = 0; j < pointSpatialCoefficients[i].size(); j++) {
@@ -262,7 +262,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
   uniqueIndiceCount = 0;
   std::vector<ElectrodePosition> positions;
 
-	for (int i = 0; i < triangulatedPositions.size(); i++) {
+  for (int i = 0; i < triangulatedPositions.size(); i++) {
     //indices
     bool duplicate = false;
     for (int j = 0; j < i; j++) {
@@ -276,8 +276,8 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
       indices.push_back(uniqueIndiceCount++);
       positions.push_back(triangulatedPositions[i]);
     }
-	}
-  
+  }
+
   std::vector<ElectrodePosition> splitPositions = std::move(positions);
   for (int i = 0; i < TRIANGLE_SPLIT_COUNT; i++) {
     splitTriangles(splitPositions, indices);
@@ -291,7 +291,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
     finalTriangles.push_back(s.voltage);
   }
 
-	return finalTriangles;
+  return finalTriangles;
 }
 
 GLuint ScalpCanvas::setupColormapTexture(std::vector<float> colormap) {
@@ -323,9 +323,9 @@ void ScalpCanvas::updateColormapTexture() {
 //TODO: doesnt refresh on table change
 void ScalpCanvas::paintGL() {
 #ifndef NDEBUG
-	logToFile("Painting started.");
+  logToFile("Painting started.");
 #endif
-	if (ready()) {
+  if (ready()) {
     decltype(chrono::high_resolution_clock::now()) start;
     if (printTiming) {
       start = chrono::high_resolution_clock::now();
@@ -369,7 +369,7 @@ void ScalpCanvas::paintGL() {
     //POINTS
     if (shouldDrawChannels) {
       gl()->glPointSize(10.0f);
-      std:vector<GLfloat> channelBufferData;
+    std:vector<GLfloat> channelBufferData;
       for (int i = 0; i < originalPositions.size(); i++) {
         channelBufferData.push_back(originalPositions[i].x);
         channelBufferData.push_back(originalPositions[i].y);
@@ -411,7 +411,7 @@ void ScalpCanvas::paintGL() {
       graphics::NumberRange(gradient->getXright() + 0.01f, gradient->getXright() + 0.10f, gradient->getYbot() + 0.04f,
         gradient->getYtop() + 0.04f, this, 3, minVoltage, maxVoltage, 2, QColor(255, 255, 255), QColor(0, 0, 0),
         graphics::Orientation::Vertical)
-    );
+      );
     gradAxisNumbers->render(painter);
 
     gradient->render(painter);
@@ -431,7 +431,7 @@ void ScalpCanvas::paintGL() {
   }
 
 #ifndef NDEBUG
-	logToFile("Painting finished.");
+  logToFile("Painting finished.");
 #endif
 }
 
@@ -473,16 +473,16 @@ bool ScalpCanvas::ready() {
 }
 
 void ScalpCanvas::renderText(QPainter* painter, float x, float y, const QString& str, const QFont& font, const QColor& fontColor) {
-	int realX = width() / 2 + (width() / 2) * x;
-	int realY = height() / 2 + (height() / 2) * y * -1;
+  int realX = width() / 2 + (width() / 2) * x;
+  int realY = height() / 2 + (height() / 2) * y * -1;
 
   painter->save();
-	painter->setBackgroundMode(Qt::OpaqueMode);
-	painter->setBackground(QBrush(QColor(0, 0, 0)));
-	painter->setPen(fontColor);
-	painter->setBrush(fontColor);
-	painter->setFont(font);
-	painter->drawText(realX, realY, str);
+  painter->setBackgroundMode(Qt::OpaqueMode);
+  painter->setBackground(QBrush(QColor(0, 0, 0)));
+  painter->setPen(fontColor);
+  painter->setBrush(fontColor);
+  painter->setFont(font);
+  painter->drawText(realX, realY, str);
   painter->restore();
 }
 
@@ -618,7 +618,7 @@ QMenu* ScalpCanvas::setupExtremaMenu(QMenu* menu) {
 }
 
 QMenu* ScalpCanvas::setupProjectionMenu(QMenu* menu) {
-  QMenu* projectionMenu =  new QMenu("Electrode Projection");
+  QMenu* projectionMenu = new QMenu("Electrode Projection");
   auto* projectionGroup = new QActionGroup(this);
   projectionGroup->setExclusive(true);
 

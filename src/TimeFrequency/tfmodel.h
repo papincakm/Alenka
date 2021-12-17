@@ -26,9 +26,9 @@ namespace AlenkaSignal {
   class FftProcessor;
 } // namespace AlenkaSignal
 
-/**
-* @brief Calculates the STFT.
-*/
+  /**
+  * @brief Calculates the STFT.
+  */
 class TfModel {
 
   //fft processor related
@@ -52,7 +52,7 @@ public:
   int frameCount = 0;
   int freqBinsUsed = 0;
 
-	TfModel() {};
+  TfModel() {};
 
   /**
   * @brief Returns STFT result in a form of framcount * freqbin array.

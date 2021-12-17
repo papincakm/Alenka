@@ -30,9 +30,9 @@ namespace AlenkaSignal {
   * Controls the TfModel and TfVisualizer to draw a spectrogram.
   */
 class TfAnalyser : public QWidget {
-	Q_OBJECT
+  Q_OBJECT
 
-  bool freeze = true;
+    bool freeze = true;
   bool parentVisible = true;
   bool printTiming = false;
 
@@ -46,13 +46,13 @@ class TfAnalyser : public QWidget {
   std::unique_ptr<TfModel> tfModel;
 
 public:
-	explicit TfAnalyser(QWidget *parent = nullptr);
+  explicit TfAnalyser(QWidget *parent = nullptr);
 
-	/**
-	* @brief Notifies this object that the DataFile changed.
-	* @param file Pointer to the data file. nullptr means file was closed.
-	*/
-	void changeFile(OpenDataFile *file);
+  /**
+  * @brief Notifies this object that the DataFile changed.
+  * @param file Pointer to the data file. nullptr means file was closed.
+  */
+  void changeFile(OpenDataFile *file);
 
 private:
   void updateConnections();
@@ -65,11 +65,11 @@ private:
   QGroupBox* createFilterMenu();
   QWidget* createFreezeMenu();
   QLayout* createChannelTimeMenu();
-private slots:
+  private slots:
   /**
   * @brief Calls FftProcessor to compute FFT and updates the data in TfVisualizer.
   */
-	void updateSpectrum();
+  void updateSpectrum();
   void setFrameSize();
   void setHopSize();
   void setMinFreqDraw();

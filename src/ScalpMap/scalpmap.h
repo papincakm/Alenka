@@ -21,7 +21,7 @@ class InfoTable;
 */
 class ScalpMap : public QWidget {
   Q_OBJECT
-  OpenDataFile *file = nullptr;
+    OpenDataFile *file = nullptr;
   ScalpCanvas *scalpCanvas = nullptr;
   ScalpModel model;
   float voltageMin = 0.0f;
@@ -52,7 +52,7 @@ private:
   bool enabled();
   void reset();
 
-private slots:
+  private slots:
   void parentVisibilityChanged(bool vis);
   void updateTrackTableConnections();
   void updateLabels();

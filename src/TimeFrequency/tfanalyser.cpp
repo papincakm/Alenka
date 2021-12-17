@@ -51,41 +51,41 @@ void TfAnalyser::setupTfVisualizer(QVBoxLayout* mainBox) {
 }
 
 void TfAnalyser::changeFile(OpenDataFile *file) {
-		tfModel->file = file;
-		if (file) {
-				updateConnections();
-				updateSpectrum();
+  tfModel->file = file;
+  if (file) {
+    updateConnections();
+    updateSpectrum();
 
-        channelSpinBox->setRange(0, file->file->getChannelCount());
+    channelSpinBox->setRange(0, file->file->getChannelCount());
 
-        tfModel->frequency = file->file->getSamplingFrequency() / 2;
-        visualizer->setFrequency(tfModel->frequency);
-        visualizer->setMinFrequency(0);
-        visualizer->setMaxFrequency(tfModel->frequency);
+    tfModel->frequency = file->file->getSamplingFrequency() / 2;
+    visualizer->setFrequency(tfModel->frequency);
+    visualizer->setMinFrequency(0);
+    visualizer->setMaxFrequency(tfModel->frequency);
 
-        minFreqLine->clear();
-        delete minFreqLine->validator();
-        minFreqLine->insert(QString::number(0));
-        minFreqLine->setValidator(new QIntValidator(0, tfModel->frequency, minFreqLine));
+    minFreqLine->clear();
+    delete minFreqLine->validator();
+    minFreqLine->insert(QString::number(0));
+    minFreqLine->setValidator(new QIntValidator(0, tfModel->frequency, minFreqLine));
 
-        maxFreqLine->clear();
-        delete maxFreqLine->validator();
-        maxFreqLine->insert(QString::number(tfModel->frequency));
-        maxFreqLine->setValidator(new QIntValidator(tfModel->frequency / tfModel->freqBins + 1, tfModel->frequency,
-          maxFreqLine));
-		}
+    maxFreqLine->clear();
+    delete maxFreqLine->validator();
+    maxFreqLine->insert(QString::number(tfModel->frequency));
+    maxFreqLine->setValidator(new QIntValidator(tfModel->frequency / tfModel->freqBins + 1, tfModel->frequency,
+      maxFreqLine));
+  }
 }
 
 void TfAnalyser::updateConnections() {
-		for (auto e : connections)
-				disconnect(e);
-		connections.clear();
+  for (auto e : connections)
+    disconnect(e);
+  connections.clear();
 
-		if (tfModel->file) {
-				auto c = connect(&(tfModel->file)->infoTable, SIGNAL(positionChanged(int, double)), this,
-						SLOT(updateSpectrum()));
-				connections.push_back(c);
-		}
+  if (tfModel->file) {
+    auto c = connect(&(tfModel->file)->infoTable, SIGNAL(positionChanged(int, double)), this,
+      SLOT(updateSpectrum()));
+    connections.push_back(c);
+  }
 }
 
 bool TfAnalyser::ready() {
@@ -98,7 +98,7 @@ bool TfAnalyser::ready() {
 void TfAnalyser::updateSpectrum() {
   if (!ready())
     return;
-  
+
   //benchmarking
   decltype(std::chrono::high_resolution_clock::now()) start;
   if (printTiming) {

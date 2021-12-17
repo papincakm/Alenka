@@ -192,7 +192,7 @@ void ScalpMap::updateLabels() {
 
   if (positionsProjected.empty()) {
     scalpCanvas->forbidDraw("Electrode positions are invalid\n(A sphere cant be fitted to the coordinates,"\
-    "scalpmap cant be generated).\nChange the coordinates or disable the invalid electrodes.");
+      "scalpmap cant be generated).\nChange the coordinates or disable the invalid electrodes.");
     posValidCnt = 0;
     return;
   }
@@ -212,7 +212,7 @@ void ScalpMap::updateSpectrum() {
 
   // benchmark
   decltype(chrono::high_resolution_clock::now()) start;
-  if (printTiming) {  
+  if (printTiming) {
     start = chrono::high_resolution_clock::now();
   }
 
