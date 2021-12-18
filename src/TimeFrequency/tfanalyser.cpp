@@ -56,7 +56,7 @@ void TfAnalyser::changeFile(OpenDataFile *file) {
     updateConnections();
     updateSpectrum();
 
-    channelSpinBox->setRange(0, file->file->getChannelCount());
+    channelSpinBox->setRange(0, file->file->getChannelCount() - 1);
 
     tfModel->frequency = file->file->getSamplingFrequency() / 2;
     visualizer->setFrequency(tfModel->frequency);
