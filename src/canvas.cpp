@@ -1329,7 +1329,7 @@ void Canvas::storeCurrentPositionSample() {
   set<int> posIndex;
   posIndex.insert(blockFromTo.first);
 
-  int idd;
+  int idd = 0;
   GPUCacheItem *cacheItem;
 
   cacheItem = cache->getAny(posIndex, &idd);

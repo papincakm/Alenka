@@ -27,7 +27,7 @@ public:
   ~FftProcessor();
 
   std::vector<std::complex<float>> process(const std::vector<float>& input,
-    OpenCLContext *gcontext, int batchSize, int fftSize);
+    OpenCLContext *gcontext, int batchSize, size_t fftSize);
 private:
   int parallelQueues = 0;
   int batchSize = 0;

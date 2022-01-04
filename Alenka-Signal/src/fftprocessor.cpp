@@ -74,7 +74,6 @@ void FftProcessor::deleteBuffers() {
 }
 
 void FftProcessor::createPlans() {
-  cl_int err;
   clfftStatus errFFT;
 
   clfftPrecision precision = CLFFT_SINGLE;
@@ -101,7 +100,6 @@ void FftProcessor::deletePlans() {
 
 void FftProcessor::updateFft() {
   clfftStatus errFFT;
-  cl_int err;
 
   deleteBuffers();
 
@@ -115,7 +113,7 @@ void FftProcessor::updateFft() {
 }
 
 std::vector<std::complex<float>> FftProcessor::process(const std::vector<float>& input,
-  OpenCLContext *gcontext, int batchSize, int fftSize) {
+  OpenCLContext *gcontext, int batchSize, size_t fftSize) {
   if (this->batchSize != batchSize || this->fftSize != fftSize) {
     this->batchSize = batchSize;
     this->fftSize = static_cast<size_t>(fftSize);
@@ -130,7 +128,6 @@ std::vector<std::complex<float>> FftProcessor::process(const std::vector<float>&
   context = gcontext;
 
   std::vector<std::complex<float>> result(batchSize * (fftSize / 2 + 1), 0);
-  int ref;
 
   err = clEnqueueWriteBuffer(queue, inBuf, CL_TRUE, 0,
     batchSize * fftSize * sizeof(float), input.data(), 0, NULL, NULL);

@@ -110,10 +110,10 @@ public:
   const std::vector<float> &getSignalSampleCurPosProcessed() const {
     return signalCurPosProcessed;
   }
-  const InfoTable::Extrema getScalpMapExtrema() const {
+  InfoTable::Extrema getScalpMapExtrema() const {
     return selectedScalpMapExtrema;
   }
-  const bool getScalpMapProjection() const {
+  bool getScalpMapProjection() const {
     return scalpMapProjection;
   }
   QString getGlobalMontageHeader() const { return globalMontageHeader; }

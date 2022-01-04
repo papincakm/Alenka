@@ -216,10 +216,10 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
   }
 
   objects.push_back(std::make_shared<RectangleText>(
-    RectangleText(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, "Arial", textColor,
-      backgroundColor, QString::number(printNumber, 'f', usedPrecision), objectOrientation,
-      Orientation::Horizontal, alignment)
-    ));
+    RectangleText(Rectangle(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, backgroundColor,
+    objectOrientation, alignment), "Arial", textColor, QString::number(printNumber, 'f', usedPrecision),
+    Orientation::Horizontal
+  ));
 }
 
 Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget,
@@ -235,7 +235,7 @@ Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widg
 
 Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget, QColor borderColor,
   QColor backgroundColor, Orientation orientation, Alignment alignment) :
-  Rectangle(botx, topx, boty, topy, widget, borderColor, backgroundColor, orientation, alignment) {
+  Rectangle(botx, topx, boty, topy, widget, backgroundColor, borderColor, orientation, alignment) {
 
   changeRangeY = std::min(heightReal, 300.0f) / 3.0f;
   changeRangeX = std::min(widthReal, 50.0f) * 50;

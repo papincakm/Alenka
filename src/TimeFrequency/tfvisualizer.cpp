@@ -127,7 +127,7 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
   float minVal = FLT_MAX;
   float maxVal = FLT_MIN;
 
-  for (int i = 0; i < values.size(); i++) {
+  for (size_t i = 0; i < values.size(); i++) {
     minVal = std::min(minVal, values[i]);
     maxVal = std::max(maxVal, values[i]);
   }
@@ -135,7 +135,7 @@ void TfVisualizer::convertToRange(std::vector<float>& values, float newMin, floa
   float newRange = newMax - newMin;
   float oldRange = maxVal - minVal;
 
-  for (int i = 0; i < values.size(); i++) {
+  for (size_t i = 0; i < values.size(); i++) {
     values[i] = (values[i] - minVal) * newRange / oldRange + newMin;
   }
 }
@@ -265,9 +265,9 @@ void TfVisualizer::paintGL() {
 
     //frequency
     float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
-    auto frequencyAxisLabel = graphics::RectangleText(-0.99f, -0.92f,
-      specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, "Arial", QColor(0, 0, 0), "Frequency (Hz)",
-      graphics::Orientation::Vertical, graphics::Orientation::Vertical);
+    auto frequencyAxisLabel = graphics::RectangleText(Rectangle(-0.99f, -0.92f,
+      specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, graphics::Orientation::Vertical), "Arial", QColor(0, 0, 0), "Frequency (Hz)",
+      graphics::Orientation::Vertical);
     frequencyAxisLabel.render(painter);
 
     auto frequencyAxisNumbers = graphics::RectangleChainFactory<graphics::NumberRange>().make(
@@ -299,9 +299,9 @@ void TfVisualizer::paintGL() {
     timeAxisNumbers->render(painter);
 
     float specXSize = std::abs(specMesh.getXleft() - specMesh.getXright());
-    auto timeAxisLabel = graphics::RectangleText(specMesh.getXleft() + specXSize / 2.4f,
+    auto timeAxisLabel = graphics::RectangleText(Rectangle(specMesh.getXleft() + specXSize / 2.4f,
       specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.18f,
-      this, "Arial", QColor(0, 0, 0), "Time(sec)", graphics::Orientation::Vertical,
+      this, graphics::Orientation::Vertical), "Arial", QColor(0, 0, 0), "Time(sec)", 
       graphics::Orientation::Horizontal);
     timeAxisLabel.render(painter);
 
@@ -388,8 +388,8 @@ void TfVisualizer::generateTriangulatedGrid(std::vector<GLfloat>& triangles,
   std::vector<GLuint>& indices, const std::vector<float> xAxis, const std::vector<float> yAxis,
   const std::vector<float>& values) {
 
-  for (int i = 0; i < xAxis.size() - 1; i++) {
-    for (int j = 0; j < yAxis.size() - 1; j++) {
+  for (size_t i = 0; i < xAxis.size() - 1; i++) {
+    for (size_t j = 0; j < yAxis.size() - 1; j++) {
       int valueIt = i * (yAxis.size() - 1) + j;
       GLuint squarePos = i * (yAxis.size() - 1) * 4 + j * 4;
       //create rectangle from 2 triangles

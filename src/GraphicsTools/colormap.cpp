@@ -208,7 +208,7 @@ void Colormap::change(float contrast, float brightness) {
   center = brightness;
   createTextureBR();
 
-  for (int i = 0; i < colormapTextureBuffer.size(); i += 3) {
+  for (size_t i = 0; i < colormapTextureBuffer.size(); i += 3) {
     colormapTextureBuffer[i] = truncate<float>(defaultColormapTextureBuffer[i] * contrast, 0, 1.0f);
     colormapTextureBuffer[i + 1] = truncate<float>(defaultColormapTextureBuffer[i + 1] * contrast, 0, 1.0f);
     colormapTextureBuffer[i + 2] = truncate<float>(defaultColormapTextureBuffer[i + 2] * contrast, 0, 1.0f);
@@ -226,9 +226,6 @@ void Colormap::reset() {
 
 std::vector<float> Colormap::getColorTemplate(ColorPallete colpal) {
   switch (colpal) {
-  case Jet:
-    return getJetPallete();
-    break;
   case Rainbow:
     return getRainbowPallete();
     break;
@@ -243,6 +240,9 @@ std::vector<float> Colormap::getColorTemplate(ColorPallete colpal) {
     break;
   case ExtendedKindlmann:
     return getExtendedKindlmannPallete();
+    break;
+  default:
+    return getJetPallete();
     break;
   }
 }

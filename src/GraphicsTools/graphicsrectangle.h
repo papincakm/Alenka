@@ -64,11 +64,7 @@ public:
     calculateWidgetProportions();
   };
 
-  QtObject(const QtObject& object) {
-    xleft = object.xleft;
-    xright = object.xright;
-    ybot = object.ybot;
-    ytop = object.ytop;
+  QtObject(const QtObject& object) : GObject(object) {
     widget = object.widget;
     calculateWidgetProportions();
   };
@@ -108,11 +104,11 @@ public:
     backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
   };
 
-  Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor drawingColor,
-    QColor backgroundColor, Orientation orientation = Orientation::Vertical,
+  Rectangle(float xleft, float xright, float ybot, float ytop, QWidget* widget,
+    QColor backgroundColor, QColor drawingColor, Orientation orientation = Orientation::Vertical,
     Alignment alignment = Alignment::None) :
     QtObject(xleft, xright, ybot, ytop, widget), boundRect(xleft, xright, ybot, ytop, widget),
-    drawingColor(drawingColor), backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
+    backgroundColor(backgroundColor), drawingColor(drawingColor), orientation(orientation), alignment(alignment) {
   };
 
   Rectangle(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
@@ -138,18 +134,19 @@ public:
 
   Rectangle(const GObject& object, QWidget* widget, Orientation orientation = Orientation::Vertical,
     Alignment alignment = Alignment::None) : QtObject(object, widget), boundRect(object, widget),
-    backgroundColor(backgroundColor), orientation(orientation), alignment(alignment) {
+    orientation(orientation), alignment(alignment) {
+    backgroundColor = widget->palette().color(QPalette::Window);
   };
 
   virtual void render(QPainter* painter);
   void update();
 
 protected:
-  Orientation orientation;
-  Alignment alignment;
+  QtObject boundRect;
   QColor backgroundColor;
   QColor drawingColor;
-  QtObject boundRect;
+  Orientation orientation;
+  Alignment alignment;
 
   virtual void renderTop(QPainter* painter) {};
   virtual void renderBot(QPainter* painter) {};
@@ -172,36 +169,39 @@ protected:
 
 class RectangleText : public Rectangle {
 public:
-  RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QString font,
-    QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
+  /*RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget,
+    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None, QString font = "Arial",
+    QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
       Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment), font(font), textColor(textColor),
       text(text), textOrientation(textOrientation) {};
 
-  RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QString font,
-    QColor textColor, QColor backgroundColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
-    Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
-    text(text), textOrientation(textOrientation) {};
+  RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor backgroundColor,
+    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None, QString font,
+    QColor textColor, Qstring text, Orientation textOrientation = Orientation::Horizontal) :
+      Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
+      text(text), textOrientation(textOrientation) {};
 
   RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
-    QString font, QColor textColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
-    Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
-    text(text), textOrientation(textOrientation) {};
+    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None,
+    QString font, QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
+      Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
+      text(text), textOrientation(textOrientation) {};
 
   RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
-    QString font, QColor textColor, QColor backgroundColor, QString text, Orientation orientation = Orientation::Horizontal,
-    Orientation textOrientation = Orientation::Horizontal, Alignment alignment = Alignment::None) :
-    Rectangle(xleft, xright, ybot, ytop, boundRect, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
-    text(text), textOrientation(textOrientation) {
-  };
+    QColor backgroundColor, Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None
+    OQString font, QColor textColor, QString text, textOrientation = Orientation::Horizontal) :
+      Rectangle(xleft, xright, ybot, ytop, boundRect, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
+      text(text), textOrientation(textOrientation) {
+  };*/
+
+  RectangleText(Rectangle rectangle, QString font, QColor textColor, Qstring text, Orientation textOrientation = Orientation::Horizontal) :
+    Rectangle(rectangle), font(font), textColor(textColor), text(text), textOrientation(textOrientation) {};
 
   void setText(const QString& newText) { text = newText; };
 protected:
-  QString text;
-  QString font = "Arial";
+  QString font;
   QColor textColor;
+  QString text;
   Orientation textOrientation;
 
   void renderFull(QPainter* painter) override;
@@ -286,7 +286,7 @@ public:
       length(std::fabs(to - from)) {};
 
   NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
-    float from, float to, int precision, QColor textColor, QColor backgroundColor, Orientation orientation = Vertical,
+    float from, float to, int precision, QColor backgroundColor, QColor textColor, Orientation orientation = Vertical,
     Orientation childOrientation = Vertical) :
     RectangleChain(xleft, xright, ybot, ytop, widget, backgroundColor, objectCount, orientation,
       childOrientation), fromNumber(from), toNumber(to),
