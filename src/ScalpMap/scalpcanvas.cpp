@@ -128,7 +128,7 @@ void ScalpCanvas::setupScalpMesh() {
   calculateVoltages(scalpMesh);
 
   gradient->generateGradientMesh(scalpMesh, indices);
-  int uniqueIndiceCount = scalpMesh.size();
+  uniqueIndiceCount = scalpMesh.size();
 }
 
 void ScalpCanvas::setChannelPositions(const std::vector<QVector2D>& channelPositions) {
@@ -213,11 +213,11 @@ float getDistance(const float x1, const float y1, const float x2, const float y2
 void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& triangulatedPoints) {
   pointSpatialCoefficients.clear();
 
-  for (int i = 0; i < triangulatedPoints.size(); i += OPENGL_VERTEX_SIZE) {
+  for (size_t i = 0; i < triangulatedPoints.size(); i += OPENGL_VERTEX_SIZE) {
     std::vector<std::pair<float, int>> distances;
     std::vector<PointSpatialCoefficient> singlePointSpatialCoefficients;
 
-    for (int j = 0; j < originalPositions.size(); j++) {
+    for (size_t j = 0; j < originalPositions.size(); j++) {
       float distance = getDistance(triangulatedPoints[i], triangulatedPoints[i + 1], originalPositions[j].x, originalPositions[j].y);
       distance = (distance == 0) ? 0.0001f : distance;
       distances.push_back(std::make_pair(1.0f / (distance * distance), j));
@@ -225,7 +225,7 @@ void ScalpCanvas::calculateSpatialCoefficients(const std::vector<GLfloat>& trian
 
     std::sort(distances.begin(), distances.end());
 
-    for (int j = distances.size() - 1; j > distances.size() - SPATIAL_NEAREST_NEIGHBOUR_COUNT - 1; j--) {
+    for (size_t j = distances.size() - 1; j > distances.size() - SPATIAL_NEAREST_NEIGHBOUR_COUNT - 1; j--) {
       float pDist = distances[j].first;
       for (int s = 1; s < SPATIAL_P; s++) {
         pDist = pDist * distances[j].first;
@@ -242,10 +242,10 @@ void ScalpCanvas::calculateVoltages(std::vector<GLfloat>& points) {
   //points contain gradient mesh as well
   assert(static_cast<int>(points.size() / OPENGL_VERTEX_SIZE) >= static_cast<int>(pointSpatialCoefficients.size()));
 
-  for (int i = 0; i < pointSpatialCoefficients.size(); i++) {
+  for (size_t i = 0; i < pointSpatialCoefficients.size(); i++) {
     float newVoltage = 0;
     float sumCoefficient = 0;
-    for (int j = 0; j < pointSpatialCoefficients[i].size(); j++) {
+    for (size_t j = 0; j < pointSpatialCoefficients[i].size(); j++) {
       newVoltage += pointSpatialCoefficients[i][j].coefficient *
         originalPositions[pointSpatialCoefficients[i][j].toPoint].voltage;
       sumCoefficient += pointSpatialCoefficients[i][j].coefficient;
@@ -262,7 +262,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
   uniqueIndiceCount = 0;
   std::vector<ElectrodePosition> positions;
 
-  for (int i = 0; i < triangulatedPositions.size(); i++) {
+  for (size_t i = 0; i < triangulatedPositions.size(); i++) {
     //indices
     bool duplicate = false;
     for (int j = 0; j < i; j++) {
@@ -369,8 +369,8 @@ void ScalpCanvas::paintGL() {
     //POINTS
     if (shouldDrawChannels) {
       gl()->glPointSize(10.0f);
-    std:vector<GLfloat> channelBufferData;
-      for (int i = 0; i < originalPositions.size(); i++) {
+    std::vector<GLfloat> channelBufferData;
+      for (size_t i = 0; i < originalPositions.size(); i++) {
         channelBufferData.push_back(originalPositions[i].x);
         channelBufferData.push_back(originalPositions[i].y);
       }
@@ -399,7 +399,7 @@ void ScalpCanvas::paintGL() {
     painter->endNativePainting();
 
     if (shouldDrawLabels) {
-      for (int i = 0; i < originalPositions.size(); i++) {
+      for (size_t i = 0; i < originalPositions.size(); i++) {
         QFont labelFont = QFont("Times", 8, QFont::Bold);
 
         renderText(painter, originalPositions[i].x, originalPositions[i].y, labels[i], labelFont, QColor(255, 255, 255));
@@ -569,7 +569,7 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
   menu->addSeparator();
 
   menu->addMenu(colormap.getColormapMenu(this));
-  menu->addMenu(setupProjectionMenu(menu));
+  menu->addMenu(setupProjectionMenu());
   menu->addSeparator();
 
   QMenu* extremaMenu = menu->addMenu("Extrema");
@@ -613,11 +613,7 @@ void ScalpCanvas::renderPopupMenu(const QPoint& pos) {
   menu->exec(mapToGlobal(pos));
 }
 
-QMenu* ScalpCanvas::setupExtremaMenu(QMenu* menu) {
-  return nullptr;
-}
-
-QMenu* ScalpCanvas::setupProjectionMenu(QMenu* menu) {
+QMenu* ScalpCanvas::setupProjectionMenu() {
   QMenu* projectionMenu = new QMenu("Electrode Projection");
   auto* projectionGroup = new QActionGroup(this);
   projectionGroup->setExclusive(true);
@@ -660,7 +656,7 @@ GLuint ScalpCanvas::addMidEdgePoint(std::vector<ElectrodePosition>& splitTriangl
   std::vector<GLuint>& splitIndices, ElectrodePosition candidate) {
   GLuint indice = 0;
   bool duplicate = false;
-  for (int j = 0; j < splitTriangles.size(); j++) {
+  for (size_t j = 0; j < splitTriangles.size(); j++) {
     if (candidate == splitTriangles[j]) {
       duplicate = true;
       indice = splitTriangles[j].indice;

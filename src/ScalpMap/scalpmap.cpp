@@ -223,12 +223,10 @@ void ScalpMap::updateSpectrum() {
   if (trackTable->rowCount() <= 0)
     return;
 
-  const int position = OpenDataFile::infoTable.getPosition();
-
   std::vector<float> samplesUnfiltered = OpenDataFile::infoTable.getSignalSampleCurPosProcessed();
   std::vector<float> samples;
 
-  for (int i = 0; i < samplesUnfiltered.size(); i++) {
+  for (size_t i = 0; i < samplesUnfiltered.size(); i++) {
     if (allowedPositions[i])
       samples.push_back(samplesUnfiltered[i]);
   }
