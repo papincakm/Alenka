@@ -219,7 +219,7 @@ void NumberRange::createObject(int position, float botx, float topx, float boty,
     RectangleText(Rectangle(xl, xr, yb, yt, QtObject(botx, topx, boty, topy, widget), widget, backgroundColor,
     objectOrientation, alignment), "Arial", textColor, QString::number(printNumber, 'f', usedPrecision),
     Orientation::Horizontal
-  ));
+  )));
 }
 
 Gradient::Gradient(float botx, float topx, float boty, float topy, QWidget* widget,

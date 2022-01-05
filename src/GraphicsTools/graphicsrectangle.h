@@ -194,7 +194,7 @@ public:
       text(text), textOrientation(textOrientation) {
   };*/
 
-  RectangleText(Rectangle rectangle, QString font, QColor textColor, Qstring text, Orientation textOrientation = Orientation::Horizontal) :
+  RectangleText(Rectangle rectangle, QString font, QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
     Rectangle(rectangle), font(font), textColor(textColor), text(text), textOrientation(textOrientation) {};
 
   void setText(const QString& newText) { text = newText; };

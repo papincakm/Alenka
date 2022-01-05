@@ -265,8 +265,8 @@ void TfVisualizer::paintGL() {
 
     //frequency
     float specYSize = std::abs(specMesh.getYtop() - specMesh.getYbot());
-    auto frequencyAxisLabel = graphics::RectangleText(Rectangle(-0.99f, -0.92f,
-      specMesh.getYbot() + specYSize / 3.0f, specMesh.getYtop() - specYSize / 3.0f, this, graphics::Orientation::Vertical), "Arial", QColor(0, 0, 0), "Frequency (Hz)",
+    auto frequencyAxisLabel = graphics::RectangleText(graphics::Rectangle(-0.99f, -0.92f, specMesh.getYbot() + specYSize / 3.0f,
+      specMesh.getYtop() - specYSize / 3.0f, this, graphics::Orientation::Vertical), "Arial", QColor(0, 0, 0), "Frequency (Hz)",
       graphics::Orientation::Vertical);
     frequencyAxisLabel.render(painter);
 
@@ -299,7 +299,7 @@ void TfVisualizer::paintGL() {
     timeAxisNumbers->render(painter);
 
     float specXSize = std::abs(specMesh.getXleft() - specMesh.getXright());
-    auto timeAxisLabel = graphics::RectangleText(Rectangle(specMesh.getXleft() + specXSize / 2.4f,
+    auto timeAxisLabel = graphics::RectangleText(graphics::Rectangle(specMesh.getXleft() + specXSize / 2.4f,
       specMesh.getXright() - specXSize / 2.4f, specMesh.getYbot() - 0.25f, specMesh.getYbot() - 0.18f,
       this, graphics::Orientation::Vertical), "Arial", QColor(0, 0, 0), "Time(sec)", 
       graphics::Orientation::Horizontal);
