@@ -154,8 +154,7 @@ private:
 
   //menu
   void renderPopupMenu(const QPoint& pos);
-  QMenu* setupExtremaMenu(QMenu* menu);
-  QMenu* setupProjectionMenu(QMenu* menu);
+  QMenu* setupProjectionMenu();
 };
 
 #endif // SCALPCANVAS_H

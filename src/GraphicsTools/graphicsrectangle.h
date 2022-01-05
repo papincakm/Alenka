@@ -148,9 +148,9 @@ protected:
   Orientation orientation;
   Alignment alignment;
 
-  virtual void renderTop(QPainter* painter) {};
-  virtual void renderBot(QPainter* painter) {};
-  virtual void renderCenter(QPainter* painter) {};
+  virtual void renderTop(QPainter* painter) { (void)painter; };
+  virtual void renderBot(QPainter* painter) { (void)painter; };
+  virtual void renderCenter(QPainter* painter) { (void)painter; };
   virtual void renderFull(QPainter* painter);
 };
 
@@ -169,31 +169,6 @@ protected:
 
 class RectangleText : public Rectangle {
 public:
-  /*RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget,
-    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None, QString font = "Arial",
-    QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
-      Rectangle(xleft, xright, ybot, ytop, widget, orientation, alignment), font(font), textColor(textColor),
-      text(text), textOrientation(textOrientation) {};
-
-  RectangleText(float xleft, float xright, float ybot, float ytop, QWidget* widget, QColor backgroundColor,
-    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None, QString font,
-    QColor textColor, Qstring text, Orientation textOrientation = Orientation::Horizontal) :
-      Rectangle(xleft, xright, ybot, ytop, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
-      text(text), textOrientation(textOrientation) {};
-
-  RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
-    Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None,
-    QString font, QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
-      Rectangle(xleft, xright, ybot, ytop, boundRect, widget, orientation, alignment), font(font), textColor(textColor),
-      text(text), textOrientation(textOrientation) {};
-
-  RectangleText(float xleft, float xright, float ybot, float ytop, const QtObject& boundRect, QWidget* widget,
-    QColor backgroundColor, Orientation orientation = Orientation::Horizontal, Alignment alignment = Alignment::None
-    OQString font, QColor textColor, QString text, textOrientation = Orientation::Horizontal) :
-      Rectangle(xleft, xright, ybot, ytop, boundRect, widget, backgroundColor, orientation, alignment), font(font), textColor(textColor),
-      text(text), textOrientation(textOrientation) {
-  };*/
-
   RectangleText(Rectangle rectangle, QString font, QColor textColor, QString text, Orientation textOrientation = Orientation::Horizontal) :
     Rectangle(rectangle), font(font), textColor(textColor), text(text), textOrientation(textOrientation) {};
 
@@ -282,15 +257,15 @@ public:
   NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
     float from, float to, int precision, QColor textColor, Orientation orientation = Vertical, 
     Orientation childOrientation = Vertical) : RectangleChain(xleft, xright, ybot, ytop, widget, objectCount,
-      orientation, childOrientation), fromNumber(from), toNumber(to), precision(precision), textColor(textColor),
-      length(std::fabs(to - from)) {};
+      orientation, childOrientation), fromNumber(from), toNumber(to), precision(precision), length(std::fabs(to - from)),
+      textColor(textColor) {};
 
   NumberRange(float xleft, float xright, float ybot, float ytop, QWidget* widget, int objectCount,
     float from, float to, int precision, QColor backgroundColor, QColor textColor, Orientation orientation = Vertical,
     Orientation childOrientation = Vertical) :
     RectangleChain(xleft, xright, ybot, ytop, widget, backgroundColor, objectCount, orientation,
       childOrientation), fromNumber(from), toNumber(to),
-      precision(precision), textColor(textColor), length(std::fabs(to - from)) {};
+      precision(precision), length(std::fabs(to - from)), textColor(textColor) {};
 
 protected:
   void createObject(int position, float xleft, float xright, float ybot, float ytop, Orientation objectOrientation,

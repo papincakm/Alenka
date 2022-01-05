@@ -71,13 +71,13 @@ using namespace std;
 			MontageXML montage;
 			montage.Name = node.attribute("name").as_string();
 			montage.Save = node.attribute("save").as_bool();
-			list<TrackTableXML> list = this->CreateListTrackTableAtributes(node, montage);
+			list<TrackTableXML> list = this->CreateListTrackTableAtributes(node);
 			montage.TrackTable = list;
 			xml->Montage.push_front(montage);
 		}
 	}
 
-	list<TrackTableXML> ComparatorXML::CreateListTrackTableAtributes(pugi::xml_node node, MontageXML montage)
+	list<TrackTableXML> ComparatorXML::CreateListTrackTableAtributes(pugi::xml_node node)
 	{
 		list<TrackTableXML> list;
 
@@ -141,7 +141,7 @@ using namespace std;
 		// Condition if there are more montages in the comparable file than defualt.
 		if (diferenceMontages <= 0)
 		{
-			for (size_t i = 0; i < numberMontagesComparable; i++)
+			for (int i = 0; i < numberMontagesComparable; i++)
 			{
 				MontageXML montageResult;
 				// Counting the number of tracks
@@ -172,7 +172,7 @@ using namespace std;
 				{
 					for (size_t i = 0; i < montageComparable.TrackTable.size(); i++)
 					{
-						int numberTrackLabel = montageDefault.TrackTable.size();
+						size_t numberTrackLabel = montageDefault.TrackTable.size();
 				
 						if (i  <  numberTrackLabel)
 						{
@@ -197,7 +197,7 @@ using namespace std;
 		// Condition if there are less montages in the comparable file than default 
 		if (diferenceMontages > 0)
 		{
-			for (size_t i = 0; i < numberMontagesComparable; i++)
+			for (int i = 0; i < numberMontagesComparable; i++)
 			{
 				MontageXML montageResult;
 
@@ -232,7 +232,7 @@ using namespace std;
 					{
 						for (size_t i = 0; i < montageComparable.TrackTable.size(); i++)
 						{
-							int numberTrackLabel = montageDefault.TrackTable.size();
+						  size_t numberTrackLabel = montageDefault.TrackTable.size();
 							
 							if (i  < numberTrackLabel)
 							{

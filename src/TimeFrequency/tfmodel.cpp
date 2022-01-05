@@ -84,12 +84,12 @@ void TfModel::applyWindowFunction(std::vector<float>& data) {
   case 0:
     return;
   case 1:
-    for (int i = 0; i < data.size(); i++) {
+    for (size_t i = 0; i < data.size(); i++) {
       data[i] = hammingWindow<float>(data[i], data.size());
     }
     break;
   case 2:
-    for (int i = 0; i < data.size(); i++) {
+    for (size_t i = 0; i < data.size(); i++) {
       data[i] = blackmanWindow<float>(data[i], data.size());
     }
     break;
