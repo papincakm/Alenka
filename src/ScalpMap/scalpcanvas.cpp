@@ -265,7 +265,7 @@ std::vector<GLfloat> ScalpCanvas::generateScalpTriangleArray(
   for (size_t i = 0; i < triangulatedPositions.size(); i++) {
     //indices
     bool duplicate = false;
-    for (int j = 0; j < i; j++) {
+    for (size_t j = 0; j < i; j++) {
       if (triangulatedPositions[i] == triangulatedPositions[j]) {
         duplicate = true;
         indices.push_back(indices[j]);

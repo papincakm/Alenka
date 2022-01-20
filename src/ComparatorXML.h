@@ -44,7 +44,7 @@ private:
 
 	// Methods for load the atributes from file 
 	void CreateMontageAtributes(XMLAtributes* xml, pugi::xml_document* document);
-	list<TrackTableXML> CreateListTrackTableAtributes(pugi::xml_node node, MontageXML montage );
+	list<TrackTableXML> CreateListTrackTableAtributes(pugi::xml_node node);
 	
 	// Methods to operate 
 	int CountMontages(ModelDoc model);

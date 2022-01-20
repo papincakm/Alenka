@@ -41,10 +41,8 @@ void TrackManager::loadCoordinates() {
 
   if (!positions.empty()) {
     int row = tableView->model()->rowCount();
-    int col = tableView->model()->columnCount();
 
     const int tableLabel = 1;
-    const int tableHidden = 5;
     const int tableX = 6;
     const int tableY = 7;
     const int tableZ = 8;
