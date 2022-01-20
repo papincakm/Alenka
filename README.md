@@ -1,5 +1,6 @@
 # Alenka 3.0
 #### A Visualization System for Bio Signals
+![Alenka](/misc/pictures/alenka.png)
 ***
 
 See [wiki](https://github.com/papincakm/Alenka/wiki) for more information and build instructions.
